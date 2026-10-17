@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hascham task console</title>
+  <meta name="color-scheme" content="light dark">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/chat.css">
+</head>
+<body class="chatpage">
+  <a class="skip" href="#task-goal">Skip to the task box</a>
+  <div class="shell">
+    <aside class="side" aria-label="Runs and navigation">
+      <div class="brand">
+        <svg class="logo" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg>
+        <div><strong>Hascham</strong><span>Task console</span></div>
+      </div>
+      <a class="newrun" href="/run"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>New task</a>
+      <h2 class="side-h">Past runs</h2>
+      <ul id="past" class="past"></ul>
+      <div class="side-foot">
+        <a class="linkbtn small" href="/">Open the audit view</a>
+        <p id="run-state" class="run-state" role="status"></p>
+        <p>Runs only from this computer. Your key is never shown here.</p>
+      </div>
+    </aside>
+
+    <section class="chat" aria-label="Task conversation">
+      <div id="thread" class="thread" role="log" aria-live="polite" tabindex="0">
+        <div id="hero" class="hero">
+          <svg class="hero-logo" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg>
+          <h1>What should the agent do?</h1>
+          <p class="hero-sub">You give the task. The agent works in a remote browser. Everything it reports is written to a signed receipt you can check offline.</p>
+          <div class="ideas" role="group" aria-label="Example tasks">
+            <button type="button" class="idea" data-text="Tell about Spain." data-url="https://example.com">About Spain</button>
+            <button type="button" class="idea" data-text="Tell me the page title and what the page is for." data-url="https://example.com">Explain a page</button>
+            <button type="button" class="idea" data-text="Give me the first three section headings of this article." data-url="https://en.wikipedia.org/wiki/Python_(programming_language)">Article headings</button>
+          </div>
+          <ul class="facts">
+            <li><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg><span><strong>Policy first.</strong> The start site is checked before anything is sent.</span></li>
+            <li><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span><strong>Task kept as a hash.</strong> The text itself is not stored.</span></li>
+            <li><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg><span><strong>Honest receipt.</strong> It proves the record is unchanged, not that the agent told the truth.</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <form id="task-form" class="composer" aria-label="New task">
+        <fieldset class="modes" id="modes">
+          <legend class="sr">What kind of task</legend>
+          <label class="mode"><input type="radio" name="mode" value="search" checked><span><b>Search</b> fast ranked web results with links</span></label>
+          <label class="mode"><input type="radio" name="mode" value="research"><span><b>Research</b> a written, cited report (5 to 20 minutes)</span></label>
+          <label class="mode"><input type="radio" name="mode" value="agent"><span><b>Browse</b> TinyFish agent, read-only</span></label>
+          <label class="mode"><input type="radio" name="mode" value="guarded"><span><b>Demo task</b> scripted bank-details change on a fake portal; waits for your signed approval</span></label>
+          <label class="mode"><input type="radio" name="mode" value="realsite"><span><b>Real website</b> a real browser submits a real form; waits for your signed approval</span></label>
+        </fieldset>
+        <p id="task-cost" class="cost ready" role="status" hidden></p>
+        <label class="sr" for="task-goal">Task for the agent</label>
+        <textarea id="task-goal" rows="2" maxlength="500" required
+          placeholder="Describe the task, for example: read the page and tell me its first sentence"></textarea>
+        <div class="composer-row">
+          <label class="field" id="field-url" for="task-url"><span>Start at</span>
+            <input id="task-url" name="url" type="url" list="task-sites" autocomplete="off" required>
+            <datalist id="task-sites"></datalist></label>
+          <label class="switch" id="field-confirm" for="task-confirm">
+            <input type="checkbox" id="task-confirm" role="switch">
+            <span class="track" aria-hidden="true"></span>
+            <span id="task-confirm-text">I agree to spend up to this amount of my TinyFish credit.</span>
+          </label>
+          <button type="submit" id="task-run" disabled>
+            <span id="task-run-label">Run task</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+      </form>
+      <p id="status" class="sr" role="status" aria-live="polite"></p>
+    </section>
+  </div>
+  <script src="/format.js"></script>
+  <script src="/run.js"></script>
+</body>
+</html>

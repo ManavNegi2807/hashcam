@@ -1,0 +1,161 @@
+# Agent Black Box: Docker Compose (`core` profile, Steps 3 and 4).
+#
+# Status: IMPLEMENTED, NOT TESTED. These files have never been run: no Docker
+# daemon was available while they were written, so `R-OPS-01` and `R-OPS-02`
+# stay unverified and nothing here claims "one command from a fresh checkout".
+# What *is* checked, by `tools/check_key_volume_isolation.py` in CI, is the rule
+# that matters most for the signer: its key volume is mounted nowhere else
+# (`R-OPS-03`).
+#
+# Profiles (`R-OPS-01`): `core` exists. `replay`, `playwright`, `tinyfish`,
+# `ipfs`, `llm` and `testing` arrive with their steps rather than being declared
+# empty now.
+#
+# Still absent, each with its step: minio (Step 6), witness (Step 8), ui
+# (Step 10).
+
+name: abb
+
+services:
+  postgres:
+    # Pin by digest where feasible (`R-OPS-02`); a bare tag is not reproducible.
+    image: postgres:18.4-alpine
+    environment:
+      POSTGRES_USER: abb
+      POSTGRES_DB: abb
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    # Not published to the host (`R-OPS-04`).
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U abb -d abb"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - data
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+    profiles: ["core"]
+
+  # The one component that holds the signing key. It has no database
+  # credentials, no published port, and its key volume is mounted nowhere else
+  # (`R-SIG-01`, `R-SIG-02`, `R-OPS-03`).
+  signer:
+    build:
+      context: ..
+      dockerfile: deploy/signer.Dockerfile
+    environment:
+      ABB_SIGNER_STATE_DIR: /state
+      ABB_SIGNER_KEY: /keys/signer.key
+      ABB_SIGNER_ADDR: 0.0.0.0:8081
+      ABB_SIGNER_RATE_LIMIT: "50"
+      # The public half of the ingestion key: the only caller it will listen to.
+      ABB_SIGNER_INGESTION_PUBKEY_FILE: /run/secrets/ingestion_public_key
+    secrets:
+      - ingestion_public_key
+    volumes:
+      # Read-only, and this is the only service that may name it.
+      - signer_keys:/keys:ro
+      - signer_state:/state
+    expose:
+      - "8081"
+    user: "10002:10002"
+    read_only: true
+    cap_drop: ["ALL"]
+    security_opt:
+      - no-new-privileges:true
+    # Only the signer network: it must not be able to reach the database.
+    networks:
+      - signer
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/abb-signer", "--help"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+    profiles: ["core"]
+
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/api.Dockerfile
+    environment:
+      ABB_DB_HOST: postgres
+      ABB_DB_USER: abb
+      ABB_DB_NAME: abb
+      ABB_DB_PASSWORD_FILE: /run/secrets/postgres_password
+      ABB_BIN: /usr/local/bin/abb
+      ABB_SIGNER_URL: http://signer:8081
+      # The *private* ingestion key, used only to attest signing requests. It is
+      # not a signing key: it cannot produce a checkpoint.
+      ABB_INGESTION_KEY: /ingestion/ingestion.key
+    secrets:
+      - postgres_password
+    volumes:
+      - ingestion_keys:/ingestion:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      signer:
+        condition: service_started
+    # The only service a person talks to.
+    ports:
+      - "127.0.0.1:8000:8000"
+    user: "10001:10001"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: ["ALL"]
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - data
+      - signer
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/abb", "--version"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    profiles: ["core"]
+
+networks:
+  # The database is reachable from the api only.
+  data:
+    driver: bridge
+  # The signer is reachable from the api only.
+  signer:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  # Mounted by the signer and by nothing else. An operator puts
+  # `signer.key` here with `abb keygen`, ideally from an offline machine.
+  signer_keys:
+  signer_state:
+  # The ingestion key pair's private half, for attesting signing requests.
+  ingestion_keys:
+
+secrets:
+  postgres_password:
+    # Created by the operator; never committed (`R-OPS-05`). See deploy/README.md.
+    file: ./secrets/postgres_password
+  ingestion_public_key:
+    file: ./secrets/ingestion_public_key

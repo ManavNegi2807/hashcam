@@ -1,0 +1,6 @@
+fastapi==0.143.1
+uvicorn==0.53.0
+cryptography==50.0.1
+langgraph==1.2.15
+httpx==0.28.1
+pytest==9.1.1

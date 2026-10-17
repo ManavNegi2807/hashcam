@@ -1,0 +1,270 @@
+{
+  "set": "signed human approvals (D-16)",
+  "protocol_version": "abb/1",
+  "generator": "vectors/tools/generate.py (Python reference, cross-check only)",
+  "note": "PROTOCOL.md 5.6. Signing bytes are `ABB1-APPROVAL || 0x00 || JCS(statement)`. Tampered cases keep the original signature and change one field.",
+  "cases": [
+    {
+      "id": "approval-accept-granted",
+      "desc": "a granted approval signed by the approver key",
+      "input": {
+        "statement": {
+          "approval_id": "approval-act-7",
+          "run_id": "11111111-1111-4111-8111-111111111111",
+          "action_id": "act-7",
+          "summary_digest": "5a64ad957cb9d81228a627fb83dcc55e2bd1038e9db0853788c3d7b9d5b5c341",
+          "decision": "GRANTED",
+          "expires_at": 1760000900000
+        },
+        "key_id": "ed25519:f1c929cc6ac7eb3b65b2b173c97c1d4ef5bc11f86bf6872af5563131cfd79d9d",
+        "signature": "b76a5087e2ff118adc7a6dc1619565b18383e8948c90f7bf9755d707ce7f2cd7f6c828225a46984376ff718431ba30651f780cfb37a1c1c31d96fd251674c801"
+      },
+      "expect": {
+        "result": "ACCEPT",
+        "canonical_b64": "eyJhY3Rpb25faWQiOiJhY3QtNyIsImFwcHJvdmFsX2lkIjoiYXBwcm92YWwtYWN0LTciLCJkZWNpc2lvbiI6IkdSQU5URUQiLCJleHBpcmVzX2F0IjoxNzYwMDAwOTAwMDAwLCJydW5faWQiOiIxMTExMTExMS0xMTExLTQxMTEtODExMS0xMTExMTExMTExMTEiLCJzdW1tYXJ5X2RpZ2VzdCI6IjVhNjRhZDk1N2NiOWQ4MTIyOGE2MjdmYjgzZGNjNTVlMmJkMTAzOGU5ZGIwODUzNzg4YzNkN2I5ZDViNWMzNDEifQ==",
+        "signing_digest": "fa128f5adee1f390f2f5634e9604630f97a0f9994e8a4cb50a28bc06683d6a32"
+      }
+    },
+    {
+      "id": "approval-accept-denied",
+      "desc": "a denial is signed the same way",
+      "input": {
+        "statement": {
+          "approval_id": "approval-act-8",
+          "run_id": "11111111-1111-4111-8111-111111111111",
+          "action_id": "act-8",
+          "summary_digest": "5a64ad957cb9d81228a627fb83dcc55e2bd1038e9db0853788c3d7b9d5b5c341",
+          "decision": "DENIED",
+          "expires_at": 1760000900000
+        },
+        "key_id": "ed25519:f1c929cc6ac7eb3b65b2b173c97c1d4ef5bc11f86bf6872af5563131cfd79d9d",
+        "signature": "e77295babd8fe66862bcb3a98ed7b6ba9169b1643e15088a7ab95ef6b86aab35057ed737f77b803b1dfa5ced61ee6c8a59d177016dd6bca07d317adbea031c03"
+      },
+      "expect": {
+        "result": "ACCEPT",
+        "canonical_b64": "eyJhY3Rpb25faWQiOiJhY3QtOCIsImFwcHJvdmFsX2lkIjoiYXBwcm92YWwtYWN0LTgiLCJkZWNpc2lvbiI6IkRFTklFRCIsImV4cGlyZXNfYXQiOjE3NjAwMDA5MDAwMDAsInJ1bl9pZCI6IjExMTExMTExLTExMTEtNDExMS04MTExLTExMTExMTExMTExMSIsInN1bW1hcnlfZGlnZXN0IjoiNWE2NGFkOTU3Y2I5ZDgxMjI4YTYyN2ZiODNkY2M1NWUyYmQxMDM4ZTlkYjA4NTM3ODhjM2Q3YjlkNWI1YzM0MSJ9",
+        "signing_digest": "3e49711622143b9e127ffb91bf5cdae537062e12cfe6270146d19b4f86c08232"
+      }
+    },
+    {
+      "id": "approval-reject-action-changed",
+      "desc": "action_id changed after signing",
+      "input": {
+        "statement": {
+          "approval_id": "approval-act-7",
+          "run_id": "11111111-1111-4111-8111-111111111111",
+          "action_id": "act-9",
+          "summary_digest": "5a64ad957cb9d81228a627fb83dcc55e2bd1038e9db0853788c3d7b9d5b5c341",
+          "decision": "GRANTED",
+          "expires_at": 1760000900000
+        },
+        "key_id": "ed25519:f1c929cc6ac7eb3b65b2b173c97c1d4ef5bc11f86bf6872af5563131cfd79d9d",
+        "signature": "b76a5087e2ff118adc7a6dc1619565b18383e8948c90f7bf9755d707ce7f2cd7f6c828225a46984376ff718431ba30651f780cfb37a1c1c31d96fd251674c801"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "BAD_SIGNATURE"
+      }
+    },
+    {
+      "id": "approval-reject-summary-changed",
+      "desc": "the approver signed a different summary than the one now claimed",
+      "input": {
+        "statement": {
+          "approval_id": "approval-act-7",
+          "run_id": "11111111-1111-4111-8111-111111111111",
+          "action_id": "act-7",
+          "summary_digest": "51a6a69204c2da897f2ef5038caa44303f95bd87c9f4cd746c2b8e4c90429437",
+          "decision": "GRANTED",
+          "expires_at": 1760000900000
+        },
+        "key_id": "ed25519:f1c929cc6ac7eb3b65b2b173c97c1d4ef5bc11f86bf6872af5563131cfd79d9d",
+        "signature": "b76a5087e2ff118adc7a6dc1619565b18383e8948c90f7bf9755d707ce7f2cd7f6c828225a46984376ff718431ba30651f780cfb37a1c1c31d96fd251674c801"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "BAD_SIGNATURE"
+      }
+    },
+    {
+      "id": "approval-reject-decision-flipped",
+      "desc": "DENIED rewritten as GRANTED",
+      "input": {
+        "statement": {
+          "approval_id": "approval-act-7",
+          "run_id": "11111111-1111-4111-8111-111111111111",
+          "action_id": "act-7",
+          "summary_digest": "5a64ad957cb9d81228a627fb83dcc55e2bd1038e9db0853788c3d7b9d5b5c341",
+          "decision": "DENIED",
+          "expires_at": 1760000900000
+        },
+        "key_id": "ed25519:f1c929cc6ac7eb3b65b2b173c97c1d4ef5bc11f86bf6872af5563131cfd79d9d",
+        "signature": "b76a5087e2ff118adc7a6dc1619565b18383e8948c90f7bf9755d707ce7f2cd7f6c828225a46984376ff718431ba30651f780cfb37a1c1c31d96fd251674c801"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "BAD_SIGNATURE"
+      }
+    },
+    {
+      "id": "approval-reject-expiry-extended",
+      "desc": "expires_at pushed later",
+      "input": {
+        "statement": {
+          "approval_id": "approval-act-7",
+          "run_id": "11111111-1111-4111-8111-111111111111",
+          "action_id": "act-7",
+          "summary_digest": "5a64ad957cb9d81228a627fb83dcc55e2bd1038e9db0853788c3d7b9d5b5c341",
+          "decision": "GRANTED",
+          "expires_at": 1760009999999
+        },
+        "key_id": "ed25519:f1c929cc6ac7eb3b65b2b173c97c1d4ef5bc11f86bf6872af5563131cfd79d9d",
+        "signature": "b76a5087e2ff118adc7a6dc1619565b18383e8948c90f7bf9755d707ce7f2cd7f6c828225a46984376ff718431ba30651f780cfb37a1c1c31d96fd251674c801"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "BAD_SIGNATURE"
+      }
+    },
+    {
+      "id": "approval-reject-other-run",
+      "desc": "the statement is replayed into a different run",
+      "input": {
+        "statement": {
+          "approval_id": "approval-act-7",
+          "run_id": "22222222-2222-4222-8222-222222222222",
+          "action_id": "act-7",
+          "summary_digest": "5a64ad957cb9d81228a627fb83dcc55e2bd1038e9db0853788c3d7b9d5b5c341",
+          "decision": "GRANTED",
+          "expires_at": 1760000900000
+        },
+        "key_id": "ed25519:f1c929cc6ac7eb3b65b2b173c97c1d4ef5bc11f86bf6872af5563131cfd79d9d",
+        "signature": "b76a5087e2ff118adc7a6dc1619565b18383e8948c90f7bf9755d707ce7f2cd7f6c828225a46984376ff718431ba30651f780cfb37a1c1c31d96fd251674c801"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "BAD_SIGNATURE"
+      }
+    },
+    {
+      "id": "approval-reject-forged-signature",
+      "desc": "signature made by a different key than the one named",
+      "input": {
+        "statement": {
+          "approval_id": "approval-act-7",
+          "run_id": "11111111-1111-4111-8111-111111111111",
+          "action_id": "act-7",
+          "summary_digest": "5a64ad957cb9d81228a627fb83dcc55e2bd1038e9db0853788c3d7b9d5b5c341",
+          "decision": "GRANTED",
+          "expires_at": 1760000900000
+        },
+        "key_id": "ed25519:f1c929cc6ac7eb3b65b2b173c97c1d4ef5bc11f86bf6872af5563131cfd79d9d",
+        "signature": "ae8d69d713dbce9dadbf65a3900dfe4c6521d6b1c4fb9afb053250a872a5e963702d413d32481819ceb7fa932f50787efd4cee1a2866d3ca090f28e6248a700a"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "BAD_SIGNATURE"
+      }
+    },
+    {
+      "id": "approval-reject-wrong-domain-tag",
+      "desc": "the same bytes signed under the mandate tag must not count as an approval",
+      "input": {
+        "statement": {
+          "approval_id": "approval-act-7",
+          "run_id": "11111111-1111-4111-8111-111111111111",
+          "action_id": "act-7",
+          "summary_digest": "5a64ad957cb9d81228a627fb83dcc55e2bd1038e9db0853788c3d7b9d5b5c341",
+          "decision": "GRANTED",
+          "expires_at": 1760000900000
+        },
+        "key_id": "ed25519:f1c929cc6ac7eb3b65b2b173c97c1d4ef5bc11f86bf6872af5563131cfd79d9d",
+        "signature": "fb6997b4da4b4880c829a04629e4b7fe1145fdbeaf2014ee3759ba9ffe1193c237fafc48cc017902482c03edc8a3a5e25aa099cd9c60380c9674236ba57fc607"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "BAD_SIGNATURE"
+      }
+    },
+    {
+      "id": "approval-reject-key-is-not-an-approver",
+      "desc": "a valid signature by a witness key is not an approval",
+      "input": {
+        "statement": {
+          "approval_id": "approval-act-7",
+          "run_id": "11111111-1111-4111-8111-111111111111",
+          "action_id": "act-7",
+          "summary_digest": "5a64ad957cb9d81228a627fb83dcc55e2bd1038e9db0853788c3d7b9d5b5c341",
+          "decision": "GRANTED",
+          "expires_at": 1760000900000
+        },
+        "key_id": "ed25519:54b6ff4af374450617ae97c85b7b6c2320048577418f9e19c4915bd7ee42d5df",
+        "signature": "ae8d69d713dbce9dadbf65a3900dfe4c6521d6b1c4fb9afb053250a872a5e963702d413d32481819ceb7fa932f50787efd4cee1a2866d3ca090f28e6248a700a"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "WRONG_KEY_ROLE"
+      }
+    },
+    {
+      "id": "approval-reject-extra-field",
+      "desc": "an undefined field is refused",
+      "input": {
+        "statement_text": "{\"action_id\":\"act-7\",\"approval_id\":\"approval-act-7\",\"decision\":\"GRANTED\",\"expires_at\":1760000900000,\"run_id\":\"11111111-1111-4111-8111-111111111111\",\"summary_digest\":\"5a64ad957cb9d81228a627fb83dcc55e2bd1038e9db0853788c3d7b9d5b5c341\",\"note\":\"hi\"}",
+        "key_id": "ed25519:f1c929cc6ac7eb3b65b2b173c97c1d4ef5bc11f86bf6872af5563131cfd79d9d"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "VALIDATION_FAILED"
+      }
+    },
+    {
+      "id": "approval-reject-bad-decision",
+      "desc": "decision must be GRANTED or DENIED",
+      "input": {
+        "statement_text": "{\"action_id\":\"act-7\",\"approval_id\":\"approval-act-7\",\"decision\":\"MAYBE\",\"expires_at\":1760000900000,\"run_id\":\"11111111-1111-4111-8111-111111111111\",\"summary_digest\":\"5a64ad957cb9d81228a627fb83dcc55e2bd1038e9db0853788c3d7b9d5b5c341\"}",
+        "key_id": "ed25519:f1c929cc6ac7eb3b65b2b173c97c1d4ef5bc11f86bf6872af5563131cfd79d9d"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "VALIDATION_FAILED"
+      }
+    },
+    {
+      "id": "approval-reject-uppercase-digest",
+      "desc": "hex must be lowercase",
+      "input": {
+        "statement_text": "{\"action_id\":\"act-7\",\"approval_id\":\"approval-act-7\",\"decision\":\"GRANTED\",\"expires_at\":1760000900000,\"run_id\":\"11111111-1111-4111-8111-111111111111\",\"summary_digest\":\"5A64AD957CB9D81228A627FB83DCC55E2BD1038E9DB0853788C3D7B9D5B5C341\"}",
+        "key_id": "ed25519:f1c929cc6ac7eb3b65b2b173c97c1d4ef5bc11f86bf6872af5563131cfd79d9d"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "VALIDATION_FAILED"
+      }
+    },
+    {
+      "id": "approval-reject-not-canonical",
+      "desc": "whitespace makes it non-canonical",
+      "input": {
+        "statement_text": "{\"action_id\": \"act-7\",\"approval_id\":\"approval-act-7\",\"decision\":\"GRANTED\",\"expires_at\":1760000900000,\"run_id\":\"11111111-1111-4111-8111-111111111111\",\"summary_digest\":\"5a64ad957cb9d81228a627fb83dcc55e2bd1038e9db0853788c3d7b9d5b5c341\"}",
+        "key_id": "ed25519:f1c929cc6ac7eb3b65b2b173c97c1d4ef5bc11f86bf6872af5563131cfd79d9d"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "VALIDATION_FAILED"
+      }
+    },
+    {
+      "id": "approval-reject-float-expiry",
+      "desc": "protocol numbers are integers",
+      "input": {
+        "statement_text": "{\"action_id\":\"act-7\",\"approval_id\":\"approval-act-7\",\"decision\":\"GRANTED\",\"expires_at\":1760000900000.5,\"run_id\":\"11111111-1111-4111-8111-111111111111\",\"summary_digest\":\"5a64ad957cb9d81228a627fb83dcc55e2bd1038e9db0853788c3d7b9d5b5c341\"}",
+        "key_id": "ed25519:f1c929cc6ac7eb3b65b2b173c97c1d4ef5bc11f86bf6872af5563131cfd79d9d"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "VALIDATION_FAILED"
+      }
+    }
+  ]
+}

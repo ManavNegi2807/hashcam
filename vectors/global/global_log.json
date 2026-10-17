@@ -1,0 +1,185 @@
+{
+  "set": "global log of run roots (D-10)",
+  "protocol_version": "abb/1",
+  "generator": "vectors/tools/generate.py (Python reference, cross-check only)",
+  "note": "PROTOCOL.md 8.5. Includes the deleted-run and altered-root cases that `abb verify-global` must catch (TS-11, TS-12).",
+  "cases": [
+    {
+      "id": "glb-record-1",
+      "desc": "run-root record at global position 0",
+      "input": {
+        "position": 0,
+        "run_id": "00000000-0000-4000-8000-000000000001"
+      },
+      "expect": {
+        "record_canonical_b64": "eyJjaGVja3BvaW50X2hhc2giOiIyODY0YzE4OTg4Y2U4ZjVmMTI3OWY4MTNlODA5ZDA2YWEwNTNlYTBkNjU1NWE0OGI0OGI3OTkzYjEwYzk2ZWZhIiwiZmluYWxpemVkX2F0IjoxNzYwMDAwMDAwMDAwLCJtYW5pZmVzdF9oZWFkIjoiMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsInJvb3RfaGFzaCI6IjRhMGUxYjY3ZGE3YjZiMWNjYzI5MDFlOTJlZTMyYTZhMzI1MWYyMWRlYzgzMDdlY2MwZjE3MWZmODBkNTEyZDIiLCJydW5faWQiOiIwMDAwMDAwMC0wMDAwLTQwMDAtODAwMC0wMDAwMDAwMDAwMDEiLCJ0cmVlX3NpemUiOjR9",
+        "leaf_hash": "bab3285a956167ae6764747ce4083ba515a0883deeabb6017a22b147b38ed196"
+      }
+    },
+    {
+      "id": "glb-record-2",
+      "desc": "run-root record at global position 1",
+      "input": {
+        "position": 1,
+        "run_id": "00000000-0000-4000-8000-000000000002"
+      },
+      "expect": {
+        "record_canonical_b64": "eyJjaGVja3BvaW50X2hhc2giOiI1Yzk2Mjk5NmE5NDQ4Y2M2YzcwOTNkYzZkYjA1MjM4OTdkYjNkOWQ0ODQzZWRiNWNkZTNkMmUwYmU5ZmYzMTMyIiwiZmluYWxpemVkX2F0IjoxNzYwMDAwMDAxMDAwLCJtYW5pZmVzdF9oZWFkIjoiMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsInJvb3RfaGFzaCI6IjFlMjdmNGMxNDYwZjU1MzQ4Njk3NTFhNmRmYzkxMjhhZjBjODYxZTU5OTAwM2QwMzBmYWJjZTQ4ZDliZTVkOTAiLCJydW5faWQiOiIwMDAwMDAwMC0wMDAwLTQwMDAtODAwMC0wMDAwMDAwMDAwMDIiLCJ0cmVlX3NpemUiOjV9",
+        "leaf_hash": "23ab272e9afa5528e82bc9ab084cdf02ed59edcc75ce86fcd01ba49bef85f8e2"
+      }
+    },
+    {
+      "id": "glb-record-3",
+      "desc": "run-root record at global position 2",
+      "input": {
+        "position": 2,
+        "run_id": "00000000-0000-4000-8000-000000000003"
+      },
+      "expect": {
+        "record_canonical_b64": "eyJjaGVja3BvaW50X2hhc2giOiJlNmY0YzM2YWUwZjhjODA4MjI4NDliMDE3Yzg2OWEwZGE5OGYxZGMwNTQwNjhkNzFkMGMyMDNkMTY5NDFhMWY4IiwiZmluYWxpemVkX2F0IjoxNzYwMDAwMDAyMDAwLCJtYW5pZmVzdF9oZWFkIjoiMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsInJvb3RfaGFzaCI6IjA5OGJlOTk2OGE2MTJkYTk3MGI4ZTJlNGMzN2UyMDMwZTUyNjNlNGZiYmI4Njk4MDk1MWEzYzY4OTBhYmVlMWEiLCJydW5faWQiOiIwMDAwMDAwMC0wMDAwLTQwMDAtODAwMC0wMDAwMDAwMDAwMDMiLCJ0cmVlX3NpemUiOjZ9",
+        "leaf_hash": "9942a102be360c83a52eb7889650bb8483a49b366fd8418d4bb919c4d5456042"
+      }
+    },
+    {
+      "id": "glb-record-4",
+      "desc": "run-root record at global position 3",
+      "input": {
+        "position": 3,
+        "run_id": "00000000-0000-4000-8000-000000000004"
+      },
+      "expect": {
+        "record_canonical_b64": "eyJjaGVja3BvaW50X2hhc2giOiIzMTJmYzUxYmE1MmVhYjFhODgzMWFhNjAxNTBkNjY0N2EzZDg1MDlkNDRmODBjNmVkYTQ3MjFkYmEzNGMxYjRkIiwiZmluYWxpemVkX2F0IjoxNzYwMDAwMDAzMDAwLCJtYW5pZmVzdF9oZWFkIjoiMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsInJvb3RfaGFzaCI6ImVkNzVhNmQwNDJmMTE3OWY1YTlkZGNiZmI3NTE1MDQ2Mzg5NWM3NmY0Y2E5NjUwNzBkMjNjYzJmODg0Zjk3YjAiLCJydW5faWQiOiIwMDAwMDAwMC0wMDAwLTQwMDAtODAwMC0wMDAwMDAwMDAwMDQiLCJ0cmVlX3NpemUiOjd9",
+        "leaf_hash": "f34e984dea1f7c4580cd70041ba445cab877fd00836746d484c160841bd79e3e"
+      }
+    },
+    {
+      "id": "glb-record-5",
+      "desc": "run-root record at global position 4",
+      "input": {
+        "position": 4,
+        "run_id": "00000000-0000-4000-8000-000000000005"
+      },
+      "expect": {
+        "record_canonical_b64": "eyJjaGVja3BvaW50X2hhc2giOiI3MjI3MDc2N2YwMzBiMTFjZGQzM2NmYTMyOWYxODQ3ODZlMzc2MjhlZjI5OGEzMmJmNzNjNjM2YTM1OTg5ZjBjIiwiZmluYWxpemVkX2F0IjoxNzYwMDAwMDA0MDAwLCJtYW5pZmVzdF9oZWFkIjoiMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsInJvb3RfaGFzaCI6ImNmYmRhN2YyMDE2MDIzOGFiOTQ5ZWY2YjkzMmI3N2JmNjJmOTA3YWRkNDE1NTk0OTMxYmZhYzhjNTMzZmMzYTYiLCJydW5faWQiOiIwMDAwMDAwMC0wMDAwLTQwMDAtODAwMC0wMDAwMDAwMDAwMDUiLCJ0cmVlX3NpemUiOjh9",
+        "leaf_hash": "e20d567be41ed004056f07ab7e62988af2b459afaedda1c71c2a68e5a71416fa"
+      }
+    },
+    {
+      "id": "glb-root-1",
+      "desc": "global root after 1 finalised runs",
+      "input": {
+        "tree_size": 1
+      },
+      "expect": {
+        "root_hash": "bab3285a956167ae6764747ce4083ba515a0883deeabb6017a22b147b38ed196"
+      }
+    },
+    {
+      "id": "glb-root-2",
+      "desc": "global root after 2 finalised runs",
+      "input": {
+        "tree_size": 2
+      },
+      "expect": {
+        "root_hash": "4a945f4e7ca0d6fddcbbfb68976d144dca14556370d99c0f50e70e72dca2076b"
+      }
+    },
+    {
+      "id": "glb-root-3",
+      "desc": "global root after 3 finalised runs",
+      "input": {
+        "tree_size": 3
+      },
+      "expect": {
+        "root_hash": "6f6c8adbeabfaa2f1038b454e1f07b88bd7d6f1df0c9bea0e65b6103dab3bad6"
+      }
+    },
+    {
+      "id": "glb-root-4",
+      "desc": "global root after 4 finalised runs",
+      "input": {
+        "tree_size": 4
+      },
+      "expect": {
+        "root_hash": "86fbefc96ddbbfd13891394a4d8f3e24420fea391f6233ca300af0db8aa0b131"
+      }
+    },
+    {
+      "id": "glb-root-5",
+      "desc": "global root after 5 finalised runs",
+      "input": {
+        "tree_size": 5
+      },
+      "expect": {
+        "root_hash": "b765126cbbea8c54902f3cdc878bb4b5a6c43839ff73f4adcd7b1ebc96d15ff7"
+      }
+    },
+    {
+      "id": "glb-checkpoint-5",
+      "desc": "global checkpoint covering five runs; manifest_size 0 and 64 zero bytes head",
+      "input": {
+        "tree_size": 5,
+        "stream_id": "global"
+      },
+      "expect": {
+        "result": "ACCEPT",
+        "canonical_b64": "eyJjcmVhdGVkX2F0IjoxNzYwMDAwNTAwMDAwLCJrZXlfaWQiOiJlZDI1NTE5OjBkZTYyYmFmNjgzMGQxOTg0YjYzZTlhNTgxNTc4NzYyZjk5ZjUwYjNlNGQ0ODQ1ODgxMjMyMjhmZDFmMmEyYzIiLCJtYW5pZmVzdF9oZWFkIjoiMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsIm1hbmlmZXN0X3NpemUiOjAsInByZXZfY2hlY2twb2ludF9oYXNoIjoiMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsInByb3RvY29sX3ZlcnNpb24iOiJhYmIvMSIsInJvb3RfaGFzaCI6ImI3NjUxMjZjYmJlYThjNTQ5MDJmM2NkYzg3OGJiNGI1YTZjNDM4MzlmZjczZjRhZGNkN2IxZWJjOTZkMTVmZjciLCJzdHJlYW1faWQiOiJnbG9iYWwiLCJ0cmVlX3NpemUiOjV9",
+        "checkpoint_hash": "de426991f65ec7b31a94bb28f471466f60e2bdcc688d588b3ae6d91952065772",
+        "signature": "a613eda59b0850fbb521d0f75c8149a23e3ee22857b9aee8b3eb24ae034cfa57053e198c466ac810d4b70b10cbd6b94e82e73afd3888f498d57f981035a56508"
+      }
+    },
+    {
+      "id": "glb-reject-deleted-run",
+      "desc": "run 3 deleted: the recomputed global root no longer matches the anchored checkpoint, and the tree is one leaf shorter (TS-11)",
+      "input": {
+        "deleted_run_id": "00000000-0000-4000-8000-000000000003",
+        "remaining_positions": [
+          0,
+          1,
+          3,
+          4
+        ],
+        "anchored_tree_size": 5,
+        "anchored_root_hash": "b765126cbbea8c54902f3cdc878bb4b5a6c43839ff73f4adcd7b1ebc96d15ff7"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "GLOBAL_ROOT_MISMATCH",
+        "recomputed_root_hash": "7632c74391e1ae324e0d7aeaa7a10c7b5361f26d6bbb60ac36a6d4dda7fca829",
+        "recomputed_tree_size": 4
+      }
+    },
+    {
+      "id": "glb-reject-altered-run-root",
+      "desc": "run 2's root_hash edited in the global log (TS-12)",
+      "input": {
+        "position": 1,
+        "altered_record_canonical_b64": "eyJjaGVja3BvaW50X2hhc2giOiI1Yzk2Mjk5NmE5NDQ4Y2M2YzcwOTNkYzZkYjA1MjM4OTdkYjNkOWQ0ODQzZWRiNWNkZTNkMmUwYmU5ZmYzMTMyIiwiZmluYWxpemVkX2F0IjoxNzYwMDAwMDAxMDAwLCJtYW5pZmVzdF9oZWFkIjoiMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsInJvb3RfaGFzaCI6ImVmZWZlZmVmZWZlZmVmZWZlZmVmZWZlZmVmZWZlZmVmZWZlZmVmZWZlZmVmZWZlZmVmZWZlZmVmZWZlZmVmZWYiLCJydW5faWQiOiIwMDAwMDAwMC0wMDAwLTQwMDAtODAwMC0wMDAwMDAwMDAwMDIiLCJ0cmVlX3NpemUiOjV9",
+        "anchored_root_hash": "b765126cbbea8c54902f3cdc878bb4b5a6c43839ff73f4adcd7b1ebc96d15ff7"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "GLOBAL_ROOT_MISMATCH",
+        "recomputed_root_hash": "5adc876dcf932c1ff8bd8fcef0f84963aec33971d468a514c25645069450d32d"
+      }
+    },
+    {
+      "id": "glb-reject-injected-run-root",
+      "desc": "run root whose checkpoint_hash is not in the signer's own state log (R-GLB-02)",
+      "input": {
+        "record_canonical_b64": "eyJjaGVja3BvaW50X2hhc2giOiJiYWJhYmFiYWJhYmFiYWJhYmFiYWJhYmFiYWJhYmFiYWJhYmFiYWJhYmFiYWJhYmFiYWJhYmFiYWJhYmFiYWJhIiwiZmluYWxpemVkX2F0IjoxNzYwMDAwMDA5MDAwLCJtYW5pZmVzdF9oZWFkIjoiMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsInJvb3RfaGFzaCI6ImQ3NTA0OWJkMWVjNDk0YThlZTExNDdiNTc4NDVlYWFlYjFkODM1NzgwZjZiZDJmYjY4MWRhYmM0ODYzMDEwYjEiLCJydW5faWQiOiIwMDAwMDAwMC0wMDAwLTQwMDAtODAwMC0wMDAwMDAwMDAwMDEwIiwidHJlZV9zaXplIjoxM30=",
+        "signer_state_log_checkpoint_hashes": [
+          "2864c18988ce8f5f1279f813e809d06aa053ea0d6555a48b48b7993b10c96efa",
+          "5c962996a9448cc6c7093dc6db0523897db3d9d4843edb5cde3d2e0be9ff3132",
+          "e6f4c36ae0f8c80822849b017c869a0da98f1dc054068d71d0c203d16941a1f8",
+          "312fc51ba52eab1a8831aa60150d6647a3d8509d44f80c6eda4721dba34c1b4d",
+          "72270767f030b11cdd33cfa329f184786e37628ef298a32bf73c636a35989f0c"
+        ]
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "NOT_IN_SIGNER_STATE_LOG"
+      }
+    }
+  ]
+}

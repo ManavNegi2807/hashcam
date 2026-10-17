@@ -1,0 +1,129 @@
+{
+  "set": "proofs that must be rejected",
+  "protocol_version": "abb/1",
+  "generator": "vectors/tools/generate.py (Python reference, cross-check only)",
+  "note": "PROTOCOL.md section 8: wrong index, wrong path length, non-hex, bad sizes, empty proof.",
+  "cases": [
+    {
+      "id": "merkle-bad-index-out-of-range",
+      "desc": "leaf_index equal to tree_size",
+      "input": {
+        "proof_kind": "inclusion",
+        "tree_size": 7,
+        "leaf_index": 7,
+        "path": [
+          "389c7a780c1d8f70880013c30374fe9dc0dd73a06e27695dc1edc04aebb9f0d0",
+          "3f352d4cbdfb20aa0863b5aef47e9d99d68761e8cdf2da3bba0ba5eb1d631915",
+          "d8f99c79472171048ed63a32a4ddb12ec1836589fef0475183282b15151c41f2"
+        ]
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "LEAF_INDEX_OUT_OF_RANGE"
+      }
+    },
+    {
+      "id": "merkle-bad-path-too-short",
+      "desc": "audit path with an element removed",
+      "input": {
+        "proof_kind": "inclusion",
+        "tree_size": 7,
+        "leaf_index": 3,
+        "path": [
+          "389c7a780c1d8f70880013c30374fe9dc0dd73a06e27695dc1edc04aebb9f0d0",
+          "3f352d4cbdfb20aa0863b5aef47e9d99d68761e8cdf2da3bba0ba5eb1d631915"
+        ]
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "PATH_TOO_SHORT"
+      }
+    },
+    {
+      "id": "merkle-bad-path-too-long",
+      "desc": "audit path with an extra element",
+      "input": {
+        "proof_kind": "inclusion",
+        "tree_size": 7,
+        "leaf_index": 3,
+        "path": [
+          "389c7a780c1d8f70880013c30374fe9dc0dd73a06e27695dc1edc04aebb9f0d0",
+          "3f352d4cbdfb20aa0863b5aef47e9d99d68761e8cdf2da3bba0ba5eb1d631915",
+          "d8f99c79472171048ed63a32a4ddb12ec1836589fef0475183282b15151c41f2",
+          "0000000000000000000000000000000000000000000000000000000000000000"
+        ]
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "PATH_TOO_LONG"
+      }
+    },
+    {
+      "id": "merkle-bad-path-not-hex",
+      "desc": "audit path element that is not hex",
+      "input": {
+        "proof_kind": "inclusion",
+        "tree_size": 7,
+        "leaf_index": 3,
+        "path": [
+          "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+          "3f352d4cbdfb20aa0863b5aef47e9d99d68761e8cdf2da3bba0ba5eb1d631915",
+          "d8f99c79472171048ed63a32a4ddb12ec1836589fef0475183282b15151c41f2"
+        ]
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "NOT_HEX"
+      }
+    },
+    {
+      "id": "merkle-bad-first-size-zero",
+      "desc": "consistency proof with first_size 0",
+      "input": {
+        "proof_kind": "consistency",
+        "first_size": 0,
+        "second_size": 7,
+        "first_root": "4a0e1b67da7b6b1ccc2901e92ee32a6a3251f21dec8307ecc0f171ff80d512d2",
+        "path": [
+          "d8f99c79472171048ed63a32a4ddb12ec1836589fef0475183282b15151c41f2"
+        ]
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "FIRST_SIZE_ZERO"
+      }
+    },
+    {
+      "id": "merkle-bad-first-larger-than-second",
+      "desc": "consistency proof with first_size greater than second_size",
+      "input": {
+        "proof_kind": "consistency",
+        "first_size": 9,
+        "second_size": 7,
+        "first_root": "4a0e1b67da7b6b1ccc2901e92ee32a6a3251f21dec8307ecc0f171ff80d512d2",
+        "path": [
+          "d8f99c79472171048ed63a32a4ddb12ec1836589fef0475183282b15151c41f2"
+        ]
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "SIZE_REGRESSION"
+      }
+    },
+    {
+      "id": "merkle-bad-consistency-empty-path",
+      "desc": "consistency proof between different sizes with an empty path",
+      "input": {
+        "proof_kind": "consistency",
+        "first_size": 4,
+        "second_size": 7,
+        "first_root": "4a0e1b67da7b6b1ccc2901e92ee32a6a3251f21dec8307ecc0f171ff80d512d2",
+        "path": []
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "EMPTY_PROOF"
+      }
+    }
+  ]
+}

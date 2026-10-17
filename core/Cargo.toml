@@ -1,0 +1,45 @@
+[workspace]
+resolver = "2"
+members = ["abb-jcs", "abb-merkle", "abb-checkpoint", "abb-event", "abb-verify", "abb-receipt", "abb-cli", "../signer"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+# 1.89 for std::fs::File::try_lock, which the signer uses to hold its state
+# directory without a third-party locking crate.
+rust-version = "1.89"
+publish = false
+
+# Dependencies are pinned and licence-checked (AGENTS.md 3.11, question Q5).
+#   sha2            0.10.9  MIT OR Apache-2.0
+#   ed25519-dalek   2.2.0   BSD-3-Clause   (pulls curve25519-dalek BSD-3-Clause,
+#                                           signature / zeroize MIT OR Apache-2.0)
+#   getrandom       0.3.3   MIT OR Apache-2.0
+#   tiny_http       0.12.0  MIT OR Apache-2.0  (signer's narrow HTTP API)
+#   zip             9.0.3   MIT                (receipt container, deflate only)
+#   proptest        1.8.0   MIT OR Apache-2.0 (dev only)
+# No BSL, SSPL, AGPL or non-commercial dependency. JSON and JCS are hand written
+# in abb-jcs so no third-party crate owns the canonical bytes.
+[workspace.dependencies]
+abb-jcs = { path = "abb-jcs" }
+abb-merkle = { path = "abb-merkle" }
+abb-checkpoint = { path = "abb-checkpoint" }
+abb-event = { path = "abb-event" }
+abb-verify = { path = "abb-verify" }
+abb-receipt = { path = "abb-receipt" }
+sha2 = "0.10.9"
+ed25519-dalek = "2.2.0"
+getrandom = "0.3.3"
+tiny_http = "0.12.0"
+proptest = "1.8.0"
+
+[workspace.lints.rust]
+# AGENTS.md 7: no unsafe without a written reason. There is no reason here.
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+# "The verifier must not panic on malformed input" is a test obligation, not a
+# lint: see the malformed-input tests and the fuzz corpus in abb-cli.
+[workspace.lints.clippy]
+todo = "deny"
+unimplemented = "deny"

@@ -1,0 +1,14 @@
+# Development and test tooling. Pinned; review licences before adding anything.
+pytest==8.3.4
+pytest-asyncio==1.3.0     # Apache-2.0
+httpx==0.28.1             # BSD-3-Clause (ASGI test client)
+testcontainers[postgres]==4.14.1  # Apache-2.0 (spins up a real PostgreSQL)
+cryptography==50.0.1      # Ed25519 for test-vector generation only (Apache-2.0 / BSD)
+ruff==0.14.0              # MIT
+mypy==1.14.1              # MIT
+PyYAML==6.0.2            # MIT, for the compose isolation check
+types-PyYAML==6.0.12.20250915  # Apache-2.0, stubs for the above
+# Step 7 and the dashboard tests. Playwright's WebSocket route is used through a private
+# API, so this version is pinned and an upgrade must rerun tests/adapter first.
+playwright==1.64.0            # Apache-2.0 (the browsers it downloads are separate)
+axe-playwright-python==0.1.8  # MIT wrapper; bundles axe-core 4.12.1 under MPL-2.0. Test-only, never shipped

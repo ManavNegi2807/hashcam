@@ -1,0 +1,64 @@
+{
+  "set": "leaf and node hashing",
+  "protocol_version": "abb/1",
+  "generator": "vectors/tools/generate.py (Python reference, cross-check only)",
+  "note": "PROTOCOL.md section 8: leaf prefix 0x00, node prefix 0x01, empty tree is SHA-256 of zero bytes.",
+  "cases": [
+    {
+      "id": "hash-empty-tree",
+      "desc": "empty tree root is the digest of zero bytes",
+      "input": {
+        "kind": "empty_tree"
+      },
+      "expect": {
+        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "id": "hash-leaf-prefix",
+      "desc": "leaf hash uses the 0x00 prefix",
+      "input": {
+        "kind": "leaf",
+        "data_b64": "YWJiMS10ZXN0LWxlYWYtMA=="
+      },
+      "expect": {
+        "digest": "473becc27ad4269c3c6efc1b9253caad0295c474aa5cdda91f6dbe6a451cc036"
+      }
+    },
+    {
+      "id": "hash-leaf-tagged-event",
+      "desc": "leaf hash over tagged event bytes, as an event stream builds it",
+      "input": {
+        "kind": "leaf",
+        "data_b64": "QUJCMS1FVkVOVABhYmIxIHZlY3RvciBpbnB1dA=="
+      },
+      "expect": {
+        "digest": "ba282bafa3a2e4f05b99c4fd6cb5b66527bfd89771fe19d9ed88a554e6b976c2"
+      }
+    },
+    {
+      "id": "hash-node-prefix",
+      "desc": "node hash uses the 0x01 prefix and is order sensitive",
+      "input": {
+        "kind": "node",
+        "left": "473becc27ad4269c3c6efc1b9253caad0295c474aa5cdda91f6dbe6a451cc036",
+        "right": "956c65bc49f241a83662c64cb47bc0ed88c98f9ae5fee51e2a7e0798fb4146ba"
+      },
+      "expect": {
+        "digest": "3f352d4cbdfb20aa0863b5aef47e9d99d68761e8cdf2da3bba0ba5eb1d631915"
+      }
+    },
+    {
+      "id": "hash-node-swapped",
+      "desc": "swapping the children gives a different digest",
+      "input": {
+        "kind": "node",
+        "left": "956c65bc49f241a83662c64cb47bc0ed88c98f9ae5fee51e2a7e0798fb4146ba",
+        "right": "473becc27ad4269c3c6efc1b9253caad0295c474aa5cdda91f6dbe6a451cc036"
+      },
+      "expect": {
+        "digest": "14347818167d7840dd7cb1e61ddfb353c79041fee2d2f883a46343d54c961c59"
+      }
+    }
+  ]
+}

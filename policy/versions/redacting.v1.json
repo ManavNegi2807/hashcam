@@ -1,0 +1,20 @@
+{
+  "policy_id": "redacting",
+  "version": 1,
+  "description": "The default policy plus field redaction: a value typed into a form is committed to, not stored. For demonstrating salted field commitments (D-11).",
+  "allowed_action_types": ["navigate", "form_fill", "form_submit", "download", "api_call"],
+  "action_types_needing_target": ["navigate", "form_submit", "download", "api_call"],
+  "allowed_hosts": ["portal.example", "*.portal.example"],
+  "denied_hosts": ["evil.example"],
+  "max_actions": 20,
+  "max_amount_minor_units": 500000,
+  "approval_required": {
+    "action_types": ["payment"],
+    "hosts": [],
+    "target_contains": ["/bank"],
+    "amount_minor_units_over": 100000
+  },
+  "redaction": {
+    "ACTION_REQUESTED": ["typed_value"]
+  }
+}

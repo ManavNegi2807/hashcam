@@ -1,0 +1,11 @@
+{
+  "policy_id": "tinyfish-demo",
+  "version": 1,
+  "description": "The TinyFish demo: an agent may be started only at example.com or en.wikipedia.org. What the remote browser does after that is the provider's own report.",
+  "allowed_action_types": ["api_call"],
+  "action_types_needing_target": ["api_call"],
+  "allowed_hosts": ["example.com", "en.wikipedia.org"],
+  "denied_hosts": [],
+  "max_actions": 10,
+  "max_amount_minor_units": 0
+}

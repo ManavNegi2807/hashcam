@@ -1,0 +1,26 @@
+{
+  "scenario_id": "bank_change_approval",
+  "description": "The same portal, but the step that changes bank details. Policy answers REQUIRE_APPROVAL, and since signed approvals are not built yet (Step 9), the action is not dispatched.",
+  "task": "Change vendor bank details on portal.example",
+  "requested_coverage": "STEP_GATED",
+  "steps": [
+    {
+      "action_id": "b-1",
+      "action_type": "navigate",
+      "target": "https://portal.example/vendor/42",
+      "params": {},
+      "observation": {
+        "observation_kind": "page_loaded",
+        "url": "https://portal.example/vendor/42",
+        "text": "Vendor 42"
+      }
+    },
+    {
+      "action_id": "b-2",
+      "action_type": "form_submit",
+      "target": "https://portal.example/vendor/42/bank",
+      "params": {"form": "bank-details"},
+      "expect_approval": true
+    }
+  ]
+}

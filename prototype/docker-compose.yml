@@ -1,0 +1,67 @@
+services:
+  ui:
+    build: .
+    user: "10001"
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      DB_PATH: /data/log.db
+      SHOTS_DIR: /data/shots
+      ANCHOR_PATH: /data/anchor.json
+      PUBLIC_KEY_PATH: /run/secrets/public_key
+    volumes:
+      - ledger_data:/data:ro
+    secrets:
+      - public_key
+    networks: [external]
+
+  # ledger: sirf yahi signing key rakhta hai. Port sirf local machine par.
+  ledger:
+    build: .
+    user: "10001"
+    command: ["uvicorn", "ledger.serve:build", "--factory", "--host", "0.0.0.0", "--port", "8001"]
+    ports:
+      - "127.0.0.1:8001:8001"
+    environment:
+      DB_PATH: /data/log.db
+      SHOTS_DIR: /data/shots
+      PAYMENT_DB_PATH: /data/payments.db
+      SIGNING_KEY_PATH: /run/secrets/signing_key
+      PUBLIC_KEY_PATH: /run/secrets/public_key
+      READ_TOKEN_PATH: /run/secrets/read_token
+      PAY_TOKEN_PATH: /run/secrets/pay_token
+    volumes:
+      - ledger_data:/data
+    secrets:
+      - signing_key
+      - public_key
+      - read_token
+      - pay_token
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8001/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [external, internal]
+
+  # agent service yahan aayegi, sirf internal network par (internet band)
+  # agent:
+  #   networks: [internal]
+
+secrets:
+  public_key:
+    file: ./secrets/public_key.pem
+  signing_key:
+    file: ./secrets/signing_key.pem
+  read_token:
+    file: ./secrets/read_token
+  pay_token:
+    file: ./secrets/pay_token
+
+volumes:
+  ledger_data: {}
+
+networks:
+  internal:
+    internal: true
+  external: {}

@@ -1,0 +1,140 @@
+{
+  "set": "tree hash for the required sizes",
+  "protocol_version": "abb/1",
+  "generator": "vectors/tools/generate.py (Python reference, cross-check only)",
+  "note": "Leaf i is the ASCII bytes `abb1-test-leaf-<i>`, so any implementation can rebuild the tree without this file.",
+  "cases": [
+    {
+      "id": "merkle-root-0",
+      "desc": "RFC 6962 tree hash over 0 synthetic leaves",
+      "input": {
+        "leaf_count": 0,
+        "leaf_data_pattern": "abb1-test-leaf-<i>"
+      },
+      "expect": {
+        "root_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "id": "merkle-root-1",
+      "desc": "RFC 6962 tree hash over 1 synthetic leaves",
+      "input": {
+        "leaf_count": 1,
+        "leaf_data_pattern": "abb1-test-leaf-<i>"
+      },
+      "expect": {
+        "root_hash": "473becc27ad4269c3c6efc1b9253caad0295c474aa5cdda91f6dbe6a451cc036"
+      }
+    },
+    {
+      "id": "merkle-root-2",
+      "desc": "RFC 6962 tree hash over 2 synthetic leaves",
+      "input": {
+        "leaf_count": 2,
+        "leaf_data_pattern": "abb1-test-leaf-<i>"
+      },
+      "expect": {
+        "root_hash": "3f352d4cbdfb20aa0863b5aef47e9d99d68761e8cdf2da3bba0ba5eb1d631915"
+      }
+    },
+    {
+      "id": "merkle-root-3",
+      "desc": "RFC 6962 tree hash over 3 synthetic leaves",
+      "input": {
+        "leaf_count": 3,
+        "leaf_data_pattern": "abb1-test-leaf-<i>"
+      },
+      "expect": {
+        "root_hash": "3dca2092b34c7f274c0dbed2086928de04eea9d0405088100c17b889cf2738b9"
+      }
+    },
+    {
+      "id": "merkle-root-4",
+      "desc": "RFC 6962 tree hash over 4 synthetic leaves",
+      "input": {
+        "leaf_count": 4,
+        "leaf_data_pattern": "abb1-test-leaf-<i>"
+      },
+      "expect": {
+        "root_hash": "4a0e1b67da7b6b1ccc2901e92ee32a6a3251f21dec8307ecc0f171ff80d512d2"
+      }
+    },
+    {
+      "id": "merkle-root-5",
+      "desc": "RFC 6962 tree hash over 5 synthetic leaves",
+      "input": {
+        "leaf_count": 5,
+        "leaf_data_pattern": "abb1-test-leaf-<i>"
+      },
+      "expect": {
+        "root_hash": "1e27f4c1460f5534869751a6dfc9128af0c861e599003d030fabce48d9be5d90"
+      }
+    },
+    {
+      "id": "merkle-root-7",
+      "desc": "RFC 6962 tree hash over 7 synthetic leaves",
+      "input": {
+        "leaf_count": 7,
+        "leaf_data_pattern": "abb1-test-leaf-<i>"
+      },
+      "expect": {
+        "root_hash": "ed75a6d042f1179f5a9ddcbfb75150463895c76f4ca965070d23cc2f884f97b0"
+      }
+    },
+    {
+      "id": "merkle-root-8",
+      "desc": "RFC 6962 tree hash over 8 synthetic leaves",
+      "input": {
+        "leaf_count": 8,
+        "leaf_data_pattern": "abb1-test-leaf-<i>"
+      },
+      "expect": {
+        "root_hash": "cfbda7f20160238ab949ef6b932b77bf62f907add415594931bfac8c533fc3a6"
+      }
+    },
+    {
+      "id": "merkle-root-9",
+      "desc": "RFC 6962 tree hash over 9 synthetic leaves",
+      "input": {
+        "leaf_count": 9,
+        "leaf_data_pattern": "abb1-test-leaf-<i>"
+      },
+      "expect": {
+        "root_hash": "dd7f60a4f1e43cbd99072987e888e2a83ea27188d0b08f56d08a947f77da7235"
+      }
+    },
+    {
+      "id": "merkle-root-15",
+      "desc": "RFC 6962 tree hash over 15 synthetic leaves",
+      "input": {
+        "leaf_count": 15,
+        "leaf_data_pattern": "abb1-test-leaf-<i>"
+      },
+      "expect": {
+        "root_hash": "0c8235f81403e65a9f82dde57103e96483fac652c6bd9d845d630a7a23f4e40e"
+      }
+    },
+    {
+      "id": "merkle-root-16",
+      "desc": "RFC 6962 tree hash over 16 synthetic leaves",
+      "input": {
+        "leaf_count": 16,
+        "leaf_data_pattern": "abb1-test-leaf-<i>"
+      },
+      "expect": {
+        "root_hash": "17c3189ac0429381194da0792be0ecc3cd57f4ef3d2c7e2cc002b7c00325d1bb"
+      }
+    },
+    {
+      "id": "merkle-root-17",
+      "desc": "RFC 6962 tree hash over 17 synthetic leaves",
+      "input": {
+        "leaf_count": 17,
+        "leaf_data_pattern": "abb1-test-leaf-<i>"
+      },
+      "expect": {
+        "root_hash": "68d1f7f660ef9c787a414fab4ec48b01e8d03573ef14ed562c0937c5e21564b5"
+      }
+    }
+  ]
+}

@@ -1,0 +1,255 @@
+{
+  "set": "checkpoint signing and chain rules",
+  "protocol_version": "abb/1",
+  "generator": "vectors/tools/generate.py (Python reference, cross-check only)",
+  "note": "PROTOCOL.md section 10. Roots are the trees of merkle/roots.json, so a checkpoint cannot claim a tree it does not describe.",
+  "cases": [
+    {
+      "id": "cp-accept-genesis",
+      "desc": "genesis checkpoint: previous hash is 64 zeros and tree_size >= 1",
+      "input": {
+        "payload": {
+          "protocol_version": "abb/1",
+          "stream_id": "11111111-1111-4111-8111-111111111111",
+          "tree_size": 4,
+          "root_hash": "4a0e1b67da7b6b1ccc2901e92ee32a6a3251f21dec8307ecc0f171ff80d512d2",
+          "manifest_size": 0,
+          "manifest_head": "0000000000000000000000000000000000000000000000000000000000000000",
+          "prev_checkpoint_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+          "key_id": "ed25519:0de62baf6830d1984b63e9a581578762f99f50b3e4d484588123228fd1f2a2c2",
+          "created_at": 1760000100000
+        }
+      },
+      "expect": {
+        "result": "ACCEPT",
+        "canonical_b64": "eyJjcmVhdGVkX2F0IjoxNzYwMDAwMTAwMDAwLCJrZXlfaWQiOiJlZDI1NTE5OjBkZTYyYmFmNjgzMGQxOTg0YjYzZTlhNTgxNTc4NzYyZjk5ZjUwYjNlNGQ0ODQ1ODgxMjMyMjhmZDFmMmEyYzIiLCJtYW5pZmVzdF9oZWFkIjoiMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsIm1hbmlmZXN0X3NpemUiOjAsInByZXZfY2hlY2twb2ludF9oYXNoIjoiMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsInByb3RvY29sX3ZlcnNpb24iOiJhYmIvMSIsInJvb3RfaGFzaCI6IjRhMGUxYjY3ZGE3YjZiMWNjYzI5MDFlOTJlZTMyYTZhMzI1MWYyMWRlYzgzMDdlY2MwZjE3MWZmODBkNTEyZDIiLCJzdHJlYW1faWQiOiIxMTExMTExMS0xMTExLTQxMTEtODExMS0xMTExMTExMTExMTEiLCJ0cmVlX3NpemUiOjR9",
+        "checkpoint_hash": "27bc6fd2ac82a2022e92c73f1626800397e6985d6be9cc534c1823c65014303c",
+        "signature": "f514416b2a8f864fb2009840f418e131ab9ceacbd042106462a8c5261bd3961432596cf249b0a625971a8054a566f45b6222ecbae9c4c0652cbfa2234a18d805",
+        "key_id": "ed25519:0de62baf6830d1984b63e9a581578762f99f50b3e4d484588123228fd1f2a2c2"
+      }
+    },
+    {
+      "id": "cp-accept-extension",
+      "desc": "later checkpoint extends the genesis: larger tree_size, prev hash links",
+      "input": {
+        "payload": {
+          "protocol_version": "abb/1",
+          "stream_id": "11111111-1111-4111-8111-111111111111",
+          "tree_size": 8,
+          "root_hash": "cfbda7f20160238ab949ef6b932b77bf62f907add415594931bfac8c533fc3a6",
+          "manifest_size": 0,
+          "manifest_head": "0000000000000000000000000000000000000000000000000000000000000000",
+          "prev_checkpoint_hash": "27bc6fd2ac82a2022e92c73f1626800397e6985d6be9cc534c1823c65014303c",
+          "key_id": "ed25519:0de62baf6830d1984b63e9a581578762f99f50b3e4d484588123228fd1f2a2c2",
+          "created_at": 1760000200000
+        },
+        "prev_checkpoint_hash": "27bc6fd2ac82a2022e92c73f1626800397e6985d6be9cc534c1823c65014303c"
+      },
+      "expect": {
+        "result": "ACCEPT",
+        "canonical_b64": "eyJjcmVhdGVkX2F0IjoxNzYwMDAwMjAwMDAwLCJrZXlfaWQiOiJlZDI1NTE5OjBkZTYyYmFmNjgzMGQxOTg0YjYzZTlhNTgxNTc4NzYyZjk5ZjUwYjNlNGQ0ODQ1ODgxMjMyMjhmZDFmMmEyYzIiLCJtYW5pZmVzdF9oZWFkIjoiMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsIm1hbmlmZXN0X3NpemUiOjAsInByZXZfY2hlY2twb2ludF9oYXNoIjoiMjdiYzZmZDJhYzgyYTIwMjJlOTJjNzNmMTYyNjgwMDM5N2U2OTg1ZDZiZTljYzUzNGMxODIzYzY1MDE0MzAzYyIsInByb3RvY29sX3ZlcnNpb24iOiJhYmIvMSIsInJvb3RfaGFzaCI6ImNmYmRhN2YyMDE2MDIzOGFiOTQ5ZWY2YjkzMmI3N2JmNjJmOTA3YWRkNDE1NTk0OTMxYmZhYzhjNTMzZmMzYTYiLCJzdHJlYW1faWQiOiIxMTExMTExMS0xMTExLTQxMTEtODExMS0xMTExMTExMTExMTEiLCJ0cmVlX3NpemUiOjh9",
+        "checkpoint_hash": "77db31ac588549a9c0cbe55e1395afa5b2c68bdedc2af587eee698f5d387769d",
+        "signature": "e5a947796b7e3d74b72511e8d7785ca2a8a00c46c9336b817835dc867ae67de602147dd1401c2770ac86dda2de6d765d8bdc22eab6314acf3f864c1a985dd400",
+        "key_id": "ed25519:0de62baf6830d1984b63e9a581578762f99f50b3e4d484588123228fd1f2a2c2"
+      }
+    },
+    {
+      "id": "cp-accept-resigned-identical",
+      "desc": "the same payload signed again keeps the same checkpoint_hash",
+      "input": {
+        "payload": {
+          "protocol_version": "abb/1",
+          "stream_id": "11111111-1111-4111-8111-111111111111",
+          "tree_size": 8,
+          "root_hash": "cfbda7f20160238ab949ef6b932b77bf62f907add415594931bfac8c533fc3a6",
+          "manifest_size": 0,
+          "manifest_head": "0000000000000000000000000000000000000000000000000000000000000000",
+          "prev_checkpoint_hash": "27bc6fd2ac82a2022e92c73f1626800397e6985d6be9cc534c1823c65014303c",
+          "key_id": "ed25519:0de62baf6830d1984b63e9a581578762f99f50b3e4d484588123228fd1f2a2c2",
+          "created_at": 1760000200000
+        }
+      },
+      "expect": {
+        "result": "ACCEPT",
+        "canonical_b64": "eyJjcmVhdGVkX2F0IjoxNzYwMDAwMjAwMDAwLCJrZXlfaWQiOiJlZDI1NTE5OjBkZTYyYmFmNjgzMGQxOTg0YjYzZTlhNTgxNTc4NzYyZjk5ZjUwYjNlNGQ0ODQ1ODgxMjMyMjhmZDFmMmEyYzIiLCJtYW5pZmVzdF9oZWFkIjoiMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsIm1hbmlmZXN0X3NpemUiOjAsInByZXZfY2hlY2twb2ludF9oYXNoIjoiMjdiYzZmZDJhYzgyYTIwMjJlOTJjNzNmMTYyNjgwMDM5N2U2OTg1ZDZiZTljYzUzNGMxODIzYzY1MDE0MzAzYyIsInByb3RvY29sX3ZlcnNpb24iOiJhYmIvMSIsInJvb3RfaGFzaCI6ImNmYmRhN2YyMDE2MDIzOGFiOTQ5ZWY2YjkzMmI3N2JmNjJmOTA3YWRkNDE1NTk0OTMxYmZhYzhjNTMzZmMzYTYiLCJzdHJlYW1faWQiOiIxMTExMTExMS0xMTExLTQxMTEtODExMS0xMTExMTExMTExMTEiLCJ0cmVlX3NpemUiOjh9",
+        "checkpoint_hash": "77db31ac588549a9c0cbe55e1395afa5b2c68bdedc2af587eee698f5d387769d",
+        "signature": "e5a947796b7e3d74b72511e8d7785ca2a8a00c46c9336b817835dc867ae67de602147dd1401c2770ac86dda2de6d765d8bdc22eab6314acf3f864c1a985dd400",
+        "same_hash_as": "77db31ac588549a9c0cbe55e1395afa5b2c68bdedc2af587eee698f5d387769d",
+        "key_id": "ed25519:0de62baf6830d1984b63e9a581578762f99f50b3e4d484588123228fd1f2a2c2"
+      }
+    },
+    {
+      "id": "cp-accept-equal-size-idempotent",
+      "desc": "an equal tree_size request is only legal as the identical checkpoint",
+      "input": {
+        "payload": {
+          "protocol_version": "abb/1",
+          "stream_id": "11111111-1111-4111-8111-111111111111",
+          "tree_size": 8,
+          "root_hash": "cfbda7f20160238ab949ef6b932b77bf62f907add415594931bfac8c533fc3a6",
+          "manifest_size": 0,
+          "manifest_head": "0000000000000000000000000000000000000000000000000000000000000000",
+          "prev_checkpoint_hash": "27bc6fd2ac82a2022e92c73f1626800397e6985d6be9cc534c1823c65014303c",
+          "key_id": "ed25519:0de62baf6830d1984b63e9a581578762f99f50b3e4d484588123228fd1f2a2c2",
+          "created_at": 1760000200000
+        },
+        "resubmitted": true
+      },
+      "expect": {
+        "result": "ACCEPT",
+        "canonical_b64": "eyJjcmVhdGVkX2F0IjoxNzYwMDAwMjAwMDAwLCJrZXlfaWQiOiJlZDI1NTE5OjBkZTYyYmFmNjgzMGQxOTg0YjYzZTlhNTgxNTc4NzYyZjk5ZjUwYjNlNGQ0ODQ1ODgxMjMyMjhmZDFmMmEyYzIiLCJtYW5pZmVzdF9oZWFkIjoiMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsIm1hbmlmZXN0X3NpemUiOjAsInByZXZfY2hlY2twb2ludF9oYXNoIjoiMjdiYzZmZDJhYzgyYTIwMjJlOTJjNzNmMTYyNjgwMDM5N2U2OTg1ZDZiZTljYzUzNGMxODIzYzY1MDE0MzAzYyIsInByb3RvY29sX3ZlcnNpb24iOiJhYmIvMSIsInJvb3RfaGFzaCI6ImNmYmRhN2YyMDE2MDIzOGFiOTQ5ZWY2YjkzMmI3N2JmNjJmOTA3YWRkNDE1NTk0OTMxYmZhYzhjNTMzZmMzYTYiLCJzdHJlYW1faWQiOiIxMTExMTExMS0xMTExLTQxMTEtODExMS0xMTExMTExMTExMTEiLCJ0cmVlX3NpemUiOjh9",
+        "checkpoint_hash": "77db31ac588549a9c0cbe55e1395afa5b2c68bdedc2af587eee698f5d387769d",
+        "signature": "e5a947796b7e3d74b72511e8d7785ca2a8a00c46c9336b817835dc867ae67de602147dd1401c2770ac86dda2de6d765d8bdc22eab6314acf3f864c1a985dd400",
+        "key_id": "ed25519:0de62baf6830d1984b63e9a581578762f99f50b3e4d484588123228fd1f2a2c2"
+      }
+    },
+    {
+      "id": "cp-reject-not-extending",
+      "desc": "tree grows but prev_checkpoint_hash does not point at the last checkpoint",
+      "input": {
+        "payload": {
+          "protocol_version": "abb/1",
+          "stream_id": "11111111-1111-4111-8111-111111111111",
+          "tree_size": 16,
+          "root_hash": "17c3189ac0429381194da0792be0ecc3cd57f4ef3d2c7e2cc002b7c00325d1bb",
+          "manifest_size": 0,
+          "manifest_head": "0000000000000000000000000000000000000000000000000000000000000000",
+          "prev_checkpoint_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+          "key_id": "ed25519:0de62baf6830d1984b63e9a581578762f99f50b3e4d484588123228fd1f2a2c2",
+          "created_at": 1760000300000
+        },
+        "canonical_b64": "eyJjcmVhdGVkX2F0IjoxNzYwMDAwMzAwMDAwLCJrZXlfaWQiOiJlZDI1NTE5OjBkZTYyYmFmNjgzMGQxOTg0YjYzZTlhNTgxNTc4NzYyZjk5ZjUwYjNlNGQ0ODQ1ODgxMjMyMjhmZDFmMmEyYzIiLCJtYW5pZmVzdF9oZWFkIjoiMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsIm1hbmlmZXN0X3NpemUiOjAsInByZXZfY2hlY2twb2ludF9oYXNoIjoiMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsInByb3RvY29sX3ZlcnNpb24iOiJhYmIvMSIsInJvb3RfaGFzaCI6IjE3YzMxODlhYzA0MjkzODExOTRkYTA3OTJiZTBlY2MzY2Q1N2Y0ZWYzZDJjN2UyY2MwMDJiN2MwMDMyNWQxYmIiLCJzdHJlYW1faWQiOiIxMTExMTExMS0xMTExLTQxMTEtODExMS0xMTExMTExMTExMTEiLCJ0cmVlX3NpemUiOjE2fQ==",
+        "signature": "5414ddedb67e170bd72cea18ce00d5d3d42b2705fd20f2ed264f9cd512d45a8d50d4980d4d1dbc939b80935955fc74ce3a27261701864155781ee75b17af2d01",
+        "signer_last_checkpoint_hash": "77db31ac588549a9c0cbe55e1395afa5b2c68bdedc2af587eee698f5d387769d"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "NOT_EXTENDING",
+        "checkpoint_hash": "51d50b4a2b35432cbd62287b08cf01b1caeb3cd5aa41d356bc980687ac11c51e"
+      }
+    },
+    {
+      "id": "cp-reject-size-regression",
+      "desc": "tree_size smaller than the last signed checkpoint",
+      "input": {
+        "payload": {
+          "protocol_version": "abb/1",
+          "stream_id": "11111111-1111-4111-8111-111111111111",
+          "tree_size": 2,
+          "root_hash": "3f352d4cbdfb20aa0863b5aef47e9d99d68761e8cdf2da3bba0ba5eb1d631915",
+          "manifest_size": 0,
+          "manifest_head": "0000000000000000000000000000000000000000000000000000000000000000",
+          "prev_checkpoint_hash": "77db31ac588549a9c0cbe55e1395afa5b2c68bdedc2af587eee698f5d387769d",
+          "key_id": "ed25519:0de62baf6830d1984b63e9a581578762f99f50b3e4d484588123228fd1f2a2c2",
+          "created_at": 1760000400000
+        },
+        "canonical_b64": "eyJjcmVhdGVkX2F0IjoxNzYwMDAwNDAwMDAwLCJrZXlfaWQiOiJlZDI1NTE5OjBkZTYyYmFmNjgzMGQxOTg0YjYzZTlhNTgxNTc4NzYyZjk5ZjUwYjNlNGQ0ODQ1ODgxMjMyMjhmZDFmMmEyYzIiLCJtYW5pZmVzdF9oZWFkIjoiMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsIm1hbmlmZXN0X3NpemUiOjAsInByZXZfY2hlY2twb2ludF9oYXNoIjoiNzdkYjMxYWM1ODg1NDlhOWMwY2JlNTVlMTM5NWFmYTViMmM2OGJkZWRjMmFmNTg3ZWVlNjk4ZjVkMzg3NzY5ZCIsInByb3RvY29sX3ZlcnNpb24iOiJhYmIvMSIsInJvb3RfaGFzaCI6IjNmMzUyZDRjYmRmYjIwYWEwODYzYjVhZWY0N2U5ZDk5ZDY4NzYxZThjZGYyZGEzYmJhMGJhNWViMWQ2MzE5MTUiLCJzdHJlYW1faWQiOiIxMTExMTExMS0xMTExLTQxMTEtODExMS0xMTExMTExMTExMTEiLCJ0cmVlX3NpemUiOjJ9",
+        "signature": "d3c70c07953ff82609741927b7d0137e14f9bcf01dc043dda7547a6d3091ba0be0bd45e08d226233dcc719fe67e0bc090caded18cd989c31e73715924dc9b203",
+        "signer_last_tree_size": 8
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "SIZE_REGRESSION",
+        "checkpoint_hash": "00286898db48a62f95d858611e98dbf420ac5e081ab2c8d9c874b70861491ac5"
+      }
+    },
+    {
+      "id": "cp-reject-fork",
+      "desc": "same tree_size as an already signed checkpoint but a different root",
+      "input": {
+        "payload": {
+          "protocol_version": "abb/1",
+          "stream_id": "11111111-1111-4111-8111-111111111111",
+          "tree_size": 8,
+          "root_hash": "abababababababababababababababababababababababababababababababab",
+          "manifest_size": 0,
+          "manifest_head": "0000000000000000000000000000000000000000000000000000000000000000",
+          "prev_checkpoint_hash": "27bc6fd2ac82a2022e92c73f1626800397e6985d6be9cc534c1823c65014303c",
+          "key_id": "ed25519:0de62baf6830d1984b63e9a581578762f99f50b3e4d484588123228fd1f2a2c2",
+          "created_at": 1760000200000
+        },
+        "canonical_b64": "eyJjcmVhdGVkX2F0IjoxNzYwMDAwMjAwMDAwLCJrZXlfaWQiOiJlZDI1NTE5OjBkZTYyYmFmNjgzMGQxOTg0YjYzZTlhNTgxNTc4NzYyZjk5ZjUwYjNlNGQ0ODQ1ODgxMjMyMjhmZDFmMmEyYzIiLCJtYW5pZmVzdF9oZWFkIjoiMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsIm1hbmlmZXN0X3NpemUiOjAsInByZXZfY2hlY2twb2ludF9oYXNoIjoiMjdiYzZmZDJhYzgyYTIwMjJlOTJjNzNmMTYyNjgwMDM5N2U2OTg1ZDZiZTljYzUzNGMxODIzYzY1MDE0MzAzYyIsInByb3RvY29sX3ZlcnNpb24iOiJhYmIvMSIsInJvb3RfaGFzaCI6ImFiYWJhYmFiYWJhYmFiYWJhYmFiYWJhYmFiYWJhYmFiYWJhYmFiYWJhYmFiYWJhYmFiYWJhYmFiYWJhYmFiYWIiLCJzdHJlYW1faWQiOiIxMTExMTExMS0xMTExLTQxMTEtODExMS0xMTExMTExMTExMTEiLCJ0cmVlX3NpemUiOjh9",
+        "signature": "6243ce4b582a0b9a4535fb20f646b88af7de36a54284d551b5be30352e7333d0da0d8a577b17b3ea6c5f29d990fa78500355cd6b97714d7c801c38ad0ba9ef0e",
+        "conflicts_with_checkpoint_hash": "77db31ac588549a9c0cbe55e1395afa5b2c68bdedc2af587eee698f5d387769d"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "FORK_DETECTED",
+        "checkpoint_hash": "bad07abbf40bd900f230b9896edd9df10791540bf9a9a1e3f692fb85c113a98b"
+      }
+    },
+    {
+      "id": "cp-reject-bad-genesis",
+      "desc": "first checkpoint of an unknown stream with a non-zero previous hash",
+      "input": {
+        "payload": {
+          "protocol_version": "abb/1",
+          "stream_id": "11111111-1111-4111-8111-111111111111",
+          "tree_size": 4,
+          "root_hash": "4a0e1b67da7b6b1ccc2901e92ee32a6a3251f21dec8307ecc0f171ff80d512d2",
+          "manifest_size": 0,
+          "manifest_head": "0000000000000000000000000000000000000000000000000000000000000000",
+          "prev_checkpoint_hash": "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+          "key_id": "ed25519:0de62baf6830d1984b63e9a581578762f99f50b3e4d484588123228fd1f2a2c2",
+          "created_at": 1760000050000
+        },
+        "canonical_b64": "eyJjcmVhdGVkX2F0IjoxNzYwMDAwMDUwMDAwLCJrZXlfaWQiOiJlZDI1NTE5OjBkZTYyYmFmNjgzMGQxOTg0YjYzZTlhNTgxNTc4NzYyZjk5ZjUwYjNlNGQ0ODQ1ODgxMjMyMjhmZDFmMmEyYzIiLCJtYW5pZmVzdF9oZWFkIjoiMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsIm1hbmlmZXN0X3NpemUiOjAsInByZXZfY2hlY2twb2ludF9oYXNoIjoiY2RjZGNkY2RjZGNkY2RjZGNkY2RjZGNkY2RjZGNkY2RjZGNkY2RjZGNkY2RjZGNkY2RjZGNkY2RjZGNkY2RjZCIsInByb3RvY29sX3ZlcnNpb24iOiJhYmIvMSIsInJvb3RfaGFzaCI6IjRhMGUxYjY3ZGE3YjZiMWNjYzI5MDFlOTJlZTMyYTZhMzI1MWYyMWRlYzgzMDdlY2MwZjE3MWZmODBkNTEyZDIiLCJzdHJlYW1faWQiOiIxMTExMTExMS0xMTExLTQxMTEtODExMS0xMTExMTExMTExMTEiLCJ0cmVlX3NpemUiOjR9",
+        "signature": "8d6b1ea20f307757254f637c7c2da0af4f7094947768e2b4285ed650c6231f9304c2661a156602d293161d06bb7fbe79ce8348e1474addb726bc6098af010100",
+        "signer_has_state": false
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "BAD_GENESIS",
+        "checkpoint_hash": "2126bc29abd5db00ff17af373710fafd38ee45679f4af09cc056fcf42af4c6b3"
+      }
+    },
+    {
+      "id": "cp-reject-bad-signature",
+      "desc": "valid payload, one bit flipped in the signature",
+      "input": {
+        "payload": {
+          "protocol_version": "abb/1",
+          "stream_id": "11111111-1111-4111-8111-111111111111",
+          "tree_size": 8,
+          "root_hash": "cfbda7f20160238ab949ef6b932b77bf62f907add415594931bfac8c533fc3a6",
+          "manifest_size": 0,
+          "manifest_head": "0000000000000000000000000000000000000000000000000000000000000000",
+          "prev_checkpoint_hash": "27bc6fd2ac82a2022e92c73f1626800397e6985d6be9cc534c1823c65014303c",
+          "key_id": "ed25519:0de62baf6830d1984b63e9a581578762f99f50b3e4d484588123228fd1f2a2c2",
+          "created_at": 1760000200000
+        },
+        "canonical_b64": "eyJjcmVhdGVkX2F0IjoxNzYwMDAwMjAwMDAwLCJrZXlfaWQiOiJlZDI1NTE5OjBkZTYyYmFmNjgzMGQxOTg0YjYzZTlhNTgxNTc4NzYyZjk5ZjUwYjNlNGQ0ODQ1ODgxMjMyMjhmZDFmMmEyYzIiLCJtYW5pZmVzdF9oZWFkIjoiMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsIm1hbmlmZXN0X3NpemUiOjAsInByZXZfY2hlY2twb2ludF9oYXNoIjoiMjdiYzZmZDJhYzgyYTIwMjJlOTJjNzNmMTYyNjgwMDM5N2U2OTg1ZDZiZTljYzUzNGMxODIzYzY1MDE0MzAzYyIsInByb3RvY29sX3ZlcnNpb24iOiJhYmIvMSIsInJvb3RfaGFzaCI6ImNmYmRhN2YyMDE2MDIzOGFiOTQ5ZWY2YjkzMmI3N2JmNjJmOTA3YWRkNDE1NTk0OTMxYmZhYzhjNTMzZmMzYTYiLCJzdHJlYW1faWQiOiIxMTExMTExMS0xMTExLTQxMTEtODExMS0xMTExMTExMTExMTEiLCJ0cmVlX3NpemUiOjh9",
+        "signature": "e5a947796b7e3d74b72511e8d7785ca2a8a00c46c9336b817835dc867ae67de602147dd1401c2770ac86dda2de6d765d8bdc22eab6314acf3f864c1a985dd401"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "BAD_SIGNATURE"
+      }
+    },
+    {
+      "id": "cp-reject-wrong-key-role",
+      "desc": "checkpoint signed by the witness key, which has no signer role",
+      "input": {
+        "payload": {
+          "protocol_version": "abb/1",
+          "stream_id": "11111111-1111-4111-8111-111111111111",
+          "tree_size": 8,
+          "root_hash": "cfbda7f20160238ab949ef6b932b77bf62f907add415594931bfac8c533fc3a6",
+          "manifest_size": 0,
+          "manifest_head": "0000000000000000000000000000000000000000000000000000000000000000",
+          "prev_checkpoint_hash": "27bc6fd2ac82a2022e92c73f1626800397e6985d6be9cc534c1823c65014303c",
+          "key_id": "ed25519:0de62baf6830d1984b63e9a581578762f99f50b3e4d484588123228fd1f2a2c2",
+          "created_at": 1760000200000
+        },
+        "canonical_b64": "eyJjcmVhdGVkX2F0IjoxNzYwMDAwMjAwMDAwLCJrZXlfaWQiOiJlZDI1NTE5OjBkZTYyYmFmNjgzMGQxOTg0YjYzZTlhNTgxNTc4NzYyZjk5ZjUwYjNlNGQ0ODQ1ODgxMjMyMjhmZDFmMmEyYzIiLCJtYW5pZmVzdF9oZWFkIjoiMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsIm1hbmlmZXN0X3NpemUiOjAsInByZXZfY2hlY2twb2ludF9oYXNoIjoiMjdiYzZmZDJhYzgyYTIwMjJlOTJjNzNmMTYyNjgwMDM5N2U2OTg1ZDZiZTljYzUzNGMxODIzYzY1MDE0MzAzYyIsInByb3RvY29sX3ZlcnNpb24iOiJhYmIvMSIsInJvb3RfaGFzaCI6ImNmYmRhN2YyMDE2MDIzOGFiOTQ5ZWY2YjkzMmI3N2JmNjJmOTA3YWRkNDE1NTk0OTMxYmZhYzhjNTMzZmMzYTYiLCJzdHJlYW1faWQiOiIxMTExMTExMS0xMTExLTQxMTEtODExMS0xMTExMTExMTExMTEiLCJ0cmVlX3NpemUiOjh9",
+        "signature": "fe4c58b268d744f9a948e847d92202cc24a445419f64b65cccf2ad439eae5a422304c01f11decdb0f256fab50c4cc4c48cb67e5825e8fa687c87f1d0254c610c",
+        "signed_by_key_id": "ed25519:54b6ff4af374450617ae97c85b7b6c2320048577418f9e19c4915bd7ee42d5df"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "WRONG_KEY_ROLE",
+        "checkpoint_hash": "77db31ac588549a9c0cbe55e1395afa5b2c68bdedc2af587eee698f5d387769d"
+      }
+    }
+  ]
+}

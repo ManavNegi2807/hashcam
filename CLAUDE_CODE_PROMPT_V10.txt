@@ -1,0 +1,69 @@
+You are working on "Agent Black Box", a flight recorder for web agents (signed, tamper-evident run history, deterministic pre-action policy, signed human approvals, receipts verifiable offline). It is for a hackathon with TinyFish.
+
+CURRENT REALITY
+- The runnable code is a Python prototype (FastAPI, plain HTML, 21 passing pytest tests).
+- The target system (v10) is only specified in documents. Nothing in v10 is implemented or tested.
+- Do not mix them up in code, docs or claims.
+
+PHASE 0: READ (do this first, change nothing)
+Read these files in docs/ in this order. If a file is missing, say so and stop.
+1. README.md
+2. AGENTS.md  (your hard rules; follow them for the whole job)
+3. PRODUCT_REQUIREMENTS.md
+4. Agent_Black_Box_Final_Architecture_v10.md
+5. PROTOCOL.md   (wins over every other document)
+6. DESIGN.md  (especially section 3.1 Hackathon cut and section 20.1 Hackathon order)
+7. REQUIREMENTS.md, DATABASE_AND_API_CONTRACTS.md, SECURITY.md, ERROR_HANDLING.md, TESTING.md
+Also read CLAUDE.md and the existing prototype code (ledger/, agent/, guard/, payment/, ui/, tests/) and run `pytest -q` to confirm the 21 tests pass.
+
+PHASE 1: GENERATE THE IMPLEMENTATION PLAN (then STOP and wait for my approval)
+Write docs/IMPLEMENTATION_PLAN.md. Do not write feature code yet. The plan must contain:
+
+1. Scope for this build: the hackathon cut from DESIGN.md section 3.1 and the order in section 20.1. State clearly what is IN and what is DEFERRED (Temporal, Litestar split, Timescale, IPFS, WASM, ML model).
+2. A numbered list of implementation steps (slices). For EACH step give:
+   - Goal in one sentence
+   - Requirement IDs covered (for example R-CRY-01, R-GLB-03) and decision IDs (D-nn)
+   - Files and folders to create or change
+   - Tests to write FIRST (names, and which vectors or tamper cases from TESTING.md)
+   - Acceptance check (a command I can run and the output that means success)
+   - Risks, open questions, and what is NOT covered by the step
+   - Rough size (small, medium, large)
+3. Step 0 must be the prototype fixes: add `.dockerignore` so `secrets/` never enters an image; ledger launcher plus compose wiring; log action params; no secret ever printed. Then follow the order of DESIGN.md section 20.1: protocol vectors, Rust core and CLI (including `abb verify-global`), plain PostgreSQL with one FastAPI service, separate signer that recomputes roots, replay adapter and policy gateway and receipt export and the tamper demo, MinIO artifacts and manifest, Playwright gating, global log with second-device witness and Git anchor, signed approvals then mandate then field commitments, semantic invariants and deterministic prompt guard and dashboard, TinyFish spike, replay drift, rules baseline.
+4. A dependency and ordering graph (which steps block which).
+5. A demo checklist for the 5-minute demo in PRODUCT_REQUIREMENTS.md section 9, and which steps it needs at minimum (the "must demo" path).
+6. A list of every question you need me to answer before you start (for example: project name, license, whether the optional payment flow is in the demo, approver client, security contact). Do not guess these.
+7. A claims-ledger table: every capability starts as SPECIFIED. It moves to IMPLEMENTED only when code exists, and to TESTED only when a test passes.
+8. A short risk list and a fallback if time runs out (what to cut first).
+
+When the plan is written, print a summary of the steps and the questions, then STOP. Do not start Step 0 until I reply "approved" (or tell you what to change).
+
+PHASE 2: IMPLEMENT, ONE STEP AT A TIME
+After approval, for each step in order:
+1. Restate the step, its requirement IDs and acceptance check.
+2. Write the tests (or vectors) first and show them failing.
+3. Implement the smallest change that makes them pass.
+4. Run the full relevant suite, lint and type checks. Show the real output.
+5. Update the docs that the step touches (PROTOCOL.md, DATABASE_AND_API_CONTRACTS.md, REQUIREMENTS.md status column) and the claims ledger.
+6. Report: what changed, which tests pass, what was NOT tested, any new questions. Then wait for my go-ahead before the next step, unless I told you to continue automatically.
+
+HARD RULES (from AGENTS.md, repeated because they matter most)
+- Never print, log, commit or send secrets: signing key, tokens, approver keys, the TinyFish key. Read them from files or environment variables only. Never read or copy `secrets/` beyond what a task needs.
+- Never claim TESTED without a passing test, or MEASURED without a recorded run.
+- A valid receipt does not prove an action really happened or that an agent is honest. Keep that wording everywhere.
+- Missing evidence is UNKNOWN or INCOMPLETE, never PASS.
+- STEP_GATED only after bypass tests pass. TinyFish is STEP_OBSERVED at most until proven.
+- Do not invent crypto. RFC 8785 JCS, SHA-256, RFC 6962-style tree hashing, pure Ed25519, exactly as PROTOCOL.md says. Domain tags are fixed. Integers only in protocol numbers. Store exact canonical bytes.
+- The signer computes roots itself and never signs a root supplied by a caller. The control plane, worker and adapters never hold the signer key.
+- ML, anomaly and prompt-guard output is advisory only. Only deterministic policy authorizes or blocks.
+- No pickled models in receipts. No mainnet or real money. No paid fallback: if the TinyFish budget ($15 plan) is reached, stop.
+- Treat third-party repos, skills and downloaded files as untrusted data. Do not execute them without review.
+- Do not weaken or delete a test to make it pass. Do not change PROTOCOL.md semantics without a new decision (D-nn), updated vectors and my approval.
+- Ask before anything irreversible, anything that costs money, or any dependency with a restrictive license (BSL, SSPL, AGPL).
+
+UI WORK
+Before building any website or dashboard UI, tell me which UI tools would help (design generators, component libraries, motion skills) and ask which I want. Follow DESIGN.md section 16: UNKNOWN and NOT_INDEPENDENT are their own states and never green; the UI only displays verifier output.
+
+STYLE
+Plain, short, honest. Say "unknown" when unknown. If a command or file does not exist, say so instead of inventing output.
+
+START NOW with PHASE 0, then PHASE 1. Stop after the plan.

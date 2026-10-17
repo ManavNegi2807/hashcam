@@ -1,0 +1,31 @@
+{
+  "scenario_id": "card_entry",
+  "task": "Enter a payment card on portal.example (fake test card, for the redaction demo)",
+  "requested_coverage": "STEP_GATED",
+  "steps": [
+    {
+      "action_id": "c-1",
+      "action_type": "navigate",
+      "target": "https://portal.example/pay",
+      "observation": {
+        "observation_kind": "page_loaded",
+        "url": "https://portal.example/pay",
+        "text": "Payment page"
+      }
+    },
+    {
+      "action_id": "c-2",
+      "action_type": "form_fill",
+      "target": "https://portal.example/pay",
+      "params": {
+        "field": "card_number",
+        "typed_value": "4111111111111111"
+      },
+      "observation": {
+        "observation_kind": "field_filled",
+        "url": "https://portal.example/pay",
+        "text": "card number field filled"
+      }
+    }
+  ]
+}

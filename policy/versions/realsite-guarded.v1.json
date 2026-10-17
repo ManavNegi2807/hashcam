@@ -1,0 +1,31 @@
+{
+  "policy_id": "realsite-guarded",
+  "version": 1,
+  "description": "A real public website, a real browser. Reading pages is free; submitting a form needs a person's signed approval first. Only httpbin.org (a public HTTP test service) is allowed.",
+  "allowed_action_types": [
+    "navigate",
+    "form_fill",
+    "form_submit",
+    "download",
+    "api_call"
+  ],
+  "action_types_needing_target": [
+    "navigate",
+    "form_submit",
+    "download",
+    "api_call"
+  ],
+  "allowed_hosts": [
+    "httpbin.org"
+  ],
+  "denied_hosts": [],
+  "max_actions": 200,
+  "max_amount_minor_units": 0,
+  "approval_required": {
+    "action_types": [
+      "form_submit"
+    ],
+    "hosts": [],
+    "target_contains": []
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "set": "domain-separated digests",
+  "protocol_version": "abb/1",
+  "generator": "vectors/tools/generate.py (Python reference, cross-check only)",
+  "note": "PROTOCOL.md section 4. Every tag hashes the same input, so any two tags sharing a digest would be a domain-separation bug. The artifact digest is untagged by D-03.",
+  "cases": [
+    {
+      "id": "hash-tag-abb1-event",
+      "desc": "ABB1-EVENT over the shared vector input; the same bytes under a different tag must give a different digest",
+      "input": {
+        "tag": "ABB1-EVENT",
+        "data_b64": "YWJiMSB2ZWN0b3IgaW5wdXQ="
+      },
+      "expect": {
+        "digest": "a77e24b0dbfec56ac8d390317443910791cb546991d52f8127db679015db3075"
+      }
+    },
+    {
+      "id": "hash-tag-abb1-checkpoint",
+      "desc": "ABB1-CHECKPOINT over the shared vector input; the same bytes under a different tag must give a different digest",
+      "input": {
+        "tag": "ABB1-CHECKPOINT",
+        "data_b64": "YWJiMSB2ZWN0b3IgaW5wdXQ="
+      },
+      "expect": {
+        "digest": "a8b92d653dfc23a4fa442970cee559e6b590d9195f29602e1130274a5f98e1bd"
+      }
+    },
+    {
+      "id": "hash-tag-abb1-manifest",
+      "desc": "ABB1-MANIFEST over the shared vector input; the same bytes under a different tag must give a different digest",
+      "input": {
+        "tag": "ABB1-MANIFEST",
+        "data_b64": "YWJiMSB2ZWN0b3IgaW5wdXQ="
+      },
+      "expect": {
+        "digest": "7e18bbbfd40c1405baf18da42c19d75ce5e7f13020222c336234e9d5c6f98f78"
+      }
+    },
+    {
+      "id": "hash-tag-abb1-witness",
+      "desc": "ABB1-WITNESS over the shared vector input; the same bytes under a different tag must give a different digest",
+      "input": {
+        "tag": "ABB1-WITNESS",
+        "data_b64": "YWJiMSB2ZWN0b3IgaW5wdXQ="
+      },
+      "expect": {
+        "digest": "8db11d4c799d5b75c5bd6f010d01ed9ed310ebf69c5edd3ed66b9b68d2faa840"
+      }
+    },
+    {
+      "id": "hash-tag-abb1-keyrotate",
+      "desc": "ABB1-KEYROTATE over the shared vector input; the same bytes under a different tag must give a different digest",
+      "input": {
+        "tag": "ABB1-KEYROTATE",
+        "data_b64": "YWJiMSB2ZWN0b3IgaW5wdXQ="
+      },
+      "expect": {
+        "digest": "132f22e1b6204459dfc4abe015f880a977028cb459a5335981e2d38498e729a3"
+      }
+    },
+    {
+      "id": "hash-tag-abb1-runroot",
+      "desc": "ABB1-RUNROOT over the shared vector input; the same bytes under a different tag must give a different digest",
+      "input": {
+        "tag": "ABB1-RUNROOT",
+        "data_b64": "YWJiMSB2ZWN0b3IgaW5wdXQ="
+      },
+      "expect": {
+        "digest": "5f5364fbeb1c1372c87c64b2fde04f78a38b38e6c8b68bf0d6097e613538fa9b"
+      }
+    },
+    {
+      "id": "hash-tag-abb1-field",
+      "desc": "ABB1-FIELD over the shared vector input; the same bytes under a different tag must give a different digest",
+      "input": {
+        "tag": "ABB1-FIELD",
+        "data_b64": "YWJiMSB2ZWN0b3IgaW5wdXQ="
+      },
+      "expect": {
+        "digest": "661e899e0792a17bfb0c43cd9b4d8cb22040552b5967063acdcd1872d400d2f3"
+      }
+    },
+    {
+      "id": "hash-tag-abb1-approval",
+      "desc": "ABB1-APPROVAL over the shared vector input; the same bytes under a different tag must give a different digest",
+      "input": {
+        "tag": "ABB1-APPROVAL",
+        "data_b64": "YWJiMSB2ZWN0b3IgaW5wdXQ="
+      },
+      "expect": {
+        "digest": "345e32e1da89ffa5550db60b97118473e252da213e9a9b9a3e10d059721c5f4b"
+      }
+    },
+    {
+      "id": "hash-tag-abb1-mandate",
+      "desc": "ABB1-MANDATE over the shared vector input; the same bytes under a different tag must give a different digest",
+      "input": {
+        "tag": "ABB1-MANDATE",
+        "data_b64": "YWJiMSB2ZWN0b3IgaW5wdXQ="
+      },
+      "expect": {
+        "digest": "ccd49b6113bd33f507b2bdfe603804dff797ab36c2ce762d92c5a7810debb237"
+      }
+    },
+    {
+      "id": "hash-artifact-untagged",
+      "desc": "D-03: an artifact digest is SHA-256 of the raw bytes with no tag, because the object key equals the digest",
+      "input": {
+        "tag": null,
+        "data_b64": "YWJiMSB2ZWN0b3IgaW5wdXQ="
+      },
+      "expect": {
+        "digest": "958773b82dec844781542e9cc25782a479e7835a0de8944d9e0991a5cc4c5173"
+      }
+    }
+  ]
+}

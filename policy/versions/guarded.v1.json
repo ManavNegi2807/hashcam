@@ -1,0 +1,38 @@
+{
+  "policy_id": "guarded",
+  "version": 1,
+  "description": "The default policy plus one rule: if the prompt guard signals BLOCK_BY_POLICY on anything the agent read, an allowed action needs a human approval instead. The guard only ever makes a decision stricter.",
+  "allowed_action_types": [
+    "navigate",
+    "form_fill",
+    "form_submit",
+    "download",
+    "api_call"
+  ],
+  "action_types_needing_target": [
+    "navigate",
+    "form_submit",
+    "download",
+    "api_call"
+  ],
+  "allowed_hosts": [
+    "portal.example",
+    "*.portal.example"
+  ],
+  "denied_hosts": [
+    "evil.example"
+  ],
+  "max_actions": 20,
+  "max_amount_minor_units": 500000,
+  "approval_required": {
+    "action_types": [
+      "payment"
+    ],
+    "hosts": [],
+    "target_contains": [
+      "/bank"
+    ],
+    "amount_minor_units_over": 100000
+  },
+  "prompt_guard_escalation": "REQUIRE_APPROVAL"
+}

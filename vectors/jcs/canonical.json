@@ -1,0 +1,175 @@
+{
+  "set": "RFC 8785 canonical output",
+  "protocol_version": "abb/1",
+  "generator": "vectors/tools/generate.py (Python reference, cross-check only)",
+  "note": "Each case gives the exact canonical text and its SHA-256. Key order is UTF-16 code-unit order (PROTOCOL.md 3.1).",
+  "cases": [
+    {
+      "id": "jcs-empty-object",
+      "desc": "empty object",
+      "input": {},
+      "expect": {
+        "canonical": "{}",
+        "canonical_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+      }
+    },
+    {
+      "id": "jcs-empty-array",
+      "desc": "empty array",
+      "input": [],
+      "expect": {
+        "canonical": "[]",
+        "canonical_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    {
+      "id": "jcs-key-order-ascii",
+      "desc": "ASCII keys are reordered",
+      "input": {
+        "b": 1,
+        "a": 2,
+        "C": 3
+      },
+      "expect": {
+        "canonical": "{\"C\":3,\"a\":2,\"b\":1}",
+        "canonical_sha256": "27e01c26743085bff8e4a98d76dca93ebdb6c805f8136fae1216ee257d33f5c5"
+      }
+    },
+    {
+      "id": "jcs-nested",
+      "desc": "nested objects and arrays keep array order and sort object keys",
+      "input": {
+        "z": [
+          3,
+          2,
+          1
+        ],
+        "a": {
+          "y": 1,
+          "b": {
+            "x": 0
+          }
+        }
+      },
+      "expect": {
+        "canonical": "{\"a\":{\"b\":{\"x\":0},\"y\":1},\"z\":[3,2,1]}",
+        "canonical_sha256": "5da207ab4c4b0c211568cafd55bbc2b2ba7c0db78c54a4db3e63bf2e61919a72"
+      }
+    },
+    {
+      "id": "jcs-key-order-non-bmp",
+      "desc": "U+10000 sorts before U+FFFF by UTF-16 code unit, the opposite of code-point order",
+      "input": {
+        "￿": 1,
+        "𐀀": 2,
+        "a": 3
+      },
+      "expect": {
+        "canonical": "{\"a\":3,\"𐀀\":2,\"￿\":1}",
+        "canonical_sha256": "6c75323f2e1c8dcea926319a73fbb3ab58b0f063893b8d5b5e5c7c126290cb67"
+      }
+    },
+    {
+      "id": "jcs-key-order-latin-vs-combining",
+      "desc": "precomposed and other non-ASCII keys; no normalisation is applied",
+      "input": {
+        "é": 1,
+        "é": 2,
+        "f": 3
+      },
+      "expect": {
+        "canonical": "{\"é\":2,\"f\":3,\"é\":1}",
+        "canonical_sha256": "1e7439fefe4466804034da5171c5a12b8fbd83309738afddcee6f7d76d3a4578"
+      }
+    },
+    {
+      "id": "jcs-integer-extremes",
+      "desc": "largest and smallest allowed integers",
+      "input": {
+        "max": 9007199254740991,
+        "min": -9007199254740991,
+        "zero": 0
+      },
+      "expect": {
+        "canonical": "{\"max\":9007199254740991,\"min\":-9007199254740991,\"zero\":0}",
+        "canonical_sha256": "b7b2401ddca2165824e98c61890c0aaec470258d3119dd265d02be9438bf47e6"
+      }
+    },
+    {
+      "id": "jcs-escaping",
+      "desc": "only quote, backslash and control characters are escaped",
+      "input": {
+        "q": "a\"b",
+        "bs": "a\\b",
+        "ctl": "a\u0000\u001f\bb",
+        "tabnl": "a\t\nb"
+      },
+      "expect": {
+        "canonical": "{\"bs\":\"a\\\\b\",\"ctl\":\"a\\u0000\\u001f\\bb\",\"q\":\"a\\\"b\",\"tabnl\":\"a\\t\\nb\"}",
+        "canonical_sha256": "dfe48b8676855edde57e4b341fc23346a3a6f814fb1e41bbae0c27d2ff5757c3"
+      }
+    },
+    {
+      "id": "jcs-literals",
+      "desc": "true, false and null are preserved",
+      "input": {
+        "t": true,
+        "f": false,
+        "n": null
+      },
+      "expect": {
+        "canonical": "{\"f\":false,\"n\":null,\"t\":true}",
+        "canonical_sha256": "22e00dc2f7b01420f940fbdbfbdf34fa0667cc6500186495023ba37722cbd05e"
+      }
+    },
+    {
+      "id": "jcs-unicode-literal",
+      "desc": "non-ASCII characters are emitted literally as UTF-8, not escaped",
+      "input": {
+        "text": "é中😀"
+      },
+      "expect": {
+        "canonical": "{\"text\":\"é中😀\"}",
+        "canonical_sha256": "620a53c3389e4bfcbe29c0ea7d0e20c4c3ec0eca6c89ef808f3c9d7790cad98b"
+      }
+    },
+    {
+      "id": "jcs-event-envelope",
+      "desc": "the illustrative event from PROTOCOL.md section 20",
+      "input": {
+        "protocol_version": "abb/1",
+        "schema_version": 1,
+        "run_id": "00000000-0000-4000-8000-000000000001",
+        "event_id": "00000000-0000-4000-8000-0000000000a1",
+        "sequence": 3,
+        "event_type": "ACTION_BLOCKED",
+        "created_at": 1760000000000,
+        "source": "observed_by_local_gateway",
+        "provenance": {
+          "adapter_name": "replay",
+          "adapter_version": "0.1.0",
+          "execution_id": "replay-1",
+          "mode": "REPLAY",
+          "observed_coverage": "STEP_GATED"
+        },
+        "payload": {
+          "action_id": "act-2",
+          "policy_id": "default",
+          "policy_version": "1",
+          "reason_codes": [
+            "DOMAIN_NOT_ALLOWED"
+          ]
+        },
+        "policy_ref": {
+          "policy_id": "default",
+          "policy_version": "1"
+        },
+        "idempotency_key": "run1-act2-blocked"
+      },
+      "expect": {
+        "canonical": "{\"created_at\":1760000000000,\"event_id\":\"00000000-0000-4000-8000-0000000000a1\",\"event_type\":\"ACTION_BLOCKED\",\"idempotency_key\":\"run1-act2-blocked\",\"payload\":{\"action_id\":\"act-2\",\"policy_id\":\"default\",\"policy_version\":\"1\",\"reason_codes\":[\"DOMAIN_NOT_ALLOWED\"]},\"policy_ref\":{\"policy_id\":\"default\",\"policy_version\":\"1\"},\"protocol_version\":\"abb/1\",\"provenance\":{\"adapter_name\":\"replay\",\"adapter_version\":\"0.1.0\",\"execution_id\":\"replay-1\",\"mode\":\"REPLAY\",\"observed_coverage\":\"STEP_GATED\"},\"run_id\":\"00000000-0000-4000-8000-000000000001\",\"schema_version\":1,\"sequence\":3,\"source\":\"observed_by_local_gateway\"}",
+        "canonical_sha256": "7965468d100c8515227936a2077efa1150f00a20e99ae675e259a3903bbaeec2"
+      }
+    }
+  ]
+}

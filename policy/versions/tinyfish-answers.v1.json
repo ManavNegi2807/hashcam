@@ -1,0 +1,18 @@
+{
+  "policy_id": "tinyfish-answers",
+  "version": 1,
+  "description": "Search and research through TinyFish: the question may be sent only to TinyFish's own search and research API hosts. What comes back is the provider's own report.",
+  "allowed_action_types": [
+    "api_call"
+  ],
+  "action_types_needing_target": [
+    "api_call"
+  ],
+  "allowed_hosts": [
+    "agent.tinyfish.ai",
+    "api.search.tinyfish.ai"
+  ],
+  "denied_hosts": [],
+  "max_actions": 10,
+  "max_amount_minor_units": 0
+}

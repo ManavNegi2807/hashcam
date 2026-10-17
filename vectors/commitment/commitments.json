@@ -1,0 +1,153 @@
+{
+  "set": "salted field commitments (D-11)",
+  "protocol_version": "abb/1",
+  "generator": "vectors/tools/generate.py (Python reference, cross-check only)",
+  "note": "PROTOCOL.md 5.5. commitment = SHA-256(`ABB1-FIELD` || 0x00 || salt || JCS(value)); the salt is exactly 16 bytes.",
+  "cases": [
+    {
+      "id": "commitment-string",
+      "desc": "a card number",
+      "input": {
+        "salt_hex": "000102030405060708090a0b0c0d0e0f",
+        "value_json": "\"4111111111111111\""
+      },
+      "expect": {
+        "result": "ACCEPT",
+        "commitment": "fe5808f6dd668f21800a43c31baa20cd3bcc5a6d4c7158fc2012321991516f8e"
+      }
+    },
+    {
+      "id": "commitment-same-value-other-salt",
+      "desc": "the same value under a different salt must differ",
+      "input": {
+        "salt_hex": "ffeeddccbbaa99887766554433221100",
+        "value_json": "\"4111111111111111\""
+      },
+      "expect": {
+        "result": "ACCEPT",
+        "commitment": "6afd54bc4a3e98844f660459371de60972fb41ee44cf97f07629a28911940ab7"
+      }
+    },
+    {
+      "id": "commitment-integer",
+      "desc": "an integer value",
+      "input": {
+        "salt_hex": "000102030405060708090a0b0c0d0e0f",
+        "value_json": "1234"
+      },
+      "expect": {
+        "result": "ACCEPT",
+        "commitment": "ca202a17bf895b1302cd579cf1883a021fe94b5554a99b79d8b2f5e9379d5b91"
+      }
+    },
+    {
+      "id": "commitment-object-key-order",
+      "desc": "object keys are sorted by JCS before committing",
+      "input": {
+        "salt_hex": "000102030405060708090a0b0c0d0e0f",
+        "value_json": "{\"b\": 2, \"a\": 1}"
+      },
+      "expect": {
+        "result": "ACCEPT",
+        "commitment": "c489572f43aaeed9bbe52b81d5477f2431b2b25fd2a5eb27d49bca698f65d00c"
+      }
+    },
+    {
+      "id": "commitment-unicode",
+      "desc": "non-ASCII text is committed as UTF-8 canonical JSON",
+      "input": {
+        "salt_hex": "000102030405060708090a0b0c0d0e0f",
+        "value_json": "\"naïve café\""
+      },
+      "expect": {
+        "result": "ACCEPT",
+        "commitment": "bcf5515f1dcb49ebb33a3c6e8f736fe079e3db18dbaec383a75cc7f729540c29"
+      }
+    },
+    {
+      "id": "commitment-array",
+      "desc": "arrays keep their order",
+      "input": {
+        "salt_hex": "000102030405060708090a0b0c0d0e0f",
+        "value_json": "[\"x\", \"y\"]"
+      },
+      "expect": {
+        "result": "ACCEPT",
+        "commitment": "9276b185dfb73624dbf6a06c22506249c17874067067abbc4fd6424e1f3825bc"
+      }
+    },
+    {
+      "id": "commitment-boolean",
+      "desc": "a boolean value",
+      "input": {
+        "salt_hex": "000102030405060708090a0b0c0d0e0f",
+        "value_json": "true"
+      },
+      "expect": {
+        "result": "ACCEPT",
+        "commitment": "ae48ba8c0fec57dd1220bb2c793d124127460c1552486d32500472c6a0fbe96c"
+      }
+    },
+    {
+      "id": "commitment-empty-string",
+      "desc": "an empty string is still a value",
+      "input": {
+        "salt_hex": "ffeeddccbbaa99887766554433221100",
+        "value_json": "\"\""
+      },
+      "expect": {
+        "result": "ACCEPT",
+        "commitment": "a030ff89411fdf80e4b679b89b57ac4139ac0df8a52d2062b1b825681f570f59"
+      }
+    },
+    {
+      "id": "commitment-not-the-plain-digest",
+      "desc": "the commitment differs from SHA-256 of the canonical value alone",
+      "input": {
+        "salt_hex": "000102030405060708090a0b0c0d0e0f",
+        "value_json": "\"hunter2\""
+      },
+      "expect": {
+        "result": "ACCEPT",
+        "commitment": "3a83175a0332285c66107357f87fbd413b3008790bb3461c2d373e311b72bcec",
+        "differs_from_plain_digest": "4ddbb67bf993867e13253c146a339ed3b33ea5b895543569278e99d5b3c2b7d5"
+      }
+    },
+    {
+      "id": "commitment-reject-salt-too-short",
+      "desc": "15 bytes is not a valid salt",
+      "input": {
+        "salt_hex": "000102030405060708090a0b0c0d0e",
+        "value_json": "\"x\""
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "BAD_SALT"
+      }
+    },
+    {
+      "id": "commitment-reject-salt-too-long",
+      "desc": "17 bytes is not a valid salt",
+      "input": {
+        "salt_hex": "000102030405060708090a0b0c0d0e0f10",
+        "value_json": "\"x\""
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "BAD_SALT"
+      }
+    },
+    {
+      "id": "commitment-reject-salt-empty",
+      "desc": "an empty salt is not a valid salt",
+      "input": {
+        "salt_hex": "",
+        "value_json": "\"x\""
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "BAD_SALT"
+      }
+    }
+  ]
+}

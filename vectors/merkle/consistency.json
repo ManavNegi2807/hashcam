@@ -1,0 +1,458 @@
+{
+  "set": "consistency proofs",
+  "protocol_version": "abb/1",
+  "generator": "vectors/tools/generate.py (Python reference, cross-check only)",
+  "note": "RFC 6962 section 2.1.2. A verifier prepends the first root itself when first_size is an exact power of two.",
+  "cases": [
+    {
+      "id": "merkle-cons-1-2",
+      "desc": "consistency proof from 1 leaves to 2",
+      "input": {
+        "first_size": 1,
+        "second_size": 2
+      },
+      "expect": {
+        "first_root": "473becc27ad4269c3c6efc1b9253caad0295c474aa5cdda91f6dbe6a451cc036",
+        "second_root": "3f352d4cbdfb20aa0863b5aef47e9d99d68761e8cdf2da3bba0ba5eb1d631915",
+        "path": [
+          "956c65bc49f241a83662c64cb47bc0ed88c98f9ae5fee51e2a7e0798fb4146ba"
+        ]
+      }
+    },
+    {
+      "id": "merkle-cons-1-3",
+      "desc": "consistency proof from 1 leaves to 3",
+      "input": {
+        "first_size": 1,
+        "second_size": 3
+      },
+      "expect": {
+        "first_root": "473becc27ad4269c3c6efc1b9253caad0295c474aa5cdda91f6dbe6a451cc036",
+        "second_root": "3dca2092b34c7f274c0dbed2086928de04eea9d0405088100c17b889cf2738b9",
+        "path": [
+          "956c65bc49f241a83662c64cb47bc0ed88c98f9ae5fee51e2a7e0798fb4146ba",
+          "389c7a780c1d8f70880013c30374fe9dc0dd73a06e27695dc1edc04aebb9f0d0"
+        ]
+      }
+    },
+    {
+      "id": "merkle-cons-2-3",
+      "desc": "consistency proof from 2 leaves to 3",
+      "input": {
+        "first_size": 2,
+        "second_size": 3
+      },
+      "expect": {
+        "first_root": "3f352d4cbdfb20aa0863b5aef47e9d99d68761e8cdf2da3bba0ba5eb1d631915",
+        "second_root": "3dca2092b34c7f274c0dbed2086928de04eea9d0405088100c17b889cf2738b9",
+        "path": [
+          "389c7a780c1d8f70880013c30374fe9dc0dd73a06e27695dc1edc04aebb9f0d0"
+        ]
+      }
+    },
+    {
+      "id": "merkle-cons-1-4",
+      "desc": "consistency proof from 1 leaves to 4",
+      "input": {
+        "first_size": 1,
+        "second_size": 4
+      },
+      "expect": {
+        "first_root": "473becc27ad4269c3c6efc1b9253caad0295c474aa5cdda91f6dbe6a451cc036",
+        "second_root": "4a0e1b67da7b6b1ccc2901e92ee32a6a3251f21dec8307ecc0f171ff80d512d2",
+        "path": [
+          "956c65bc49f241a83662c64cb47bc0ed88c98f9ae5fee51e2a7e0798fb4146ba",
+          "9e678ee79f35476c83fe87a22ca894a3da8e7b48f9f4ae38d8d1189492cfd437"
+        ]
+      }
+    },
+    {
+      "id": "merkle-cons-2-4",
+      "desc": "consistency proof from 2 leaves to 4",
+      "input": {
+        "first_size": 2,
+        "second_size": 4
+      },
+      "expect": {
+        "first_root": "3f352d4cbdfb20aa0863b5aef47e9d99d68761e8cdf2da3bba0ba5eb1d631915",
+        "second_root": "4a0e1b67da7b6b1ccc2901e92ee32a6a3251f21dec8307ecc0f171ff80d512d2",
+        "path": [
+          "9e678ee79f35476c83fe87a22ca894a3da8e7b48f9f4ae38d8d1189492cfd437"
+        ]
+      }
+    },
+    {
+      "id": "merkle-cons-3-4",
+      "desc": "consistency proof from 3 leaves to 4",
+      "input": {
+        "first_size": 3,
+        "second_size": 4
+      },
+      "expect": {
+        "first_root": "3dca2092b34c7f274c0dbed2086928de04eea9d0405088100c17b889cf2738b9",
+        "second_root": "4a0e1b67da7b6b1ccc2901e92ee32a6a3251f21dec8307ecc0f171ff80d512d2",
+        "path": [
+          "389c7a780c1d8f70880013c30374fe9dc0dd73a06e27695dc1edc04aebb9f0d0",
+          "41f88e73c15e267412d01cdc293bc4193312b636a8a03a3a829dfeb0e531cf8f",
+          "3f352d4cbdfb20aa0863b5aef47e9d99d68761e8cdf2da3bba0ba5eb1d631915"
+        ]
+      }
+    },
+    {
+      "id": "merkle-cons-1-5",
+      "desc": "consistency proof from 1 leaves to 5",
+      "input": {
+        "first_size": 1,
+        "second_size": 5
+      },
+      "expect": {
+        "first_root": "473becc27ad4269c3c6efc1b9253caad0295c474aa5cdda91f6dbe6a451cc036",
+        "second_root": "1e27f4c1460f5534869751a6dfc9128af0c861e599003d030fabce48d9be5d90",
+        "path": [
+          "956c65bc49f241a83662c64cb47bc0ed88c98f9ae5fee51e2a7e0798fb4146ba",
+          "9e678ee79f35476c83fe87a22ca894a3da8e7b48f9f4ae38d8d1189492cfd437",
+          "6da80e4a2f9267217f4f42afe2e19ae2e0e8af490d86ec3816052bd6ba588da9"
+        ]
+      }
+    },
+    {
+      "id": "merkle-cons-2-5",
+      "desc": "consistency proof from 2 leaves to 5",
+      "input": {
+        "first_size": 2,
+        "second_size": 5
+      },
+      "expect": {
+        "first_root": "3f352d4cbdfb20aa0863b5aef47e9d99d68761e8cdf2da3bba0ba5eb1d631915",
+        "second_root": "1e27f4c1460f5534869751a6dfc9128af0c861e599003d030fabce48d9be5d90",
+        "path": [
+          "9e678ee79f35476c83fe87a22ca894a3da8e7b48f9f4ae38d8d1189492cfd437",
+          "6da80e4a2f9267217f4f42afe2e19ae2e0e8af490d86ec3816052bd6ba588da9"
+        ]
+      }
+    },
+    {
+      "id": "merkle-cons-4-5",
+      "desc": "consistency proof from 4 leaves to 5",
+      "input": {
+        "first_size": 4,
+        "second_size": 5
+      },
+      "expect": {
+        "first_root": "4a0e1b67da7b6b1ccc2901e92ee32a6a3251f21dec8307ecc0f171ff80d512d2",
+        "second_root": "1e27f4c1460f5534869751a6dfc9128af0c861e599003d030fabce48d9be5d90",
+        "path": [
+          "6da80e4a2f9267217f4f42afe2e19ae2e0e8af490d86ec3816052bd6ba588da9"
+        ]
+      }
+    },
+    {
+      "id": "merkle-cons-1-7",
+      "desc": "consistency proof from 1 leaves to 7",
+      "input": {
+        "first_size": 1,
+        "second_size": 7
+      },
+      "expect": {
+        "first_root": "473becc27ad4269c3c6efc1b9253caad0295c474aa5cdda91f6dbe6a451cc036",
+        "second_root": "ed75a6d042f1179f5a9ddcbfb75150463895c76f4ca965070d23cc2f884f97b0",
+        "path": [
+          "956c65bc49f241a83662c64cb47bc0ed88c98f9ae5fee51e2a7e0798fb4146ba",
+          "9e678ee79f35476c83fe87a22ca894a3da8e7b48f9f4ae38d8d1189492cfd437",
+          "d8f99c79472171048ed63a32a4ddb12ec1836589fef0475183282b15151c41f2"
+        ]
+      }
+    },
+    {
+      "id": "merkle-cons-3-7",
+      "desc": "consistency proof from 3 leaves to 7",
+      "input": {
+        "first_size": 3,
+        "second_size": 7
+      },
+      "expect": {
+        "first_root": "3dca2092b34c7f274c0dbed2086928de04eea9d0405088100c17b889cf2738b9",
+        "second_root": "ed75a6d042f1179f5a9ddcbfb75150463895c76f4ca965070d23cc2f884f97b0",
+        "path": [
+          "389c7a780c1d8f70880013c30374fe9dc0dd73a06e27695dc1edc04aebb9f0d0",
+          "41f88e73c15e267412d01cdc293bc4193312b636a8a03a3a829dfeb0e531cf8f",
+          "3f352d4cbdfb20aa0863b5aef47e9d99d68761e8cdf2da3bba0ba5eb1d631915",
+          "d8f99c79472171048ed63a32a4ddb12ec1836589fef0475183282b15151c41f2"
+        ]
+      }
+    },
+    {
+      "id": "merkle-cons-6-7",
+      "desc": "consistency proof from 6 leaves to 7",
+      "input": {
+        "first_size": 6,
+        "second_size": 7
+      },
+      "expect": {
+        "first_root": "098be9968a612da970b8e2e4c37e2030e5263e4fbbb86980951a3c6890abee1a",
+        "second_root": "ed75a6d042f1179f5a9ddcbfb75150463895c76f4ca965070d23cc2f884f97b0",
+        "path": [
+          "03d9a1a243ec8c5084cabde3b4461829b593b31d59fb443327d08ac3c762f3e3",
+          "00ec4eeaf8d3039669b511032024c121986ae76e3a47120d27d0f1692c7fc0f5",
+          "4a0e1b67da7b6b1ccc2901e92ee32a6a3251f21dec8307ecc0f171ff80d512d2"
+        ]
+      }
+    },
+    {
+      "id": "merkle-cons-1-8",
+      "desc": "consistency proof from 1 leaves to 8",
+      "input": {
+        "first_size": 1,
+        "second_size": 8
+      },
+      "expect": {
+        "first_root": "473becc27ad4269c3c6efc1b9253caad0295c474aa5cdda91f6dbe6a451cc036",
+        "second_root": "cfbda7f20160238ab949ef6b932b77bf62f907add415594931bfac8c533fc3a6",
+        "path": [
+          "956c65bc49f241a83662c64cb47bc0ed88c98f9ae5fee51e2a7e0798fb4146ba",
+          "9e678ee79f35476c83fe87a22ca894a3da8e7b48f9f4ae38d8d1189492cfd437",
+          "db5bd43a046a962dbd73b0cc50b8714aaeb1ca1215770ebd12096caeb11ad8e0"
+        ]
+      }
+    },
+    {
+      "id": "merkle-cons-4-8",
+      "desc": "consistency proof from 4 leaves to 8",
+      "input": {
+        "first_size": 4,
+        "second_size": 8
+      },
+      "expect": {
+        "first_root": "4a0e1b67da7b6b1ccc2901e92ee32a6a3251f21dec8307ecc0f171ff80d512d2",
+        "second_root": "cfbda7f20160238ab949ef6b932b77bf62f907add415594931bfac8c533fc3a6",
+        "path": [
+          "db5bd43a046a962dbd73b0cc50b8714aaeb1ca1215770ebd12096caeb11ad8e0"
+        ]
+      }
+    },
+    {
+      "id": "merkle-cons-7-8",
+      "desc": "consistency proof from 7 leaves to 8",
+      "input": {
+        "first_size": 7,
+        "second_size": 8
+      },
+      "expect": {
+        "first_root": "ed75a6d042f1179f5a9ddcbfb75150463895c76f4ca965070d23cc2f884f97b0",
+        "second_root": "cfbda7f20160238ab949ef6b932b77bf62f907add415594931bfac8c533fc3a6",
+        "path": [
+          "00ec4eeaf8d3039669b511032024c121986ae76e3a47120d27d0f1692c7fc0f5",
+          "be22ab3e23d9543277f33cc7386582abd5513932b8416d41021e602c30508c73",
+          "03d9a1a243ec8c5084cabde3b4461829b593b31d59fb443327d08ac3c762f3e3",
+          "4a0e1b67da7b6b1ccc2901e92ee32a6a3251f21dec8307ecc0f171ff80d512d2"
+        ]
+      }
+    },
+    {
+      "id": "merkle-cons-1-9",
+      "desc": "consistency proof from 1 leaves to 9",
+      "input": {
+        "first_size": 1,
+        "second_size": 9
+      },
+      "expect": {
+        "first_root": "473becc27ad4269c3c6efc1b9253caad0295c474aa5cdda91f6dbe6a451cc036",
+        "second_root": "dd7f60a4f1e43cbd99072987e888e2a83ea27188d0b08f56d08a947f77da7235",
+        "path": [
+          "956c65bc49f241a83662c64cb47bc0ed88c98f9ae5fee51e2a7e0798fb4146ba",
+          "9e678ee79f35476c83fe87a22ca894a3da8e7b48f9f4ae38d8d1189492cfd437",
+          "db5bd43a046a962dbd73b0cc50b8714aaeb1ca1215770ebd12096caeb11ad8e0",
+          "ce15938fdeeb3e0800fc3c19b9d40f8d0c3ce7125ecea5c3b65004a0351600b0"
+        ]
+      }
+    },
+    {
+      "id": "merkle-cons-4-9",
+      "desc": "consistency proof from 4 leaves to 9",
+      "input": {
+        "first_size": 4,
+        "second_size": 9
+      },
+      "expect": {
+        "first_root": "4a0e1b67da7b6b1ccc2901e92ee32a6a3251f21dec8307ecc0f171ff80d512d2",
+        "second_root": "dd7f60a4f1e43cbd99072987e888e2a83ea27188d0b08f56d08a947f77da7235",
+        "path": [
+          "db5bd43a046a962dbd73b0cc50b8714aaeb1ca1215770ebd12096caeb11ad8e0",
+          "ce15938fdeeb3e0800fc3c19b9d40f8d0c3ce7125ecea5c3b65004a0351600b0"
+        ]
+      }
+    },
+    {
+      "id": "merkle-cons-8-9",
+      "desc": "consistency proof from 8 leaves to 9",
+      "input": {
+        "first_size": 8,
+        "second_size": 9
+      },
+      "expect": {
+        "first_root": "cfbda7f20160238ab949ef6b932b77bf62f907add415594931bfac8c533fc3a6",
+        "second_root": "dd7f60a4f1e43cbd99072987e888e2a83ea27188d0b08f56d08a947f77da7235",
+        "path": [
+          "ce15938fdeeb3e0800fc3c19b9d40f8d0c3ce7125ecea5c3b65004a0351600b0"
+        ]
+      }
+    },
+    {
+      "id": "merkle-cons-1-15",
+      "desc": "consistency proof from 1 leaves to 15",
+      "input": {
+        "first_size": 1,
+        "second_size": 15
+      },
+      "expect": {
+        "first_root": "473becc27ad4269c3c6efc1b9253caad0295c474aa5cdda91f6dbe6a451cc036",
+        "second_root": "0c8235f81403e65a9f82dde57103e96483fac652c6bd9d845d630a7a23f4e40e",
+        "path": [
+          "956c65bc49f241a83662c64cb47bc0ed88c98f9ae5fee51e2a7e0798fb4146ba",
+          "9e678ee79f35476c83fe87a22ca894a3da8e7b48f9f4ae38d8d1189492cfd437",
+          "db5bd43a046a962dbd73b0cc50b8714aaeb1ca1215770ebd12096caeb11ad8e0",
+          "444035e590b1b650ec8f3604fb3a769c0e812a9089e951fe9e847225c4202da0"
+        ]
+      }
+    },
+    {
+      "id": "merkle-cons-7-15",
+      "desc": "consistency proof from 7 leaves to 15",
+      "input": {
+        "first_size": 7,
+        "second_size": 15
+      },
+      "expect": {
+        "first_root": "ed75a6d042f1179f5a9ddcbfb75150463895c76f4ca965070d23cc2f884f97b0",
+        "second_root": "0c8235f81403e65a9f82dde57103e96483fac652c6bd9d845d630a7a23f4e40e",
+        "path": [
+          "00ec4eeaf8d3039669b511032024c121986ae76e3a47120d27d0f1692c7fc0f5",
+          "be22ab3e23d9543277f33cc7386582abd5513932b8416d41021e602c30508c73",
+          "03d9a1a243ec8c5084cabde3b4461829b593b31d59fb443327d08ac3c762f3e3",
+          "4a0e1b67da7b6b1ccc2901e92ee32a6a3251f21dec8307ecc0f171ff80d512d2",
+          "444035e590b1b650ec8f3604fb3a769c0e812a9089e951fe9e847225c4202da0"
+        ]
+      }
+    },
+    {
+      "id": "merkle-cons-14-15",
+      "desc": "consistency proof from 14 leaves to 15",
+      "input": {
+        "first_size": 14,
+        "second_size": 15
+      },
+      "expect": {
+        "first_root": "dd705a06384ef45739e6948840ec73491354b5e8d85e0347c3eceffca38393bd",
+        "second_root": "0c8235f81403e65a9f82dde57103e96483fac652c6bd9d845d630a7a23f4e40e",
+        "path": [
+          "088b5b2f79b3ecda77ba2087342606d4b06a2bc0dfa328f075518b5398938023",
+          "f5dcb5639d8694decaf0afc57f0c255fd236fb5ff1fc791bf7bdcd685a176403",
+          "66bb1bb4da6104904bf36f111a9c1df8d5253e047cb5e999ca97aeb119724843",
+          "cfbda7f20160238ab949ef6b932b77bf62f907add415594931bfac8c533fc3a6"
+        ]
+      }
+    },
+    {
+      "id": "merkle-cons-1-16",
+      "desc": "consistency proof from 1 leaves to 16",
+      "input": {
+        "first_size": 1,
+        "second_size": 16
+      },
+      "expect": {
+        "first_root": "473becc27ad4269c3c6efc1b9253caad0295c474aa5cdda91f6dbe6a451cc036",
+        "second_root": "17c3189ac0429381194da0792be0ecc3cd57f4ef3d2c7e2cc002b7c00325d1bb",
+        "path": [
+          "956c65bc49f241a83662c64cb47bc0ed88c98f9ae5fee51e2a7e0798fb4146ba",
+          "9e678ee79f35476c83fe87a22ca894a3da8e7b48f9f4ae38d8d1189492cfd437",
+          "db5bd43a046a962dbd73b0cc50b8714aaeb1ca1215770ebd12096caeb11ad8e0",
+          "a7c087fc865270c0d55e7aaf1e977b2cb4a18e202029d51082bab29f8c612673"
+        ]
+      }
+    },
+    {
+      "id": "merkle-cons-8-16",
+      "desc": "consistency proof from 8 leaves to 16",
+      "input": {
+        "first_size": 8,
+        "second_size": 16
+      },
+      "expect": {
+        "first_root": "cfbda7f20160238ab949ef6b932b77bf62f907add415594931bfac8c533fc3a6",
+        "second_root": "17c3189ac0429381194da0792be0ecc3cd57f4ef3d2c7e2cc002b7c00325d1bb",
+        "path": [
+          "a7c087fc865270c0d55e7aaf1e977b2cb4a18e202029d51082bab29f8c612673"
+        ]
+      }
+    },
+    {
+      "id": "merkle-cons-15-16",
+      "desc": "consistency proof from 15 leaves to 16",
+      "input": {
+        "first_size": 15,
+        "second_size": 16
+      },
+      "expect": {
+        "first_root": "0c8235f81403e65a9f82dde57103e96483fac652c6bd9d845d630a7a23f4e40e",
+        "second_root": "17c3189ac0429381194da0792be0ecc3cd57f4ef3d2c7e2cc002b7c00325d1bb",
+        "path": [
+          "f5dcb5639d8694decaf0afc57f0c255fd236fb5ff1fc791bf7bdcd685a176403",
+          "338e2ede0170b5faf904fcc31978f7b3a11279f3311a564970e410589ef88807",
+          "088b5b2f79b3ecda77ba2087342606d4b06a2bc0dfa328f075518b5398938023",
+          "66bb1bb4da6104904bf36f111a9c1df8d5253e047cb5e999ca97aeb119724843",
+          "cfbda7f20160238ab949ef6b932b77bf62f907add415594931bfac8c533fc3a6"
+        ]
+      }
+    },
+    {
+      "id": "merkle-cons-1-17",
+      "desc": "consistency proof from 1 leaves to 17",
+      "input": {
+        "first_size": 1,
+        "second_size": 17
+      },
+      "expect": {
+        "first_root": "473becc27ad4269c3c6efc1b9253caad0295c474aa5cdda91f6dbe6a451cc036",
+        "second_root": "68d1f7f660ef9c787a414fab4ec48b01e8d03573ef14ed562c0937c5e21564b5",
+        "path": [
+          "956c65bc49f241a83662c64cb47bc0ed88c98f9ae5fee51e2a7e0798fb4146ba",
+          "9e678ee79f35476c83fe87a22ca894a3da8e7b48f9f4ae38d8d1189492cfd437",
+          "db5bd43a046a962dbd73b0cc50b8714aaeb1ca1215770ebd12096caeb11ad8e0",
+          "a7c087fc865270c0d55e7aaf1e977b2cb4a18e202029d51082bab29f8c612673",
+          "c57daf2dd59390e70329afe860738b25f71ea28e93ee32ffcb3aec4a37c10d92"
+        ]
+      }
+    },
+    {
+      "id": "merkle-cons-8-17",
+      "desc": "consistency proof from 8 leaves to 17",
+      "input": {
+        "first_size": 8,
+        "second_size": 17
+      },
+      "expect": {
+        "first_root": "cfbda7f20160238ab949ef6b932b77bf62f907add415594931bfac8c533fc3a6",
+        "second_root": "68d1f7f660ef9c787a414fab4ec48b01e8d03573ef14ed562c0937c5e21564b5",
+        "path": [
+          "a7c087fc865270c0d55e7aaf1e977b2cb4a18e202029d51082bab29f8c612673",
+          "c57daf2dd59390e70329afe860738b25f71ea28e93ee32ffcb3aec4a37c10d92"
+        ]
+      }
+    },
+    {
+      "id": "merkle-cons-16-17",
+      "desc": "consistency proof from 16 leaves to 17",
+      "input": {
+        "first_size": 16,
+        "second_size": 17
+      },
+      "expect": {
+        "first_root": "17c3189ac0429381194da0792be0ecc3cd57f4ef3d2c7e2cc002b7c00325d1bb",
+        "second_root": "68d1f7f660ef9c787a414fab4ec48b01e8d03573ef14ed562c0937c5e21564b5",
+        "path": [
+          "c57daf2dd59390e70329afe860738b25f71ea28e93ee32ffcb3aec4a37c10d92"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+# Runtime dependencies of the one FastAPI service (hackathon cut, R-HKC-01).
+# Pinned; licences reviewed (all MIT or BSD-3-Clause).
+fastapi==0.120.4          # MIT
+uvicorn==0.38.0           # BSD-3-Clause
+psycopg[binary]==3.2.12   # LGPL-3.0-or-later for the C wrapper; psycopg3 core is LGPL
+                          # -> see docs: LGPL permits use as a library. Flagged in the
+                          #    licence note of docs/IMPLEMENTATION_PLAN.md question Q5.

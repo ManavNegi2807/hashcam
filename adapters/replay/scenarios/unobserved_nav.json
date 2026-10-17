@@ -1,0 +1,12 @@
+{
+  "scenario_id": "unobserved_nav",
+  "task": "Navigate without ever observing the page",
+  "requested_coverage": "STEP_GATED",
+  "steps": [
+    {
+      "action_id": "u-1",
+      "action_type": "navigate",
+      "target": "https://portal.example/vendor/42"
+    }
+  ]
+}

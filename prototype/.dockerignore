@@ -1,0 +1,10 @@
+secrets/
+*.db
+*.pem
+.env
+.env.*
+shots/
+__pycache__/
+*.pyc
+.git/
+.pytest_cache/

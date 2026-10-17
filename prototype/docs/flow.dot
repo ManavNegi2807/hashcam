@@ -1,0 +1,42 @@
+digraph G {
+  rankdir=TB; nodesep=0.35; ranksep=0.45;
+  graph [fontname="Helvetica", pad=0.3, bgcolor="white"];
+  node  [fontname="Helvetica", fontsize=12, shape=box, style="rounded,filled", color="#1B2A41", fillcolor="#EAF1F8", margin="0.18,0.10"];
+  edge  [fontname="Helvetica", fontsize=10, color="#44546A"];
+
+  start  [label="User gives a task", shape=oval, fillcolor="#1B2A41", fontcolor=white];
+  plan   [label="Agent plans next step\n(LangGraph + LLM)"];
+  guard  [label="Guard checks the step\nallowlist · limit · masking", shape=diamond, fillcolor="#FFF4D6", margin="0.05,0.05"];
+  block  [label="BLOCKED or DENIED\nlogged, step skipped", fillcolor="#FBE3E1", color="#B3261E"];
+  tf     [label="run_step calls TinyFish\nsearch · fetch · browser · agent"];
+  rec    [label="Recorder writes the entry\nURL · action · masked result\nscreenshot hash · prev hash\nsha256 + Ed25519 signature", fillcolor="#E3F3E8", color="#1E7B45"];
+  more   [label="Task done?", shape=diamond, fillcolor="#FFF4D6", margin="0.05,0.05"];
+  pay    [label="Agent PREPARES payment\nrecipient · amount · site\n(cannot send money)"];
+  conf   [label="Separate confirmation screen\nshows recipient · amount · site", fillcolor="#FFF4D6"];
+  sign   [label="User reads and signs\nwith own wallet (testnet)"];
+  rej    [label="Rejected\nlogged, no payment", fillcolor="#FBE3E1", color="#B3261E"];
+  txrec  [label="Record approval + tx ID", fillcolor="#E3F3E8", color="#1E7B45"];
+  anchor [label="Anchor latest hash\npublic gist / testnet", fillcolor="#E3F3E8", color="#1E7B45"];
+  ver    [label="Verifier checks chain,\nsignatures, screenshots, anchor", shape=diamond, fillcolor="#FFF4D6", margin="0.05,0.05"];
+  ok     [label="GREEN: log intact", shape=oval, fillcolor="#1E7B45", fontcolor=white];
+  bad    [label="RED: TAMPERED at step n", shape=oval, fillcolor="#B3261E", fontcolor=white];
+
+  start -> plan;
+  plan -> guard;
+  guard -> tf    [label="allow"];
+  guard -> block [label="block / deny"];
+  block -> rec   [style=dashed, label="still recorded"];
+  tf -> rec;
+  rec -> more;
+  more -> plan   [label="no"];
+  more -> pay    [label="yes, payment needed"];
+  pay -> conf;
+  conf -> sign   [label="approve"];
+  conf -> rej    [label="reject"];
+  sign -> txrec;
+  rej -> anchor;
+  txrec -> anchor;
+  anchor -> ver;
+  ver -> ok  [label="all match"];
+  ver -> bad [label="mismatch"];
+}

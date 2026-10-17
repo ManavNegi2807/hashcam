@@ -1,0 +1,38 @@
+# Build context exclusions. A plain `COPY . .` must not be able to pick up
+# secrets, keys, local evidence or build output (R-OPS-05, AGENTS.md 3.15).
+# Never add a negation (!) that re-admits any of these.
+secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+.env
+.env.*
+id_rsa
+id_ed25519
+
+*.db
+*.sqlite
+log.db
+shots/
+out/
+artifacts-local/
+
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+target/
+node_modules/
+.next/
+dist/
+build/
+
+.git/
+.github/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+deploy/secrets/
+.pydeps/

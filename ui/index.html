@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hascham audit view</title>
+  <meta name="color-scheme" content="light dark">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/chat.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to the results</a>
+  <div class="shell auditshell">
+  <aside class="side" aria-label="Runs">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg>
+      <div><strong>Hascham</strong><span>Audit view</span></div>
+    </div>
+    <a id="run-link2" class="newrun" href="/run" hidden>+ Give a task</a>
+    <h2 class="side-h">Past runs</h2>
+    <ul id="past" class="past"></ul>
+    <div class="side-foot"><p>Read-only. Served from this computer only.</p></div>
+  </aside>
+  <div class="content">
+
+  <header class="bar">
+    <div class="titleblock">
+      <h1>Hascham <span>audit view</span></h1>
+      <p class="lede">Shows what the offline verifier says about a run. It does not decide anything itself.</p>
+    </div>
+    <a id="run-link" class="linkbtn" href="/run" hidden>Give the agent a task</a>
+    <form class="controls" id="controls" aria-label="Choose a receipt">
+      <label for="receipt">Run</label>
+      <select id="receipt" name="receipt"></select>
+      <button type="submit" id="verify">Verify</button>
+      <label class="file" for="report-file">Open a saved report (JSON)</label>
+      <input type="file" id="report-file" accept="application/json,.json">
+    </form>
+  </header>
+
+  <p id="status" class="status" role="status" aria-live="polite"></p>
+
+  <main id="main" tabindex="-1">
+    <section id="answer" class="answerbox" aria-labelledby="answer-h" hidden>
+      <h2 id="answer-h">Answer from TinyFish</h2>
+      <div id="answer-text"></div>
+      <p class="muted">This is the provider's own answer. Nothing here checks that it is true.</p>
+    </section>
+
+    <section id="overall" aria-labelledby="overall-h" hidden>
+      <h2 id="overall-h">Overall result</h2>
+      <div id="overall-body"></div>
+    </section>
+
+    <section class="notice" aria-labelledby="limits-h">
+      <h2 id="limits-h">What this view does not tell you</h2>
+      <ul>
+        <li>A valid receipt means the recorded history has not changed since it was signed. It does not mean the task was safe or correct, or that anything really happened.</li>
+        <li>A signed approval shows that a key signed. It does not show which person held that key.</li>
+        <li>A valid hash proves the bytes match what was committed. It does not prove a page was truthful.</li>
+        <li>A score from the injection guard or an anomaly rule is a signal for review. It is not proof of an attack.</li>
+        <li><strong>Unknown</strong> and <strong>not independent</strong> are never passes. Missing evidence stays missing.</li>
+      </ul>
+    </section>
+
+    <section id="channels" aria-labelledby="channels-h" hidden>
+      <h2 id="channels-h">Five channels, kept apart</h2>
+      <div id="channels-body" class="cards"></div>
+    </section>
+
+    <section id="dimensions" aria-labelledby="dims-h" hidden>
+      <h2 id="dims-h">Every verifier dimension</h2>
+      <div class="scroll" tabindex="0" role="region" aria-label="Verifier dimensions table, scrollable">
+        <table id="dims-table">
+          <caption class="sr">Verifier dimensions with their status and how much each one counts</caption>
+          <thead><tr><th scope="col">Dimension</th><th scope="col">Status</th><th scope="col">Counts as</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="findings" aria-labelledby="findings-h" hidden>
+      <h2 id="findings-h">What the verifier found</h2>
+      <ul id="findings-list" class="findings"></ul>
+    </section>
+
+    <section id="run" aria-labelledby="run-h" hidden>
+      <h2 id="run-h">Run, policy and approvals</h2>
+      <div id="run-body" class="cards"></div>
+    </section>
+
+    <section id="events" aria-labelledby="events-h" hidden>
+      <h2 id="events-h">Events</h2>
+      <p id="events-note" class="muted"></p>
+      <div class="scroll" tabindex="0" role="region" aria-label="Events table, scrollable">
+        <table id="events-table">
+          <caption class="sr">What happened, in order, with who reported each step</caption>
+          <thead><tr><th scope="col">#</th><th scope="col">What happened</th><th scope="col">Who says so</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p>Read-only. Served from this computer only. Nothing is sent anywhere.</p>
+  </footer>
+    </div>
+  </div>
+  <script src="/format.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

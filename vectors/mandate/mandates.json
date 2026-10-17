@@ -1,0 +1,463 @@
+{
+  "set": "signed mandate and host matching (D-16)",
+  "protocol_version": "abb/1",
+  "generator": "vectors/tools/generate.py (Python reference, cross-check only)",
+  "note": "PROTOCOL.md 5.7. `mandate_digest` is SHA-256 of the signing bytes `ABB1-MANDATE || 0x00 || JCS(mandate)`.",
+  "cases": [
+    {
+      "id": "mandate-accept-with-spend-bound",
+      "desc": "a mandate with a spend bound",
+      "input": {
+        "mandate": {
+          "mandate_id": "mandate-1",
+          "issuer_key_id": "ed25519:0749d7a4314af01830dcb751100b69b1b048c4e0d3e1fa421b97116e3eea6b97",
+          "subject": "replay",
+          "allowed_hosts": [
+            "vendor.example",
+            "*.bank.example"
+          ],
+          "allowed_action_types": [
+            "NAVIGATE",
+            "CLICK",
+            "TYPE"
+          ],
+          "max_actions": 12,
+          "not_before": 1760000000000,
+          "not_after": 1760086400000,
+          "max_spend_minor_units": 50000,
+          "currency": "INR"
+        },
+        "key_id": "ed25519:0749d7a4314af01830dcb751100b69b1b048c4e0d3e1fa421b97116e3eea6b97",
+        "signature": "47c4d0557e6213b99a3c4bc3b0ba2c785c3692d8422a1e39e70d406c6059909c31c154965014379f30b272a7790cc8948e33d7e9d4453f976ec5899d6f456208"
+      },
+      "expect": {
+        "result": "ACCEPT",
+        "canonical_b64": "eyJhbGxvd2VkX2FjdGlvbl90eXBlcyI6WyJOQVZJR0FURSIsIkNMSUNLIiwiVFlQRSJdLCJhbGxvd2VkX2hvc3RzIjpbInZlbmRvci5leGFtcGxlIiwiKi5iYW5rLmV4YW1wbGUiXSwiY3VycmVuY3kiOiJJTlIiLCJpc3N1ZXJfa2V5X2lkIjoiZWQyNTUxOTowNzQ5ZDdhNDMxNGFmMDE4MzBkY2I3NTExMDBiNjliMWIwNDhjNGUwZDNlMWZhNDIxYjk3MTE2ZTNlZWE2Yjk3IiwibWFuZGF0ZV9pZCI6Im1hbmRhdGUtMSIsIm1heF9hY3Rpb25zIjoxMiwibWF4X3NwZW5kX21pbm9yX3VuaXRzIjo1MDAwMCwibm90X2FmdGVyIjoxNzYwMDg2NDAwMDAwLCJub3RfYmVmb3JlIjoxNzYwMDAwMDAwMDAwLCJzdWJqZWN0IjoicmVwbGF5In0=",
+        "mandate_digest": "b8081dffcf494e7621aba936d0785244f6537ea2606cce306ae9f1b80d10cc66"
+      }
+    },
+    {
+      "id": "mandate-accept-without-spend-bound",
+      "desc": "the two spend fields are omitted together",
+      "input": {
+        "mandate": {
+          "mandate_id": "mandate-2",
+          "issuer_key_id": "ed25519:0749d7a4314af01830dcb751100b69b1b048c4e0d3e1fa421b97116e3eea6b97",
+          "subject": "replay",
+          "allowed_hosts": [
+            "vendor.example",
+            "*.bank.example"
+          ],
+          "allowed_action_types": [
+            "NAVIGATE",
+            "CLICK",
+            "TYPE"
+          ],
+          "max_actions": 12,
+          "not_before": 1760000000000,
+          "not_after": 1760086400000
+        },
+        "key_id": "ed25519:0749d7a4314af01830dcb751100b69b1b048c4e0d3e1fa421b97116e3eea6b97",
+        "signature": "8992f82dbb6cf42646e9659c20b3bc99fd56a6c1dc95ce51248aa46d3063d9e592402c6f6136383a9dd881b6c6f927c10bb448e254ae57c4e9b502e597e59408"
+      },
+      "expect": {
+        "result": "ACCEPT",
+        "canonical_b64": "eyJhbGxvd2VkX2FjdGlvbl90eXBlcyI6WyJOQVZJR0FURSIsIkNMSUNLIiwiVFlQRSJdLCJhbGxvd2VkX2hvc3RzIjpbInZlbmRvci5leGFtcGxlIiwiKi5iYW5rLmV4YW1wbGUiXSwiaXNzdWVyX2tleV9pZCI6ImVkMjU1MTk6MDc0OWQ3YTQzMTRhZjAxODMwZGNiNzUxMTAwYjY5YjFiMDQ4YzRlMGQzZTFmYTQyMWI5NzExNmUzZWVhNmI5NyIsIm1hbmRhdGVfaWQiOiJtYW5kYXRlLTIiLCJtYXhfYWN0aW9ucyI6MTIsIm5vdF9hZnRlciI6MTc2MDA4NjQwMDAwMCwibm90X2JlZm9yZSI6MTc2MDAwMDAwMDAwMCwic3ViamVjdCI6InJlcGxheSJ9",
+        "mandate_digest": "8c197caba28ccd35ded485360a24832514a08349162adcaa1bd203dbbdd37973"
+      }
+    },
+    {
+      "id": "mandate-accept-no-actions-allowed",
+      "desc": "max_actions of zero is a legal, if useless, mandate",
+      "input": {
+        "mandate": {
+          "mandate_id": "mandate-3",
+          "issuer_key_id": "ed25519:0749d7a4314af01830dcb751100b69b1b048c4e0d3e1fa421b97116e3eea6b97",
+          "subject": "replay",
+          "allowed_hosts": [
+            "vendor.example",
+            "*.bank.example"
+          ],
+          "allowed_action_types": [
+            "NAVIGATE",
+            "CLICK",
+            "TYPE"
+          ],
+          "max_actions": 0,
+          "not_before": 1760000000000,
+          "not_after": 1760086400000,
+          "max_spend_minor_units": 50000,
+          "currency": "INR"
+        },
+        "key_id": "ed25519:0749d7a4314af01830dcb751100b69b1b048c4e0d3e1fa421b97116e3eea6b97",
+        "signature": "30439b5e8b7daac72e28fc89592eea7d47f0910b9257feb1ba209f8cda110c647ff4e25281f56935c0149f26095d4513b58890f288f8b5a9710ae12a57e55b06"
+      },
+      "expect": {
+        "result": "ACCEPT",
+        "canonical_b64": "eyJhbGxvd2VkX2FjdGlvbl90eXBlcyI6WyJOQVZJR0FURSIsIkNMSUNLIiwiVFlQRSJdLCJhbGxvd2VkX2hvc3RzIjpbInZlbmRvci5leGFtcGxlIiwiKi5iYW5rLmV4YW1wbGUiXSwiY3VycmVuY3kiOiJJTlIiLCJpc3N1ZXJfa2V5X2lkIjoiZWQyNTUxOTowNzQ5ZDdhNDMxNGFmMDE4MzBkY2I3NTExMDBiNjliMWIwNDhjNGUwZDNlMWZhNDIxYjk3MTE2ZTNlZWE2Yjk3IiwibWFuZGF0ZV9pZCI6Im1hbmRhdGUtMyIsIm1heF9hY3Rpb25zIjowLCJtYXhfc3BlbmRfbWlub3JfdW5pdHMiOjUwMDAwLCJub3RfYWZ0ZXIiOjE3NjAwODY0MDAwMDAsIm5vdF9iZWZvcmUiOjE3NjAwMDAwMDAwMDAsInN1YmplY3QiOiJyZXBsYXkifQ==",
+        "mandate_digest": "3143396089466c75a40dcba4ead5062e9467159303b326e7eb681e42be9e066d"
+      }
+    },
+    {
+      "id": "mandate-reject-max-actions-raised",
+      "desc": "max_actions raised after signing",
+      "input": {
+        "mandate": {
+          "mandate_id": "mandate-1",
+          "issuer_key_id": "ed25519:0749d7a4314af01830dcb751100b69b1b048c4e0d3e1fa421b97116e3eea6b97",
+          "subject": "replay",
+          "allowed_hosts": [
+            "vendor.example",
+            "*.bank.example"
+          ],
+          "allowed_action_types": [
+            "NAVIGATE",
+            "CLICK",
+            "TYPE"
+          ],
+          "max_actions": 500,
+          "not_before": 1760000000000,
+          "not_after": 1760086400000,
+          "max_spend_minor_units": 50000,
+          "currency": "INR"
+        },
+        "key_id": "ed25519:0749d7a4314af01830dcb751100b69b1b048c4e0d3e1fa421b97116e3eea6b97",
+        "signature": "47c4d0557e6213b99a3c4bc3b0ba2c785c3692d8422a1e39e70d406c6059909c31c154965014379f30b272a7790cc8948e33d7e9d4453f976ec5899d6f456208"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "BAD_SIGNATURE"
+      }
+    },
+    {
+      "id": "mandate-reject-host-added",
+      "desc": "a host added after signing",
+      "input": {
+        "mandate": {
+          "mandate_id": "mandate-1",
+          "issuer_key_id": "ed25519:0749d7a4314af01830dcb751100b69b1b048c4e0d3e1fa421b97116e3eea6b97",
+          "subject": "replay",
+          "allowed_hosts": [
+            "vendor.example",
+            "*.bank.example",
+            "evil.example"
+          ],
+          "allowed_action_types": [
+            "NAVIGATE",
+            "CLICK",
+            "TYPE"
+          ],
+          "max_actions": 12,
+          "not_before": 1760000000000,
+          "not_after": 1760086400000,
+          "max_spend_minor_units": 50000,
+          "currency": "INR"
+        },
+        "key_id": "ed25519:0749d7a4314af01830dcb751100b69b1b048c4e0d3e1fa421b97116e3eea6b97",
+        "signature": "47c4d0557e6213b99a3c4bc3b0ba2c785c3692d8422a1e39e70d406c6059909c31c154965014379f30b272a7790cc8948e33d7e9d4453f976ec5899d6f456208"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "BAD_SIGNATURE"
+      }
+    },
+    {
+      "id": "mandate-reject-spend-raised",
+      "desc": "spend bound raised after signing",
+      "input": {
+        "mandate": {
+          "mandate_id": "mandate-1",
+          "issuer_key_id": "ed25519:0749d7a4314af01830dcb751100b69b1b048c4e0d3e1fa421b97116e3eea6b97",
+          "subject": "replay",
+          "allowed_hosts": [
+            "vendor.example",
+            "*.bank.example"
+          ],
+          "allowed_action_types": [
+            "NAVIGATE",
+            "CLICK",
+            "TYPE"
+          ],
+          "max_actions": 12,
+          "not_before": 1760000000000,
+          "not_after": 1760086400000,
+          "max_spend_minor_units": 5000000,
+          "currency": "INR"
+        },
+        "key_id": "ed25519:0749d7a4314af01830dcb751100b69b1b048c4e0d3e1fa421b97116e3eea6b97",
+        "signature": "47c4d0557e6213b99a3c4bc3b0ba2c785c3692d8422a1e39e70d406c6059909c31c154965014379f30b272a7790cc8948e33d7e9d4453f976ec5899d6f456208"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "BAD_SIGNATURE"
+      }
+    },
+    {
+      "id": "mandate-reject-window-extended",
+      "desc": "not_after pushed later",
+      "input": {
+        "mandate": {
+          "mandate_id": "mandate-1",
+          "issuer_key_id": "ed25519:0749d7a4314af01830dcb751100b69b1b048c4e0d3e1fa421b97116e3eea6b97",
+          "subject": "replay",
+          "allowed_hosts": [
+            "vendor.example",
+            "*.bank.example"
+          ],
+          "allowed_action_types": [
+            "NAVIGATE",
+            "CLICK",
+            "TYPE"
+          ],
+          "max_actions": 12,
+          "not_before": 1760000000000,
+          "not_after": 1999999999999,
+          "max_spend_minor_units": 50000,
+          "currency": "INR"
+        },
+        "key_id": "ed25519:0749d7a4314af01830dcb751100b69b1b048c4e0d3e1fa421b97116e3eea6b97",
+        "signature": "47c4d0557e6213b99a3c4bc3b0ba2c785c3692d8422a1e39e70d406c6059909c31c154965014379f30b272a7790cc8948e33d7e9d4453f976ec5899d6f456208"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "BAD_SIGNATURE"
+      }
+    },
+    {
+      "id": "mandate-reject-wrong-domain-tag",
+      "desc": "the same bytes signed under the approval tag are not a mandate",
+      "input": {
+        "mandate": {
+          "mandate_id": "mandate-1",
+          "issuer_key_id": "ed25519:0749d7a4314af01830dcb751100b69b1b048c4e0d3e1fa421b97116e3eea6b97",
+          "subject": "replay",
+          "allowed_hosts": [
+            "vendor.example",
+            "*.bank.example"
+          ],
+          "allowed_action_types": [
+            "NAVIGATE",
+            "CLICK",
+            "TYPE"
+          ],
+          "max_actions": 12,
+          "not_before": 1760000000000,
+          "not_after": 1760086400000,
+          "max_spend_minor_units": 50000,
+          "currency": "INR"
+        },
+        "key_id": "ed25519:0749d7a4314af01830dcb751100b69b1b048c4e0d3e1fa421b97116e3eea6b97",
+        "signature": "262dabad4faf9354bb702791b438b15df10f8c0edd770128de8e519911cc2a361c41483e94ddd5cfcd541c2bc25fbd2c76c17370c16dbef8d435f6621d68b70b"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "BAD_SIGNATURE"
+      }
+    },
+    {
+      "id": "mandate-reject-signed-by-an-approver-key",
+      "desc": "only a mandate_issuer key can issue a mandate",
+      "input": {
+        "mandate": {
+          "mandate_id": "mandate-1",
+          "issuer_key_id": "ed25519:0749d7a4314af01830dcb751100b69b1b048c4e0d3e1fa421b97116e3eea6b97",
+          "subject": "replay",
+          "allowed_hosts": [
+            "vendor.example",
+            "*.bank.example"
+          ],
+          "allowed_action_types": [
+            "NAVIGATE",
+            "CLICK",
+            "TYPE"
+          ],
+          "max_actions": 12,
+          "not_before": 1760000000000,
+          "not_after": 1760086400000,
+          "max_spend_minor_units": 50000,
+          "currency": "INR"
+        },
+        "key_id": "ed25519:f1c929cc6ac7eb3b65b2b173c97c1d4ef5bc11f86bf6872af5563131cfd79d9d",
+        "signature": "8a7a48d3bc0423fd67098e092a532fb6b839f2949e109aaebd3175538375fa57fc9e2878b8c9c8b7a8fd18880ac89168ce667b76cdeeda4966fbfafa7a9c5209"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "WRONG_KEY_ROLE"
+      }
+    },
+    {
+      "id": "mandate-reject-window-reversed",
+      "desc": "not_after before not_before",
+      "input": {
+        "mandate_text": "{\"allowed_action_types\":[\"NAVIGATE\",\"CLICK\",\"TYPE\"],\"allowed_hosts\":[\"vendor.example\",\"*.bank.example\"],\"currency\":\"INR\",\"issuer_key_id\":\"ed25519:0749d7a4314af01830dcb751100b69b1b048c4e0d3e1fa421b97116e3eea6b97\",\"mandate_id\":\"mandate-1\",\"max_actions\":12,\"max_spend_minor_units\":50000,\"not_after\":1759999999999,\"not_before\":1760000000000,\"subject\":\"replay\"}",
+        "key_id": "ed25519:0749d7a4314af01830dcb751100b69b1b048c4e0d3e1fa421b97116e3eea6b97"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "VALIDATION_FAILED"
+      }
+    },
+    {
+      "id": "mandate-reject-negative-max-actions",
+      "desc": "max_actions must not be negative",
+      "input": {
+        "mandate_text": "{\"allowed_action_types\":[\"NAVIGATE\",\"CLICK\",\"TYPE\"],\"allowed_hosts\":[\"vendor.example\",\"*.bank.example\"],\"currency\":\"INR\",\"issuer_key_id\":\"ed25519:0749d7a4314af01830dcb751100b69b1b048c4e0d3e1fa421b97116e3eea6b97\",\"mandate_id\":\"mandate-1\",\"max_actions\":-1,\"max_spend_minor_units\":50000,\"not_after\":1760086400000,\"not_before\":1760000000000,\"subject\":\"replay\"}",
+        "key_id": "ed25519:0749d7a4314af01830dcb751100b69b1b048c4e0d3e1fa421b97116e3eea6b97"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "VALIDATION_FAILED"
+      }
+    },
+    {
+      "id": "mandate-reject-extra-field",
+      "desc": "an undefined field is refused",
+      "input": {
+        "mandate_text": "{\"allowed_action_types\":[\"NAVIGATE\",\"CLICK\",\"TYPE\"],\"allowed_hosts\":[\"vendor.example\",\"*.bank.example\"],\"currency\":\"INR\",\"issuer_key_id\":\"ed25519:0749d7a4314af01830dcb751100b69b1b048c4e0d3e1fa421b97116e3eea6b97\",\"mandate_id\":\"mandate-1\",\"max_actions\":12,\"max_spend_minor_units\":50000,\"not_after\":1760086400000,\"not_before\":1760000000000,\"subject\":\"replay\",\"note\":\"x\"}",
+        "key_id": "ed25519:0749d7a4314af01830dcb751100b69b1b048c4e0d3e1fa421b97116e3eea6b97"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "VALIDATION_FAILED"
+      }
+    },
+    {
+      "id": "mandate-reject-spend-without-currency",
+      "desc": "the spend bound and its currency go together",
+      "input": {
+        "mandate_text": "{\"allowed_action_types\":[\"NAVIGATE\",\"CLICK\",\"TYPE\"],\"allowed_hosts\":[\"vendor.example\",\"*.bank.example\"],\"issuer_key_id\":\"ed25519:0749d7a4314af01830dcb751100b69b1b048c4e0d3e1fa421b97116e3eea6b97\",\"mandate_id\":\"mandate-1\",\"max_actions\":12,\"max_spend_minor_units\":50000,\"not_after\":1760086400000,\"not_before\":1760000000000,\"subject\":\"replay\"}",
+        "key_id": "ed25519:0749d7a4314af01830dcb751100b69b1b048c4e0d3e1fa421b97116e3eea6b97"
+      },
+      "expect": {
+        "result": "REJECT",
+        "reason": "VALIDATION_FAILED"
+      }
+    },
+    {
+      "id": "mandate-host-exact",
+      "desc": "is 'vendor.example' inside allowed_hosts ['vendor.example', '*.bank.example']",
+      "input": {
+        "allowed_hosts": [
+          "vendor.example",
+          "*.bank.example"
+        ],
+        "host": "vendor.example"
+      },
+      "expect": {
+        "result": "ALLOWED"
+      }
+    },
+    {
+      "id": "mandate-host-case-insensitive",
+      "desc": "is 'VENDOR.Example' inside allowed_hosts ['vendor.example', '*.bank.example']",
+      "input": {
+        "allowed_hosts": [
+          "vendor.example",
+          "*.bank.example"
+        ],
+        "host": "VENDOR.Example"
+      },
+      "expect": {
+        "result": "ALLOWED"
+      }
+    },
+    {
+      "id": "mandate-host-suffix-subdomain",
+      "desc": "is 'pay.bank.example' inside allowed_hosts ['vendor.example', '*.bank.example']",
+      "input": {
+        "allowed_hosts": [
+          "vendor.example",
+          "*.bank.example"
+        ],
+        "host": "pay.bank.example"
+      },
+      "expect": {
+        "result": "ALLOWED"
+      }
+    },
+    {
+      "id": "mandate-host-suffix-deep-subdomain",
+      "desc": "is 'a.b.bank.example' inside allowed_hosts ['vendor.example', '*.bank.example']",
+      "input": {
+        "allowed_hosts": [
+          "vendor.example",
+          "*.bank.example"
+        ],
+        "host": "a.b.bank.example"
+      },
+      "expect": {
+        "result": "ALLOWED"
+      }
+    },
+    {
+      "id": "mandate-host-suffix-bare",
+      "desc": "is 'bank.example' inside allowed_hosts ['vendor.example', '*.bank.example']",
+      "input": {
+        "allowed_hosts": [
+          "vendor.example",
+          "*.bank.example"
+        ],
+        "host": "bank.example"
+      },
+      "expect": {
+        "result": "ALLOWED"
+      }
+    },
+    {
+      "id": "mandate-host-lookalike-prefix",
+      "desc": "is 'evil-bank.example' inside allowed_hosts ['vendor.example', '*.bank.example']",
+      "input": {
+        "allowed_hosts": [
+          "vendor.example",
+          "*.bank.example"
+        ],
+        "host": "evil-bank.example"
+      },
+      "expect": {
+        "result": "DENIED"
+      }
+    },
+    {
+      "id": "mandate-host-suffix-trick",
+      "desc": "is 'vendor.example.evil.test' inside allowed_hosts ['vendor.example', '*.bank.example']",
+      "input": {
+        "allowed_hosts": [
+          "vendor.example",
+          "*.bank.example"
+        ],
+        "host": "vendor.example.evil.test"
+      },
+      "expect": {
+        "result": "DENIED"
+      }
+    },
+    {
+      "id": "mandate-host-unlisted",
+      "desc": "is 'other.example' inside allowed_hosts ['vendor.example', '*.bank.example']",
+      "input": {
+        "allowed_hosts": [
+          "vendor.example",
+          "*.bank.example"
+        ],
+        "host": "other.example"
+      },
+      "expect": {
+        "result": "DENIED"
+      }
+    },
+    {
+      "id": "mandate-host-empty",
+      "desc": "is '' inside allowed_hosts ['vendor.example', '*.bank.example']",
+      "input": {
+        "allowed_hosts": [
+          "vendor.example",
+          "*.bank.example"
+        ],
+        "host": ""
+      },
+      "expect": {
+        "result": "DENIED"
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "policy_id": "default",
+  "version": 1,
+  "description": "Hackathon demo policy. Allows a bounded set of actions on one vendor portal, denies everything else, and gates bank-detail changes behind a human approval.",
+  "allowed_action_types": ["navigate", "form_fill", "form_submit", "download", "api_call"],
+  "action_types_needing_target": ["navigate", "form_submit", "download", "api_call"],
+  "allowed_hosts": ["portal.example", "*.portal.example"],
+  "denied_hosts": ["evil.example"],
+  "max_actions": 20,
+  "max_amount_minor_units": 500000,
+  "approval_required": {
+    "action_types": ["payment"],
+    "hosts": [],
+    "target_contains": ["/bank"],
+    "amount_minor_units_over": 100000
+  }
+}

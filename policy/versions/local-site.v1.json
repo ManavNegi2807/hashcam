@@ -1,0 +1,11 @@
+{
+  "policy_id": "local-site",
+  "version": 1,
+  "description": "A local site only: the Playwright adapter's demo policy. Allows the loopback host and nothing else. SSRF rules in the adapter still apply on top.",
+  "allowed_action_types": ["navigate", "form_fill", "form_submit", "download", "api_call"],
+  "action_types_needing_target": ["navigate", "form_submit", "download", "api_call"],
+  "allowed_hosts": ["127.0.0.1"],
+  "denied_hosts": [],
+  "max_actions": 5000,
+  "max_amount_minor_units": 0
+}

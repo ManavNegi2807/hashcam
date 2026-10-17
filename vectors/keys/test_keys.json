@@ -1,0 +1,40 @@
+{
+  "set": "key manifest (test only)",
+  "protocol_version": "abb/1",
+  "generator": "vectors/tools/generate.py (Python reference, cross-check only)",
+  "note": "PUBLIC TEST KEYS ONLY. The private seed is SHA-256 of the label in vectors/tools/generate.py, so the key pair is reproducible by anyone and offers no security. Never use these keys outside the vectors (TESTING.md section 16). No private material is stored in this file.",
+  "keys": [
+    {
+      "key_id": "ed25519:0de62baf6830d1984b63e9a581578762f99f50b3e4d484588123228fd1f2a2c2",
+      "public_key_hex": "b11b9da34877b1801aeb9bec58d41e007f877c6ee8fc7fecf0423311c27f3ea7",
+      "role": "signer",
+      "failure_domain": "host:vector-generator/admin:test",
+      "valid_from": 1760000000000,
+      "status": "active"
+    },
+    {
+      "key_id": "ed25519:54b6ff4af374450617ae97c85b7b6c2320048577418f9e19c4915bd7ee42d5df",
+      "public_key_hex": "8ca962414c76da692652a0c42d9d27ff862b344b84d03f847498610ce3dc68ae",
+      "role": "witness",
+      "failure_domain": "host:vector-generator/admin:test",
+      "valid_from": 1760000000000,
+      "status": "active"
+    },
+    {
+      "key_id": "ed25519:f1c929cc6ac7eb3b65b2b173c97c1d4ef5bc11f86bf6872af5563131cfd79d9d",
+      "public_key_hex": "01a21a811b0eff859d26a7f21966dc45832734c9be8b4af0601ba12d5b084689",
+      "role": "approver",
+      "failure_domain": "host:vector-generator/admin:test",
+      "valid_from": 1760000000000,
+      "status": "active"
+    },
+    {
+      "key_id": "ed25519:0749d7a4314af01830dcb751100b69b1b048c4e0d3e1fa421b97116e3eea6b97",
+      "public_key_hex": "873af0cf4001348fdf8fd4c16db71564d854c665c69352db7448673c656c4493",
+      "role": "mandate_issuer",
+      "failure_domain": "host:vector-generator/admin:test",
+      "valid_from": 1760000000000,
+      "status": "active"
+    }
+  ]
+}

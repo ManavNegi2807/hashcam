@@ -1,0 +1,13 @@
+[package]
+name = "abb-jcs"
+description = "RFC 8785 canonical JSON and the strict parser for abb/1"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+sha2.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,62 @@
+# Agent Black Box - Python tooling configuration.
+# Status: SPECIFIED/IMPLEMENTED for tooling only. No product code exists yet.
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+# pytest-asyncio asks for this explicitly; function scope is what we use.
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "requires_abb: needs the `abb` CLI from core/ (Step 2)",
+    "requires_postgres: needs a live PostgreSQL (Step 3)",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+# The prototype keeps its own style (small files, short Hinglish comments,
+# CLAUDE.md rule 6) and its own tests. It is a demo, not part of v10.
+extend-exclude = ["prototype"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "S", "ANN", "RUF"]
+# S101 (assert) is expected in tests; ANN401 is noisy on fixtures.
+ignore = ["ANN401"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests assert, and they carry obviously fake tokens (TESTING.md 16).
+"tests/**" = ["S101", "S105", "S106"]
+"vectors/tools/**" = ["S101"]
+# The demo's tokens are obviously fake and are seeded into a throwaway database.
+"tools/demo.py" = ["S105"]
+# Importing a pytest fixture re-declares it as a test argument; that is the idiom.
+"tests/tamper/test_witness_anchor.py" = ["F811"]
+"tests/adapter/test_playwright_bypass.py" = ["F811"]
+"tests/tamper/test_advisory_channels.py" = ["F811"]
+# B008 is FastAPI's dependency idiom: `who: Principal = Depends(...)` is how a
+# dependency is declared, not an accidental mutable default.
+"services/api/main.py" = ["B008"]
+# The evaluation corpus is data: attack strings are kept on one line each.
+"security/prompt_guard/corpus.py" = ["E501"]
+# Probe pages are JavaScript held in strings; one statement per line reads better than wrapping.
+"adapters/playwright/probe_site.py" = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+exclude = ["^prototype/"]
+strict = true
+warn_unreachable = true
+disallow_untyped_defs = true
+
+# Pytest fixtures arrive as untyped parameters, and annotating every one of
+# them adds noise without catching anything. Source code stays strict.
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_untyped_calls = false
+disallow_incomplete_defs = false
+
+[[tool.mypy.overrides]]
+module = ["psycopg.*", "testcontainers.*"]
+ignore_missing_imports = true

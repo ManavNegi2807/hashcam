@@ -1,0 +1,65 @@
+{
+  "scenario_id": "vendor_bank_update",
+  "description": "Update a vendor record on an allowed portal, try a denied host, then submit the form. Deterministic: no network, no clock, no randomness.",
+  "task": "Update vendor contact details on portal.example",
+  "requested_coverage": "STEP_GATED",
+  "steps": [
+    {
+      "action_id": "a-1",
+      "action_type": "navigate",
+      "target": "https://portal.example/vendor/42",
+      "params": {
+        "wait_for": "#vendor-form"
+      },
+      "observation": {
+        "observation_kind": "page_loaded",
+        "url": "https://portal.example/vendor/42",
+        "text": "Vendor 42 - contact details",
+        "capture": {
+          "media_type": "text/html",
+          "capture_method": "html_snapshot",
+          "content": "<html><body>Vendor 42 - contact details</body></html>"
+        }
+      }
+    },
+    {
+      "action_id": "a-2",
+      "action_type": "form_fill",
+      "target": "https://portal.example/vendor/42",
+      "params": {
+        "field": "contact_email",
+        "value": "ops@vendor.example"
+      },
+      "observation": {
+        "observation_kind": "field_filled",
+        "url": "https://portal.example/vendor/42",
+        "text": "contact_email set"
+      }
+    },
+    {
+      "action_id": "a-3",
+      "action_type": "navigate",
+      "target": "https://evil.example/collect",
+      "params": {},
+      "expect_blocked": true
+    },
+    {
+      "action_id": "a-4",
+      "action_type": "form_submit",
+      "target": "https://portal.example/vendor/42",
+      "params": {
+        "form": "vendor-form"
+      },
+      "observation": {
+        "observation_kind": "page_loaded",
+        "url": "https://portal.example/vendor/42?saved=1",
+        "text": "Vendor 42 saved",
+        "capture": {
+          "media_type": "text/html",
+          "capture_method": "html_snapshot",
+          "content": "<html><body>Vendor 42 saved</body></html>"
+        }
+      }
+    }
+  ]
+}
