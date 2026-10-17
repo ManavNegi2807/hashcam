@@ -14,7 +14,7 @@ Read these files in docs/ in this order. If a file is missing, say so and stop.
 5. PROTOCOL.md   (wins over every other document)
 6. DESIGN.md  (especially section 3.1 Hackathon cut and section 20.1 Hackathon order)
 7. REQUIREMENTS.md, DATABASE_AND_API_CONTRACTS.md, SECURITY.md, ERROR_HANDLING.md, TESTING.md
-Also read CLAUDE.md and the existing prototype code (ledger/, agent/, guard/, payment/, ui/, tests/) and run `pytest -q` to confirm the 21 tests pass.
+Also read AGENT_NOTES.md and the existing prototype code (ledger/, agent/, guard/, payment/, ui/, tests/) and run `pytest -q` to confirm the 21 tests pass.
 
 PHASE 1: GENERATE THE IMPLEMENTATION PLAN (then STOP and wait for my approval)
 Write docs/IMPLEMENTATION_PLAN.md. Do not write feature code yet. The plan must contain:

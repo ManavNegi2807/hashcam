@@ -38,7 +38,7 @@ Start with the first two, then go deeper.
 | `ERROR_HANDLING.md` | Error codes, retries, crash recovery, degraded modes |
 | `TESTING.md` | Test layers, vectors, tamper suite, release gates |
 | `AGENTS.md` | Rules for AI coding agents working in this repo |
-| `CLAUDE.md` | Short project rules and status for Claude Code |
+| `AGENT_NOTES.md` | Short project rules and status for the coding agent |
 
 ## Quick start (prototype)
 

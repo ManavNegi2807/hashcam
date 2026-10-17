@@ -16,7 +16,7 @@ markers = [
 line-length = 100
 target-version = "py311"
 # The prototype keeps its own style (small files, short Hinglish comments,
-# CLAUDE.md rule 6) and its own tests. It is a demo, not part of v10.
+# AGENT_NOTES.md rule 6) and its own tests. It is a demo, not part of v10.
 extend-exclude = ["prototype"]
 
 [tool.ruff.lint]

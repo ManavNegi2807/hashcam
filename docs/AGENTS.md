@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Instructions for AI coding agents (Claude Code, Codex and similar) and for new contributors working on **Agent Black Box**.
+Instructions for AI coding agents (Codex and similar) and for new contributors working on **Agent Black Box**.
 
 Read this file first, then the documents it points to. If a rule here conflicts with a request, say so and ask before breaking it.
 

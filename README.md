@@ -70,7 +70,7 @@ on it**:
   again fixed it. Never stop other PostgreSQL processes on the machine.
 - Only the audit view of existing receipts needs no database: it needs just the `abb` binary.
 
-`start_hascham.bat` is a launcher written for the author's Windows machine (its paths are specific to it). To use a TinyFish mode, set `TINYFISH_API_KEY` in the environment of the server yourself. The key is read only from that variable and is never printed, logged or stored.
+The author starts it with a private Windows launcher that is not in this repository (its paths are specific to one machine). To use a TinyFish mode, set `TINYFISH_API_KEY` in the environment of the server yourself. The key is read only from that variable and is never printed, logged or stored.
 
 ## Documents
 

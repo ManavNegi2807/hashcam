@@ -41,7 +41,7 @@ Read in full (Phase 0), from `docs/`: `README.md`, `AGENTS.md`, `PRODUCT_REQUIRE
 
 | Expected by the brief | Status here |
 |---|---|
-| `CLAUDE.md` | **Not present.** Not in the archive. |
+| `AGENT_NOTES.md` | **Not present.** Not in the archive. |
 | Prototype code: `ledger/`, `agent/`, `guard/`, `payment/`, `ui/`, `tests/` | **Not present.** The archive contains documents only. |
 | `requirements.txt`, `Dockerfile`, `docker-compose.yml`, `secrets/` | **Not present.** |
 | `pytest -q` (expected: 21 tests pass) | **Not run.** There is no code and no test file to run. I will not state a test result I did not produce. |
@@ -523,7 +523,7 @@ I am not guessing any of these.
 
 | # | Question | Why it blocks |
 |---|---|---|
-| Q1 | **Where is the prototype code and `CLAUDE.md`?** This workspace has documents only. Do you want (a) to supply the prototype repository so Step 0 runs as written, or (b) Step 0b (skeleton + hygiene only) and the prototype fixes later? | Step 0 cannot run; the "21 passing tests" claim is unconfirmed. |
+| Q1 | **Where is the prototype code and `AGENT_NOTES.md`?** This workspace has documents only. Do you want (a) to supply the prototype repository so Step 0 runs as written, or (b) Step 0b (skeleton + hygiene only) and the prototype fixes later? | Step 0 cannot run; the "21 passing tests" claim is unconfirmed. |
 | Q2 | **Project name.** "Agent Black Box" is a working title. Keep it for code, package and CLI names (`abb`)? | Crate, package, CLI and container names are hard to change later. |
 | Q3 | **License** for the protocol, the verifier and the rest. The verifier is meant to be open so trust does not depend on you. | Needed before any dependency decision and before publishing. |
 | Q4 | **Is the optional testnet payment extension in the demo?** (`D-08`, `R-EXT-01`..`05`) | Decides whether Step 12 stays deferred. |

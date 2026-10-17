@@ -39,3 +39,6 @@ build/
 
 # Secrets for the local compose stack: never committed (R-OPS-05)
 deploy/secrets/
+
+# The author's private Windows launcher: its paths are specific to one machine
+start_hascham.*
