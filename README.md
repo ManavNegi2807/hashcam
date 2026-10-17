@@ -78,4 +78,28 @@ Start with [`docs/README.md`](docs/README.md). The byte-level rules are in [`doc
 
 ## Security
 
-No secret is in this repository: keys, tokens and `.env` files are ignored by `.gitignore`. If you find one, tell the author and rotate it. This is a prototype built for a hackathon, not a certified compliance product.
+The whole project is about security, so here is what it protects, how that is tested, and what it does not cover. The full threat model is in [`docs/SECURITY.md`](docs/SECURITY.md).
+
+### What it protects
+
+| Protection | How it works | How it is checked |
+|---|---|---|
+| **Tampering with history is caught** | Events are canonical JSON, hashed with SHA-256 into a Merkle tree. A separate signer process signs checkpoints with Ed25519. The offline verifier re-checks everything | Tests edit an event, swap an artifact, forge an approval and delete a whole run; each is caught |
+| **Policy decides before an action is sent** | A deterministic gateway answers allow, deny or needs-approval first. Scores from the prompt guard or anomaly rules are advice only and can only make a decision stricter | Policy and gateway tests, with rules broken on purpose to confirm a test fails |
+| **Risky steps need a person's signature** | The approval is signed with a key the ledger API and the signer never hold. `abb approve` refuses unless the text shown hashes to what is signed. An approval is for one action and expires | End-to-end tests with real signing: a grant lets the step through; a denial, silence or no approver does not |
+| **The browser adapter can't be bypassed quietly** | Every request, including redirects and WebSockets, goes through the gateway first, with checks against local and private addresses. `STEP_GATED` is claimed only after a battery of 14 bypass probes passes | The probe site's own request log proves what reached the network. The battery found a real hole once; it was fixed and pinned by a test |
+| **Secrets stay out of sight** | The signer key never reaches the API, worker or adapters. The TinyFish key comes only from an environment variable and is sent only to TinyFish. Hidden fields are salted commitments that can be shredded | Tests check the key never reaches the page, a command line or an error message |
+| **The local pages are hardened** | Served on `127.0.0.1` only. Starting or approving a run needs a random token from the page, a loopback `Host` and `Origin`, one run at a time, and a time limit. Answers are shown as text, never as markup, and links open with `noopener` | Tests for each guard |
+
+### What it does not protect against
+
+- A valid receipt means the record is unchanged. It does **not** mean an agent was honest or that an action really happened.
+- A signature shows a key signed, not which person held it. In this prototype the approver key sits on the same machine.
+- Rolling the whole history back needs independent witnesses and anchors. They ran on one machine here, so the verifier says `NOT_INDEPENDENT`.
+- Agents on someone else's servers, like TinyFish, can't be held back for approval. They get an "observed" record only.
+- Not covered: WebRTC and other non-HTTP transports, and DNS rebinding between check and fetch.
+- It has not had an outside security review and is not a certified compliance product. It was built for a hackathon.
+
+### Secrets and reporting
+
+No secret is in this repository. Keys, tokens and `.env` files are ignored by `.gitignore`, and GitHub secret scanning with push protection is on. If you find a secret or a vulnerability, please open a GitHub issue **without pasting the secret**. A private reporting channel is not set up yet.
