@@ -42,3 +42,8 @@ deploy/secrets/
 
 # The author's private Windows launcher: its paths are specific to one machine
 start_hascham.*
+
+# Local secrets
+.env
+.env.*
+!.env.example
