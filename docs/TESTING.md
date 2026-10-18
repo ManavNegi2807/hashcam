@@ -32,6 +32,8 @@
 | Security | Section 9 | Mixed | Pull request and release |
 | ML evaluation | Baselines versus models | Notebooks or scripts with recorded outputs | On change |
 | UI | Screens and accessibility | Playwright, axe | Pull request |
+| Graph | The run graph builder and the FalkorDB store | `pytest tests/graph` (store tests need `ABB_TEST_FALKORDB`) | Builder: every commit. Store: when a FalkorDB is available |
+| Endpoint | Rules, optional model, opt-in collector, alerts | `pytest tests/endpoint`, `tools/measure_endpoint.py` | Every commit |
 | End to end | The demo script | One scripted run | Before release |
 
 ## 3. Conformance vectors (first thing to build)
@@ -133,6 +135,23 @@ The checklist in `SECURITY.md` section 15 becomes automated tests where possible
 
 Playwright tests for the dashboard, run explorer, receipt viewer and approval screen. Checks: every verifier dimension is shown, `UNKNOWN` and `NOT_INDEPENDENT` are not rendered as green, escaping of event content, keyboard navigation, contrast 4.5:1, visible focus, reduced-motion support. The UI never decides validity; tests assert it only displays verifier output.
 
+In the repository these are `tests/ui/` (Chromium through Playwright, axe in light and dark): the audit view, the alerts section, the graph page (drawn from FalkorDB when connected and from the receipt otherwise, and it says which), the run console (a human starts every run; cost confirmation; token, `Host` and `Origin` checks) and the task page's approval card. Not tested: that the read routes reject a foreign `Host` header (they do not; `SECURITY.md` section 16), and a real FalkorDB through the page (store tests are in `tests/graph/`).
+
+### Where the Python tests live
+
+| Folder | Covers | Needs |
+|---|---|---|
+| `tests/contract/` | Ledger API, DB constraints, signer API, vectors, artifact stores, SSE and lease, gateway trace, redaction, remote witness | PostgreSQL, `abb` and `abb-signer`; S3 store tests also `ABB_TEST_S3` and keys |
+| `tests/tamper/` | Every way to alter history; approvals and mandates; advisory channels; witness and anchor; Playwright receipts | PostgreSQL, the Rust binaries (`psycopg` must be installed) |
+| `tests/fault/` | Signer with corrupted state | The signer binary |
+| `tests/adapter/` | Playwright gating, bypass probes and approval; TinyFish client (mock and local fake); fake-money payments (local stand-in) | Chromium for the Playwright files |
+| `tests/security/` | Prompt guard, semantic invariants, anomaly rules, build-context and compose hygiene, prototype hygiene | PyYAML; none of the services |
+| `tests/endpoint/` | Endpoint scoring rules, the optional Isolation Forest, the opt-in collector | scikit-learn for the model tests |
+| `tests/graph/` | Graph builder (pure); FalkorDB store (round trip, replace, injection text stored as text) | Store tests: a FalkorDB, `ABB_TEST_FALKORDB` |
+| `tests/ui/` | Audit view, alerts, graph page, run console, modes navigation, vendored motion library; axe in light and dark | Chromium (Playwright) |
+
+A test that needs a service that is not there must skip with a reason or fail. It must never pass silently.
+
 ## 13. CI pipeline
 
 | Stage | Contents | Blocks merge |
@@ -193,7 +212,8 @@ The demo script from `PRODUCT_REQUIREMENTS.md` section 9, automated:
 
 | Item | State |
 |---|---|
-| Prototype tests (canon, chain, verify, mask, guard) | 21 pass; they test the prototype, not v10 |
-| v10 vectors, tamper suite, contract tests | Not written |
+| Prototype tests (canon, chain, verify, mask, guard) | Kept in `prototype/`; they test the prototype, not v10 |
+| v10 vectors, tamper suite, contract tests, adapter, security, endpoint, graph and UI tests | Written (`tests/`, `vectors/`, `core/`). Count with `pytest --collect-only -q` and `cargo test`; a run needs PostgreSQL, the Rust binaries and Chromium |
+| Not set up | Coverage-guided fuzzing (`cargo-fuzz`, `atheris`; the verifier has a malformed-input corpus in `abb-cli` instead), the Docker `testing` compose profile (the compose file has profiles `core`, `graph`, `storage` only), a nightly schedule (CI runs on push and pull request), mutation checks beyond those named in `IMPLEMENTATION_PLAN.md` |
 
-Suggested order: (1) JCS and hashing vectors, (2) Merkle tree and proofs with property tests, (3) checkpoint and signer tests, (4) tamper suite on a Replay run, (5) global log and `verify-global`, (6) contract tests as the API appears.
+The first-tests order below is how the suite was built and is kept for reference: (1) JCS and hashing vectors, (2) Merkle tree and proofs with property tests, (3) checkpoint and signer tests, (4) tamper suite on a Replay run, (5) global log and `verify-global`, (6) contract tests as the API appeared.

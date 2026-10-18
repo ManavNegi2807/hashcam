@@ -3,9 +3,10 @@
 It does two things and nothing else:
 
 * serves the static files in `ui/`;
-* answers three read-only questions about receipts in one directory: which
-  exist, what the **offline verifier** says about one, and a display summary of
-  what is inside it.
+* answers read-only questions about receipts in one directory: which exist, what the
+  **offline verifier** says about one, a display summary of what is inside it, its alerts, and
+  its run graph (`GET /api/graph` also saves that graph to FalkorDB when one is connected);
+* with `--enable-runs`, adds the run console's routes (`runner.py`).
 
 The verdict always comes from `abb verify --json`, passed through untouched. This
 server and the page never compute validity, hash anything, or check a signature

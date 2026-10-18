@@ -72,11 +72,25 @@ python tools/demo_playwright.py --dsn ... --leaky      # an adapter with a hole:
 # The audit dashboard over a folder of receipts (127.0.0.1 only, read-only):
 python tools/ui_server.py --receipts <dir> --keys <key_manifest.json>
 
+# The same, with the run graph stored in FalkorDB (start it first, see below):
+python tools/ui_server.py --receipts <dir> --falkordb redis://127.0.0.1:6390
+
 # How a rerun differs from an earlier run (advisory):
 python tools/replay_drift.py first.abbreceipt second.abbreceipt
 ```
 
 Playwright needs its browser once: `python -m playwright install chromium`.
+
+### The run graph (FalkorDB)
+
+The audit view has a Graph section: one run drawn as nodes (`Run`, `Action`, `Policy`, `Approval`, `Mandate`, `Call`) and links (who requested what, which policy decided, which signed approval settled it, which provider call billed it). It is a picture of what is inside the receipt, never a verdict: the verdict stays the offline verifier's.
+
+```bash
+docker compose -f deploy/docker-compose.yml --profile graph up -d graph     # FalkorDB on 127.0.0.1:6390, no password
+python tools/ui_server.py --receipts <dir> --falkordb redis://127.0.0.1:6390
+```
+
+Without `--falkordb`, or if FalkorDB is down, the page draws the same graph straight from the receipt and says so. Opening a run with FalkorDB connected saves its graph to the database (replacing the earlier one). To run the store tests: `ABB_TEST_FALKORDB=redis://127.0.0.1:6390 pytest tests/graph`. Not shown: any FalkorDB other than a loopback one, and graphs of more than one run at once.
 
 ## What the demo does not show, and why
 

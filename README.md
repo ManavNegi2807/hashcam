@@ -60,6 +60,7 @@ abb vectors check                                    # conformance vectors
 pytest -q                                            # Python tests (set ABB_BIN, ABB_SIGNER_BIN, ABB_TEST_DSN)
 python tools/demo.py --dsn postgresql://USER@127.0.0.1:5432/postgres    # the end-to-end demo
 python tools/ui_server.py --receipts <dir> --enable-runs                # the two pages, on http://127.0.0.1:8765
+python tools/ui_server.py --receipts <dir> --falkordb redis://127.0.0.1:6390   # also keep the run graph in FalkorDB (deploy/README.md)
 ```
 
 ### Use a separate test PostgreSQL, not a database you care about
@@ -90,7 +91,7 @@ The author starts it with a private Windows launcher that is not in this reposit
 
 ## Documents
 
-Start with [`docs/README.md`](docs/README.md). The byte-level rules are in [`docs/PROTOCOL.md`](docs/PROTOCOL.md), which wins over every other document. What each mode shows, and what it does not, is in [`docs/DEMO.md`](docs/DEMO.md); the TinyFish findings are in [`docs/TINYFISH_SPIKE.md`](docs/TINYFISH_SPIKE.md); the plan and the claims ledger are in [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md).
+Start with [`docs/README.md`](docs/README.md). The byte-level rules are in [`docs/PROTOCOL.md`](docs/PROTOCOL.md), which wins over every other document. What each mode shows, and what it does not, is in [`docs/DEMO.md`](docs/DEMO.md); the TinyFish findings are in [`docs/TINYFISH_SPIKE.md`](docs/TINYFISH_SPIKE.md); the plan and the claims ledger are in [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md). Every code folder has its own `README.md` with a status line, and the local server's API is in Part E of [`docs/DATABASE_AND_API_CONTRACTS.md`](docs/DATABASE_AND_API_CONTRACTS.md).
 
 ## Security
 
@@ -114,6 +115,7 @@ The whole project is about security, so here is what it protects, how that is te
 - Rolling the whole history back needs independent witnesses and anchors. They ran on one machine here, so the verifier says `NOT_INDEPENDENT`.
 - Agents on someone else's servers, like TinyFish, can't be held back for approval. They get an "observed" record only.
 - Not covered: WebRTC and other non-HTTP transports, and DNS rebinding between check and fetch.
+- The local server checks the loopback `Host` header only on the run-console routes, not on the read routes (`docs/SECURITY.md` section 16). The graph database has no password and relies on its `127.0.0.1`-only port.
 - It has not had an outside security review and is not a certified compliance product. It was built for a hackathon.
 
 ### Secrets and reporting

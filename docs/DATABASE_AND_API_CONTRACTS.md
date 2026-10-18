@@ -567,3 +567,37 @@ The `--db <url>` option of `verify-global` in the table above is still the targe
 - A new API field is additive. A removed or renamed field is a breaking change.
 - Database migrations never rewrite `events`, `checkpoints` or `global_log` rows.
 - Every endpoint and table here gets a contract test (`TESTING.md` section 5).
+
+---
+
+# Part E. Local dashboard API (as built)
+
+**Status:** `TESTED` by `tests/ui/`. This is not the ledger API of Part B. It is a small server for one person on one computer (`tools/ui_server.py`, `services/dashboard/server.py`), bound to `127.0.0.1`. It reads receipt files from one folder and never touches the ledger database. Errors are `{"error": "<short fixed text>"}`; a message never contains a path, a stack trace or text from inside a receipt.
+
+## E1. Read routes (always on)
+
+| Route | Query | Answer |
+|---|---|---|
+| `GET /` and static files (`/style.css`, `/app.js`, `/alerts.js`, `/graph.js`, `/chat.css`, `/format.js`, `/fx.js`, `/run`, `/run.js`) | | The pages in `ui/` |
+| `GET /api/receipts` | | `{"receipts": [names], "labels": {name: label}}` |
+| `GET /api/verify` | `name` | The output of `abb verify --json`, passed through untouched. The server never computes validity (`R-SVC-01`) |
+| `GET /api/receipt` | `name` | A display summary of what is inside the receipt (events, approvals, mandate, policy) |
+| `GET /api/alerts` | `name` | `{"alerts": [...]}`: flagged scores with rules, web evidence and the signed analyst decision, read back from the receipt |
+| `GET /api/graph` | `name` | `{"source": "falkordb" \| "receipt", "note"?, nodes, edges}`. Nodes: `Run`, `Action`, `Policy`, `Approval`, `Mandate`, `Call`. Links: `REQUESTED`, `NEXT`, `DECIDED_BY`, `APPROVED_BY`, `GOVERNED_BY`, `BILLED`. With FalkorDB connected it saves the run's graph first (a write) and reads it back; otherwise, or if FalkorDB is down, it answers from the receipt and says so in `note` |
+
+Unknown name: `404 {"error": "no such receipt"}`. Unreadable receipt: `500 {"error": "could not read that receipt"}`.
+
+## E2. Run console routes (only with `--enable-runs`)
+
+| Route | Body or query | Answer |
+|---|---|---|
+| `GET /api/run/info` | | `enabled`; whether a TinyFish key is set (never the key); the hosts offered; the cost estimate, amount spent and ceiling in cents; the per-server `token`; the modes offered; and the fixed settings (approver key id, task text, whether a Stripe test key is set) for the real-website, endpoint, payment and guarded tasks |
+| `GET /api/run/status` | `id` | The job's state, its (bounded) output lines, and any pending approval |
+| `POST /api/run/start` | JSON, at most 4096 bytes: `goal`, `url`, `confirm_cents`, `mode` (default `agent`) | `202 {"job": ...}`. Refused if `confirm_cents` is lower than the worst-case cost, the cost is unknown, the host is not one the policy allows, or a run is already going |
+| `POST /api/run/approve` | JSON: `job`, `decision`, `summary_digest` | `200 {"ok": true, ...}`. Relays the person's signed decision; the page never signs |
+
+These four routes check the loopback `Host` header; the two POST routes also check `Origin` (if sent) and the `X-ABB-Token` header. Without `--enable-runs`, every POST answers `405 {"error": "read-only"}` and the run GET routes are not served.
+
+## E3. Not covered
+
+The read routes in E1 do **not** check the `Host` header (`SECURITY.md` section 16). There is no authentication: the trust boundary is the loopback address and the one person on the computer.

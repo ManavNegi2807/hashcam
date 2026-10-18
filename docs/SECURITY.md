@@ -149,6 +149,19 @@ Rules:
 - Backups: PostgreSQL, MinIO, signer state, keys and key manifests; restore is tested.
 - Disk-space alerts and safe shutdown so a full disk does not corrupt signer state.
 
+### Local pages, graph, collector and payments (as built)
+
+| Part | Control | Test |
+|---|---|---|
+| Dashboard (`services/dashboard/`) | Binds `127.0.0.1` only; serves receipts only from the folder it was started with; strict `Content-Security-Policy` (no inline script or style, no outside host); no access log; errors never carry a path, trace or receipt text; the verdict is `abb verify --json` passed through | `tests/ui/test_dashboard.py` |
+| Run console (`--enable-runs`, off by default) | A human starts every run and repeats the worst-case cost; random per-server token, loopback `Host`, same-origin `Origin`; only the policy's hosts; one run at a time; timeout; the API key is inherited by the child process, never read, sent or logged | `tests/ui/test_run_console.py` |
+| Graph (`services/graph/`) | The store accepts only a loopback address; every value is a query parameter; labels and relations come from fixed lists; the graph is a picture, never a verdict. `GET /api/graph` **writes** the run's graph to FalkorDB when one is connected | `tests/graph/test_graph.py` |
+| Endpoint collector (`endpoint/collector.py`) | Opt-in; watches one folder you name; records file name, size, hour and (Windows) source address; never file contents, folder paths, command lines or browser history; writes a JSON-lines file you can read first | `tests/endpoint/test_collector.py` |
+| Payments (`adapters/payments/`) | A key without a test prefix is refused before any request; every reply must say `livemode: false`; a hard ceiling no policy can raise; idempotency keys; the key is never printed or stored | `tests/adapter/test_payments.py` |
+| S3 artifact store | Plain `http://` only for loopback; credentials only in the signed header; every read is re-verified | `tests/contract/test_s3_store.py` |
+
+Gaps in this table are listed in section 16 (read routes without a `Host` check; a FalkorDB without a password).
+
 ## 12. Supply chain
 
 - Lock files committed; versions pinned; dependency audit in CI (`pip-audit`, `cargo audit`, `npm audit`).
@@ -174,7 +187,7 @@ Rules:
 | Masking | Regex masks | Policy-driven salted commitments |
 | Auth | Bearer tokens, no real login | Scoped, expiring, hashed tokens; approver keys |
 | Approvals | `approved_by` is a name | Ed25519-signed approvals |
-| Secrets in build | `COPY . .` may copy `secrets/` (no `.dockerignore` yet) | `.dockerignore`, secret scanning |
+| Secrets in build | `COPY . .` may copy `secrets/` (no `.dockerignore` yet) | `.dockerignore` (now in `deploy/` and `prototype/`, tested in `tests/security/test_build_context_hygiene.py`), secret scanning in CI |
 | Timestamps | Local clock | Labeled `claimed` |
 | Dependency scan, encryption at rest, KMS/HSM | None | Dependency scan in CI; others later |
 
@@ -207,3 +220,9 @@ Mapped to `TESTING.md` section 9. A capability stays `UNVERIFIED` until its test
 - A signed approval proves a key signed, not which human held it.
 - The prompt guard and the anomaly auditor are not complete defenses.
 - Availability and tenant isolation are out of scope for v10.
+- **Dashboard read routes have no `Host` check.** `services/dashboard/server.py` checks the loopback `Host` header only on the run-console routes. `/api/receipts`, `/api/receipt`, `/api/verify`, `/api/alerts` and `/api/graph` do not, so a web page that rebinds a hostname to `127.0.0.1` could read receipt summaries and make the server run `abb verify`. Found in a static review on 2026-10-18, not exploited. Fix: refuse a non-loopback `Host` on every `/api/` route.
+- **The graph database has no password.** FalkorDB (`deploy/docker-compose.yml`, profile `graph`) is reachable only on `127.0.0.1`; anyone with local access can read or change the graph. It is an index of receipts, so a changed graph cannot make a receipt valid or invalid. `services/graph/store.py` also names a database graph from the receipt's run id (receipt data is untrusted); restrict that id to a safe character set and length.
+- **Temporary debug output in the run console (2026-10-18 copy).** `services/dashboard/runner.py` prints `APPROVAL DEBUG` lines with the exception and, for a failed signing command, its stderr and stdout, to the server output. That can include file paths and tool messages, which the run-console rules above say must not be logged. Remove it before sharing logs or publishing.
+- **The Rust build is not run with `--locked`** in `deploy/signer.Dockerfile`, and two base images (`postgres`, `alpine`) are pinned by tag, not by digest.
+- **Endpoint review** is not a security product: its events are simulated except those of the opt-in collector, its isolation is simulated, a score is a rule sum, and an alert is not proof of anything (`endpoint/README.md`).
+- **Payments** use Stripe test mode only. A key without a test prefix is refused and any reply that does not say `livemode: false` is not trusted. Real money is out of scope and forbidden by the project rules.

@@ -5,7 +5,8 @@ It is NOT a probability and not a verdict: it says which rules matched, so an an
 No rule reads the gateway's policy decisions or an allowlist (`R-ANO-05`, no circularity): every
 rule looks only at the reported event itself.
 
-An optional learned model (the deck mentions an Isolation Forest) is NOT built.
+An optional learned model (an Isolation Forest) exists in `endpoint/model.py`.
+It is advisory, like these rules.
 """
 
 from __future__ import annotations

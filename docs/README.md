@@ -2,7 +2,7 @@
 
 **A flight recorder for web agents.** It records what an AI agent did as a signed, tamper-evident history, checks risky actions against rules before they run, asks a human to sign off where policy says so, and produces a **receipt** that anyone can verify offline without trusting us.
 
-> **Honest status:** this repository holds a working **prototype** (Python, FastAPI, plain HTML, 21 passing tests) and the **design documents for the target system (v10)**. Nothing in v10 is implemented or tested yet. Every claim below is labeled.
+> **Honest status (2026-10-18):** this repository holds a working system built in steps 0-11 of `IMPLEMENTATION_PLAN.md`: a Rust core and `abb` CLI, a separate signer, a FastAPI ledger service on PostgreSQL, a policy gateway, replay, Playwright, TinyFish and fake-money payment adapters, advisory security modules, endpoint review, a local audit dashboard with a run graph, and the original Python prototype in `prototype/`. Each claim below carries a status. Not built: Temporal, the Next.js dashboard, the SSE live view, the WASM verifier, a trained anomaly model, real-money payments (forbidden). The numbered requirements are not all met; `REQUIREMENTS.md` says which are.
 
 > **What it is not:** it does not prove an agent is honest or correct, and it does not prove a real-world action happened unless the observation itself is trustworthy. It is tamper-**evident**, not hack-proof.
 
@@ -12,13 +12,17 @@
 
 | Idea | In one line | Status |
 |---|---|---|
-| Signed run history | Every step is a canonical event in a Merkle tree with signed checkpoints | v10: `SPECIFIED`. Prototype: hash chain with signatures (`IMPLEMENTED`, tested) |
-| Offline verifier | A small CLI checks a receipt and names the broken point | v10: `SPECIFIED`. Prototype: Python verifier |
-| Pre-action rules | Deterministic policy allows, denies or asks for approval before an action | Prototype: allowlist and limits. v10: `SPECIFIED` |
-| Honest coverage labels | Each receipt says `TASK_LEVEL`, `STEP_OBSERVED` or `STEP_GATED` | v10: `SPECIFIED` |
-| Signed human approvals | The approver signs the exact action on their own device | v10: `SPECIFIED` (prototype records only a name) |
-| Global log | Detects a whole run being deleted | v10: `SPECIFIED` |
-| Advisory checks | Semantic invariants, prompt-injection guard, anomaly score. Never authorize anything | v10: `SPECIFIED` |
+| Signed run history | Every step is a canonical event in a Merkle tree with signed checkpoints | `TESTED` (Rust core, separate signer). The prototype's hash chain is kept in `prototype/` |
+| Offline verifier | `abb verify` checks a receipt on 16 dimensions and names the broken point | `TESTED`. The WASM verifier is `SPECIFIED` only |
+| Pre-action rules | A deterministic policy allows, denies or asks for approval before an action | `TESTED` (`policy/`, `services/worker/gateway.py`) |
+| Honest coverage labels | Each receipt says `TASK_LEVEL`, `STEP_OBSERVED` or `STEP_GATED` | `TESTED`: Playwright claims `STEP_GATED` only after a bypass battery; TinyFish is capped at `STEP_OBSERVED` |
+| Signed human approvals | The approver signs the exact action on their own device (`abb approve`) | `TESTED`. A signature shows a key signed, not which human held it |
+| Global log and witnesses | Detects a whole run being deleted; a witness co-signs | `TESTED` for detection; independence is `UNVERIFIED` on one machine (`NOT_INDEPENDENT`) |
+| Advisory checks | Semantic invariants, prompt-injection guard, anomaly rules. Never authorize anything | `TESTED`; the guard is `MEASURED` on a small hand-written corpus only |
+| Local pages | An audit view and a task page on `127.0.0.1` (plain HTML) | `TESTED` (browser tests). Read routes lack a Host-header check: `SECURITY.md` section 16 |
+| Run graph | A graph of each run in FalkorDB, or drawn from the receipt. Never a verdict | `TESTED`; the store tests need a FalkorDB (`services/graph/README.md`) |
+| Endpoint review | Reported events scored by explainable rules, alerts, a signed analyst decision | `TESTED` on **simulated** events; isolation is simulated |
+| Fake-money payments | Stripe test mode under a spend policy and a signed approval | `TESTED` against a stand-in; live test mode `UNVERIFIED` until you run it |
 
 Claim statuses: `SPECIFIED` (written down), `IMPLEMENTED` (code exists), `TESTED` (a test passes), `MEASURED` (recorded benchmark), `UNVERIFIED` (not established).
 
@@ -31,62 +35,59 @@ Start with the first two, then go deeper.
 | `PRODUCT_REQUIREMENTS.md` | Who it is for, goals, features, MVP scope, risks |
 | `Agent_Black_Box_Final_Architecture_v10.md` | The target architecture (v9 plus the review changes) |
 | `DESIGN.md` | Design by area, trust boundaries, hackathon cut, decisions |
-| `PROTOCOL.md` | Byte-level protocol: encoding, hashing, events, Merkle tree, checkpoints, signer, receipts |
-| `REQUIREMENTS.md` | 199 testable requirements with priority and prototype status |
-| `DATABASE_AND_API_CONTRACTS.md` | Tables, endpoints, SSE, CLI |
+| `PROTOCOL.md` | Byte-level protocol: encoding, hashing, events, Merkle tree, checkpoints, signer, receipts. Wins over every other document |
+| `REQUIREMENTS.md` | 199 testable requirements with priority and status |
+| `DATABASE_AND_API_CONTRACTS.md` | Tables, ledger endpoints, SSE, CLI, and the local dashboard API (Part E) |
 | `SECURITY.md` | Threat model, controls, key management, known limits |
 | `ERROR_HANDLING.md` | Error codes, retries, crash recovery, degraded modes |
-| `TESTING.md` | Test layers, vectors, tamper suite, release gates |
+| `TESTING.md` | Test layers, vectors, tamper suite, release gates, where each test folder fits |
+| `IMPLEMENTATION_PLAN.md` | The step plan, progress, and the claims ledger (what is `TESTED`, `MEASURED`, `UNVERIFIED`) |
+| `DEMO.md` | How to run each mode, what it shows and what it does not |
+| `MEASUREMENTS.md` | Recorded measurements and how they were made |
+| `PROMPT_GUARD_EVAL.md` | The prompt guard's results on its small corpus (written by `tools/eval_prompt_guard.py`) |
+| `TINYFISH_SPIKE.md` | What was learned from the TinyFish spike |
 | `AGENTS.md` | Rules for AI coding agents working in this repo |
-| `AGENT_NOTES.md` | Short project rules and status for the coding agent |
+| `../prototype/AGENT_NOTES.md` | Short project rules and status for the coding agent (prototype) |
 
-## Quick start (prototype)
+Each code folder also has its own `README.md` with a status line (`services/`, `adapters/`, `policy/`, `security/`, `endpoint/`, `tools/`, `ui/`, `deploy/`, `core/`, `signer/`, `vectors/`).
 
-The prototype is the only runnable code today.
+## Quick start
 
-```bash
-# 1. Create a signing key (kept only by the ledger). See the prototype README for the exact command.
-# 2. Run with Docker
-docker compose up --build
-# 3. Open http://localhost:8000, enter a run ID, then Load, Verify, and Tamper.
-```
+The current system is built and run as described in the top-level `README.md` ("Run it"): build the Rust core, set `ABB_BIN`, `ABB_SIGNER_BIN` and `ABB_TEST_DSN`, then `python tools/demo.py` for the end-to-end demo and `python tools/ui_server.py --receipts <dir>` for the pages on `http://127.0.0.1:8765`. `DEMO.md` covers every mode. Optional: `--enable-runs` (task page) and `--falkordb redis://127.0.0.1:6390` (graph store).
 
-Without Docker:
+The original prototype (Python, FastAPI, plain HTML) is kept and still runs on its own: see `../prototype/README.md`.
 
 ```bash
-pip install -r requirements.txt
-DB_PATH=log.db SHOTS_DIR=shots PUBLIC_KEY_PATH=secrets/public_key.pem uvicorn ui.api:build --factory
+pytest -q          # Python tests; many need PostgreSQL, the Rust binaries or Chromium and skip or error without them
+cargo test --manifest-path core/Cargo.toml
 ```
 
-Run the tests:
-
-```bash
-pytest -q
-```
-
-Never commit anything in `secrets/`. Known gap: there is no `.dockerignore` yet, so a plain `COPY . .` can copy `secrets/` into an image. Fixing that is the first task in the build list.
+Never commit anything in `secrets/`. `deploy/.dockerignore` keeps `secrets/` out of the build context (tested in `tests/security/test_build_context_hygiene.py`).
 
 ## Target system (v10) in brief
 
-- **Core:** Rust library and CLI (RFC 8785 JCS, SHA-256 Merkle tree, Ed25519), a separate signer that recomputes roots, PostgreSQL, MinIO, FastAPI, Next.js dashboard.
-- **Adapters:** Replay (default, deterministic), local Playwright (the gated path), TinyFish (optional, observed only until proven).
+- **Core:** Rust library and CLI (RFC 8785 JCS, SHA-256 Merkle tree, Ed25519), a separate signer that recomputes roots, PostgreSQL, an S3-compatible artifact store, FastAPI. The Next.js dashboard of v10 is **not** built; the pages are plain HTML.
+- **Adapters:** Replay (default, deterministic), local Playwright (the gated path), TinyFish (optional, observed only), and fake-money payments (Stripe test mode).
 - **Profiles:** `LOCAL_ONLY` (default, works offline) and `CONNECTED_EVIDENCE` (adds witnesses, anchors, TinyFish).
 - **Hackathon cut:** one FastAPI service, plain PostgreSQL, a Postgres lease instead of Temporal, Rust CLI first. Same protocol.
 
-Planned repository layout (not created yet):
+Repository layout:
 
 ```
-core/        Rust: jcs, merkle, checkpoint, verify, cli (abb)
-signer/      Separate signer service
-services/    api/ (FastAPI + ingestion), worker/, artifacts/
-adapters/    replay/, playwright/, tinyfish/
-policy/      Deterministic policy engine and gateway
-security/    semantic/, prompt_guard/, anomaly/
-ui/          Next.js dashboard
+core/        Rust: jcs, merkle, checkpoint, event, receipt, verify, cli (abb)
+signer/      Separate signer service (shares the core workspace)
+services/    api/ (FastAPI + ingestion), worker/ (gateway host), artifacts/, dashboard/, graph/
+adapters/    replay/, playwright/, tinyfish/, payments/
+policy/      Deterministic policy engine, mandates, policy versions
+security/    semantic/, prompt_guard/, anomaly/ (advisory only)
+endpoint/    Endpoint review: events, scoring, alerts, opt-in collector
+ui/          Plain HTML pages (audit view, task page, alerts, graph)
+tools/       Demos, live checks, the local server
 vectors/     Conformance test vectors (shared by Rust and Python)
-deploy/      docker-compose.yml, profiles, .dockerignore
+deploy/      docker-compose.yml (profiles core, graph, storage), Dockerfiles, .dockerignore
 docs/        The documents listed above
-tests/       contract, integration, tamper, fault, security
+tests/       adapter, contract, endpoint, fault, graph, security, tamper, ui
+prototype/   The original Python prototype
 ```
 
 ## Demo (the goal of the hackathon build)
@@ -115,7 +116,7 @@ Read `AGENTS.md` first (it applies to people too). Work in small slices, add a t
 
 ## License
 
-Not chosen yet. Decide before publishing. Check third-party licenses before adding dependencies (TimescaleDB edition, MinIO edition, Prompt Chainmail is BSL 1.1).
+Not chosen yet. Decide before publishing. Check third-party licenses before adding dependencies (TimescaleDB edition; MinIO's community edition is archived, so the S3 store was tested on SeaweedFS; FalkorDB's server is SSPL-licensed; Prompt Chainmail is BSL 1.1).
 
 ## Name
 
