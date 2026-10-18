@@ -28,7 +28,10 @@ from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 import pathsafe
+from endpoint.alerts import alerts_from
 from services.dashboard.runner import Refused
+from services.graph.build import build as build_graph
+from services.graph.store import FalkorStore, GraphUnavailable
 
 UI_DIR = Path(__file__).resolve().parents[2] / "ui"
 RECEIPT_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,200}\.abbreceipt$")
@@ -40,11 +43,24 @@ STATIC = {
     "/run": ("run.html", "text/html; charset=utf-8"),
     "/run.js": ("run.js", "text/javascript; charset=utf-8"),
     "/format.js": ("format.js", "text/javascript; charset=utf-8"),
+    "/fx.js": ("fx.js", "text/javascript; charset=utf-8"),
+    "/graph.js": ("graph.js", "text/javascript; charset=utf-8"),
+    "/alerts.js": ("alerts.js", "text/javascript; charset=utf-8"),
+    "/vendor/motion.js": ("vendor/motion.js", "text/javascript; charset=utf-8"),
+    "/vendor/gsap.min.js": ("vendor/gsap.min.js", "text/javascript; charset=utf-8"),
+    "/vendor/ScrollTrigger.min.js": (
+        "vendor/ScrollTrigger.min.js",
+        "text/javascript; charset=utf-8",
+    ),
+    "/vendor/lenis.min.js": ("vendor/lenis.min.js", "text/javascript; charset=utf-8"),
+    "/vendor/lenis.css": ("vendor/lenis.css", "text/css; charset=utf-8"),
+    "/vendor/plus-jakarta-sans.woff2": ("vendor/plus-jakarta-sans.woff2", "font/woff2"),
 }
 SECURITY_HEADERS = {
     # Everything the page needs comes from this origin; nothing is inlined.
     "Content-Security-Policy": (
         "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; "
+        "font-src 'self'; "
         "img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
     ),
     "X-Content-Type-Options": "nosniff",
@@ -61,6 +77,7 @@ class Config:
     abb: str
     profile: str = "LOCAL_ONLY"
     runner: Any = None  # a `runner.Runner`; `None` keeps the server strictly read-only
+    graph: FalkorStore | None = None  # FalkorDB on this computer; `None` = draw from the receipt
 
 
 def list_receipts(config: Config) -> list[str]:
@@ -209,6 +226,31 @@ def summarize(path: Path) -> dict[str, Any]:
     }
 
 
+def graph_of(config: Config, path: Path) -> dict[str, Any]:
+    """The run as a graph. From FalkorDB when it is connected, else straight from the receipt.
+
+    Either way it is a picture of what is inside the receipt, never a verdict."""
+    summary = summarize(path)
+    built = build_graph(summary)
+    run_id = str(summary.get("run", {}).get("run_id", "run"))
+    if config.graph is not None:
+        try:
+            config.graph.save(run_id, built)
+            stored = config.graph.load(run_id)
+            return {"source": "falkordb", **stored}
+        except GraphUnavailable as exc:
+            return {
+                "source": "receipt",
+                "note": f"FalkorDB unavailable ({exc}); drawn from the receipt.",
+                **built,
+            }
+    return {
+        "source": "receipt",
+        "note": "FalkorDB is not connected; drawn from the receipt.",
+        **built,
+    }
+
+
 def make_handler(config: Config) -> type[BaseHTTPRequestHandler]:
     class Handler(BaseHTTPRequestHandler):
         server_version = "abb-dashboard"
@@ -239,13 +281,17 @@ def make_handler(config: Config) -> type[BaseHTTPRequestHandler]:
                 elif url.path == "/api/receipts":
                     names = list_receipts(config)
                     self._json(200, {"receipts": names, "labels": labels(config, names)})
-                elif url.path in {"/api/verify", "/api/receipt"}:
+                elif url.path in {"/api/verify", "/api/receipt", "/api/graph", "/api/alerts"}:
                     name = parse_qs(url.query).get("name", [""])[0]
                     path = resolve(config, name)
                     if path is None:
                         self._json(404, {"error": "no such receipt"})
                     elif url.path == "/api/verify":
                         self._json(200, verify(config, path))
+                    elif url.path == "/api/alerts":
+                        self._json(200, {"alerts": alerts_from(path, summarize(path))})
+                    elif url.path == "/api/graph":
+                        self._json(200, graph_of(config, path))
                     else:
                         self._json(200, summarize(path))
                 else:

@@ -10,6 +10,12 @@ It is an evidence and auditing system. A valid receipt shows that the recorded h
 
 *Both screenshots show a fresh copy with no runs. The amber note on the task page is the real state of a copy with no TinyFish key set.*
 
+**Pick what the agent should do** from the sidebar list (the task page on the right): Search, Research and Browse use TinyFish; Demo task, Endpoint review, Pay bills (fake money, Stripe test mode) and Real website pause for your signed approval before anything sensitive happens.
+
+**Alerts in the audit view** (a real signed run; TinyFish shows "not asked" because no key was set):
+
+![Alerts in the audit view: a HIGH alert with the rules that fired, the learned model's reasons, web evidence and the analyst's signed decision](docs/screenshots/alert-view.png)
+
 ## What it does
 
 - **Signed receipts and an offline verifier** (Rust). Canonical JSON (RFC 8785), SHA-256, an RFC 6962-style Merkle tree and Ed25519 checkpoints. `abb verify` reports sixteen separate dimensions and never turns missing evidence into a pass.
@@ -18,6 +24,9 @@ It is an evidence and auditing system. A valid receipt shows that the recorded h
 - **Hidden fields.** A value such as a card number can be committed to without being stored, and shredded later.
 - **Adapters.** A scripted replay adapter, a real-browser Playwright adapter whose coverage claim (`STEP_GATED`) is declared only after a bypass test battery passes, and optional TinyFish adapters (Browse, Search, Research) that are capped at `STEP_OBSERVED`.
 - **Two pages** (plain HTML, served from your own computer): an audit view of receipts and a chat-style task page with a sign-and-approve card.
+- **Company-style payments with fake money.** An agent pays bills through Stripe's official test mode under a spend policy: up to 50.00 it pays on its own, over 50.00 up to 500.00 it waits for a person's signed approval (shown the amount and who is paid), over 500.00 is refused. A live key is refused before any request.
+- **Endpoint review (the deck's phishing-link scenario).** Reported endpoint events are sealed, scored by explainable rules (plus an optional Isolation Forest), explained in an **Alerts** section of the audit view, enriched with TinyFish Search and Fetch when a link is present, and an analyst signs before any (simulated) account isolation. A small opt-in collector can report real downloads, script launches and links on your own computer.
+- **A graph of each run**, stored in FalkorDB (on this computer only) and drawn on the audit page: the run, its actions, which policy decided, which signed approval settled it. It is a picture made from the receipt, never a verdict; without FalkorDB it is drawn straight from the receipt and the page says so.
 
 ## What has been measured, and what has not
 
@@ -28,8 +37,15 @@ It is an evidence and auditing system. A valid receipt shows that the recorded h
 | Approval gate on a real website (a real Chromium, `httpbin.org`) | `MEASURED` by hand twice: a granted approval let the form through, a denial sent nothing; both receipts verified. Automated test uses a local site |
 | TinyFish Browse (cost = steps x $0.016) | `MEASURED` on real runs. Some tasks sat at 0 steps until cancelled; cause unknown |
 | TinyFish Search and Research | `UNVERIFIED` live with this project's client. Search's response shape was checked against a real answer |
-| Independent witnesses and anchors | `UNVERIFIED`: everything ran on one machine, so the verifier reports `NOT_INDEPENDENT` |
-| Docker Compose stack | `UNVERIFIED`: never run |
+| Independent witnesses and anchors | The co-signing exchange between two folders is `TESTED` (`tools/remote_witness.py`). Independence is `UNVERIFIED`: it has not been tried on a second computer, so the verifier reports `NOT_INDEPENDENT` |
+| Payments with fake money (Stripe test mode) | The policy tiers, the refusal of live keys, ordering and the signed approval are `TESTED` end to end against a **local stand-in** for Stripe's reply (real signing, real verifier). Stripe test mode itself is `UNVERIFIED` until you run `tools/check_stripe_live.py` with your own test key |
+| Endpoint review: events, rules, alerts, evidence, signed decision | `TESTED` end to end with real signing and the real verifier. The events are **simulated** (or collected by the opt-in collector), the isolation is **simulated**, and TinyFish's answers are a scripted fake in the tests |
+| Real opt-in collector (`tools/endpoint_daemon.py`) | `TESTED` on this computer: new files in one folder, script-shell launches, links from a file. Not a security product; sees only what it is pointed at |
+| Isolation Forest (optional, scikit-learn) | `MEASURED` on **synthetic** labelled events only (`docs/MEASUREMENTS.md`): about 0.3 recall alone, more of the hard phishing cases with the rules. Not real-world performance |
+| TinyFish Fetch | `TESTED` against a local fake that follows the documented API. `UNVERIFIED` live: run `python tools/check_tinyfish_live.py --fetch` |
+| Artifact storage on an S3-compatible server (the deck's MinIO slot) | `TESTED` against SeaweedFS 4.48. **MinIO itself is not used**: its community edition was archived in April 2026 |
+| Run graph in FalkorDB | `TESTED` against a real FalkorDB (round trip, replace, query-injection text stored as text) and on real receipts. The database has no password and relies on its 127.0.0.1-only binding |
+| Docker Compose stack (`core` profile) | `MEASURED` once on 2026-10-18: healthy, API answers and refuses unauthenticated calls, database and signer not published, API holds no signing key. Not tested: a full signed run through the containers, digest pinning of every image, key restore |
 
 Not covered: WebRTC and other non-HTTP transports, DNS rebinding between check and fetch, which person held a signing key (a signature shows a key signed), and any real money. The project's rules forbid real-money payments.
 

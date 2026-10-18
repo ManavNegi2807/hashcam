@@ -39,6 +39,8 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+from adapters.payments.client import KEY_ENV as STRIPE_KEY_ENV
+from adapters.payments.client import TEST_PREFIXES
 from adapters.tinyfish.budget import Budget
 from adapters.tinyfish.http_client import KEY_ENV, HttpTinyFishClient
 from policy.engine import Policy
@@ -54,9 +56,17 @@ PENDING = re.compile(r"^APPROVAL_PENDING (\{.*\})$")
 
 #: The guarded task is scripted and fixed: it runs on a fake portal with fake data.
 GUARDED_TASK = "Change vendor bank details on portal.example (test site, fake data)"
-RUN_TIMEOUTS = {"agent": 300, "guarded": 1200, "search": 180, "research": 1800, "realsite": 1500}
+RUN_TIMEOUTS = {
+    "agent": 300,
+    "guarded": 1200,
+    "search": 180,
+    "research": 1800,
+    "realsite": 1500,
+    "pay": 1500,
+    "endpoint": 1500,
+}
 #: Modes that pause for a person's signed approval and so need a stdin to hear it on.
-GATED_MODES = ("guarded", "realsite")
+GATED_MODES = ("guarded", "realsite", "pay", "endpoint")
 REALSITE_URL = "https://httpbin.org/forms/post"
 #: Modes that send a question to TinyFish with no start page.
 ANSWER_MODES = ("search", "research")
@@ -119,6 +129,8 @@ class Runner:
         estimate_answer: Callable[[str], int | None] | None = None,
         answer_command: Callable[[str, str, Path], Sequence[str]] | None = None,
         realsite_command: Callable[[str, Path], Sequence[str]] | None = None,
+        pay_command: Callable[[str, Path], Sequence[str]] | None = None,
+        endpoint_command: Callable[[str, Path], Sequence[str]] | None = None,
     ) -> None:
         self.receipts = receipts
         self.token = secrets.token_urlsafe(32)
@@ -141,6 +153,8 @@ class Runner:
         self._estimate_answer = estimate_answer or self._default_estimate_answer
         self._answer_command = answer_command or self._default_answer_command
         self._realsite_command = realsite_command or self._default_realsite_command
+        self._pay_command = pay_command or self._default_pay_command
+        self._endpoint_command = endpoint_command or self._default_endpoint_command
         if sign is None:
             self._ensure_keys()
 
@@ -183,6 +197,17 @@ class Runner:
             "token": self.token,
             "modes": self._answer_modes(key_set),
             "realsite": {"host": "httpbin.org", "approver_key_id": self.approver_key_id()},
+            "endpoint": {
+                # TinyFish is asked about a link only if a key is set; otherwise it says NOT RUN
+                "enrichment": bool(os.environ.get(KEY_ENV)),
+                "approver_key_id": self.approver_key_id(),
+            },
+            "pay": {
+                # whether, never what: the key itself is never sent to the page
+                "key_set": bool(os.environ.get(STRIPE_KEY_ENV)),
+                "test_key": os.environ.get(STRIPE_KEY_ENV, "").startswith(TEST_PREFIXES),
+                "approver_key_id": self.approver_key_id(),
+            },
             "guarded": {
                 "task": GUARDED_TASK,
                 "approver_key_id": self.approver_key_id(),
@@ -216,6 +241,10 @@ class Runner:
             return self._start_guarded()
         if mode == "realsite":
             return self._start_realsite(goal)
+        if mode == "pay":
+            return self._start_pay(goal)
+        if mode == "endpoint":
+            return self._start_endpoint(goal)
         if mode in ANSWER_MODES:
             return self._start_answer(goal, confirm_cents, str(mode))
         if mode != "agent":
@@ -337,6 +366,85 @@ class Runner:
             message,
             "--wait-seconds",
             "300",
+        ]
+
+    def _start_pay(self, goal: Any) -> str:
+        """Company payments with fake money (Stripe test mode); big ones wait for approval."""
+        key = os.environ.get(STRIPE_KEY_ENV, "")
+        if not key:
+            raise Refused(f"{STRIPE_KEY_ENV} is not set in the environment of this server")
+        if not key.startswith(TEST_PREFIXES):
+            # Never repeat any part of the key. Only say that it is the wrong kind.
+            raise Refused("that is not a Stripe TEST key (it must start with sk_test_); refused")
+        if not isinstance(goal, str) or len(goal) > MAX_GOAL:
+            raise Refused(f"the task must be at most {MAX_GOAL} characters")
+        if any(ord(c) < 32 and c not in "\n\t" for c in goal):
+            raise Refused("the task has control characters")
+        with self._lock:
+            if any(j.state == "running" for j in self._jobs.values()):
+                raise Refused("a run is already in progress", 409)
+            job = Job(
+                job_id=uuid.uuid4().hex,
+                started=time.time(),
+                goal=goal.strip()
+                or "Pay the three example bills (small, needs approval, too large)",
+                url="Stripe test mode (fake money)",
+                mode="pay",
+            )
+            self._jobs[job.job_id] = job
+        argv = list(self._pay_command(goal.strip(), self.receipts))
+        threading.Thread(target=self._drive, args=(job, argv), daemon=True).start()
+        return job.job_id
+
+    def _default_pay_command(self, goal: str, out: Path) -> list[str]:
+        script = str(REPO / "tools" / "demo_pay.py")
+        return [
+            self._python,
+            script,
+            "--people-dir",
+            str(self.people_dir),
+            "--out",
+            str(out),
+            "--goal",
+            goal,
+            "--wait-seconds",
+            "600",
+        ]
+
+    def _start_endpoint(self, goal: Any) -> str:
+        """Simulated endpoint events to alerts. TinyFish is asked about links only with a key."""
+        if not isinstance(goal, str) or len(goal) > MAX_GOAL:
+            raise Refused(f"the task must be at most {MAX_GOAL} characters")
+        if any(ord(c) < 32 and c not in "\n\t" for c in goal):
+            raise Refused("the task has control characters")
+        with self._lock:
+            if any(j.state == "running" for j in self._jobs.values()):
+                raise Refused("a run is already in progress", 409)
+            job = Job(
+                job_id=uuid.uuid4().hex,
+                started=time.time(),
+                goal=goal.strip() or "Review all the simulated endpoint events",
+                url="simulated endpoint collector",
+                mode="endpoint",
+            )
+            self._jobs[job.job_id] = job
+        argv = list(self._endpoint_command(goal.strip(), self.receipts))
+        threading.Thread(target=self._drive, args=(job, argv), daemon=True).start()
+        return job.job_id
+
+    def _default_endpoint_command(self, goal: str, out: Path) -> list[str]:
+        script = str(REPO / "tools" / "demo_endpoint.py")
+        return [
+            self._python,
+            script,
+            "--people-dir",
+            str(self.people_dir),
+            "--out",
+            str(out),
+            "--goal",
+            goal,
+            "--wait-seconds",
+            "600",
         ]
 
     def _start_guarded(self) -> str:
@@ -544,7 +652,15 @@ class Runner:
     def _write_label(self, job: Job) -> None:
         """A readable name for the run list. This file sits beside the receipt, outside it:
         the receipt itself still holds only the task's hash."""
-        title = topic("Real form: " + job.goal if job.mode == "realsite" else job.goal)
+        title = topic(
+            "Real form: " + job.goal
+            if job.mode == "realsite"
+            else "Endpoint review: " + job.goal
+            if job.mode == "endpoint"
+            else "Payments: " + job.goal
+            if job.mode == "pay"
+            else job.goal
+        )
         label = {
             "title": title,
             "goal": job.goal.strip()[:500],

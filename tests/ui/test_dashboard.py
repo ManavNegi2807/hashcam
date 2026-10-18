@@ -370,6 +370,8 @@ def test_axe_finds_no_violations(
             details=[{"dimension": "prompt_security_assessment", "message": "a finding"}]
         ),
     )
+    # Let the entrance animations finish: contrast is judged on the settled page, not mid-fade.
+    page.wait_for_timeout(1500)
     results = axe_module.Axe().run(page)
     violations = [(v["id"], v["impact"], v["help"]) for v in results.response["violations"]]
     assert violations == [], violations

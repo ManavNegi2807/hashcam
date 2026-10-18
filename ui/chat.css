@@ -256,3 +256,49 @@
 
 /* An element marked hidden must stay hidden, whatever display rule it also has. */
 [hidden] { display: none !important; }
+
+/* ---- Polish: the task page ---- */
+.hero h1 { font-size: clamp(1.9rem, 4.5vw, 2.7rem); line-height: 1.1; font-weight: 800; }
+.hero-sub { font-size: 1.1rem; line-height: 1.55; }
+.hero-logo { box-shadow: 0 14px 44px var(--glow); }
+.msg.agent, .msg.you { box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 14px 34px rgba(0, 0, 0, 0.08); }
+.msg.you { font-weight: 600; }
+.composer { box-shadow: 0 10px 40px var(--glow), 0 2px 6px rgba(0, 0, 0, 0.12); backdrop-filter: blur(6px); }
+.mode { transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease; }
+.mode:hover { border-color: var(--accent); transform: translateY(-1px); }
+.mode b { font-size: 0.98rem; }
+.idea { transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease; }
+.idea:hover { transform: translateY(-2px); }
+.facts li { transition: transform 200ms ease, border-color 200ms ease; }
+.facts li:hover { transform: translateX(3px); border-color: var(--accent); }
+.past a { border-left: 3px solid transparent; }
+.past a:hover { border-left-color: var(--accent); }
+.past a[aria-current="page"], .past a.current { background: var(--accent-soft); border-left-color: var(--accent); }
+.approval { box-shadow: 0 0 0 4px color-mix(in srgb, var(--warn-fg) 16%, transparent), 0 16px 40px rgba(0, 0, 0, 0.18); }
+.agent-head { font-size: 1.05rem; }
+.say .rich { font-size: 1.06rem; }
+
+/* the sidebar list of what the console can do */
+.modesnav { list-style: none; margin: 0.35rem 0 0; padding: 0; display: grid; gap: 0.15rem; }
+.modebtn {
+  display: flex; align-items: center; gap: 0.55rem; width: 100%; text-align: left; cursor: pointer;
+  padding: 0.38rem 0.6rem; border-radius: 8px; border: 1px solid transparent;
+  background: transparent; color: var(--text); font: inherit; font-size: 0.9rem;
+}
+.modebtn:hover { background: var(--accent-soft); }
+.modebtn[aria-current="true"] { background: var(--accent-soft); border-color: var(--accent); font-weight: 700; }
+.modebtn .ico { width: 1.05rem; height: 1.05rem; margin: 0; flex: none; }
+@media (max-width: 860px) { .modesnav, #modes-h { display: none; } }
+
+/* The sidebar list picks the task type, so on wide screens the grid of cards is out of sight: still
+   there for screen readers and the keyboard (it opens while a card has focus). Narrow screens hide
+   the sidebar list, so they keep the grid. */
+.modecaption { margin: 0 0 0.45rem; color: var(--muted); font-size: 0.92rem; }
+.modecaption strong { color: var(--text); }
+@media (min-width: 861px) {
+  .modes:not(:focus-within) {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+}
+@media (max-width: 860px) { .modecaption { display: none; } }

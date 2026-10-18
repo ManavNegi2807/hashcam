@@ -60,3 +60,12 @@ disallow_incomplete_defs = false
 [[tool.mypy.overrides]]
 module = ["psycopg.*", "testcontainers.*"]
 ignore_missing_imports = true
+
+# psycopg optionally imports numpy; when numpy is installed (the optional learned model needs it) mypy
+# would follow into numpy's stubs, which use Python 3.12 syntax this project's 3.11 setting rejects.
+# Nothing here type-checks against numpy, so it is not followed.
+[[tool.mypy.overrides]]
+module = ["numpy", "numpy.*"]
+follow_imports = "skip"
+follow_imports_for_stubs = true
+ignore_missing_imports = true

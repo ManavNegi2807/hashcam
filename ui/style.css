@@ -2,6 +2,15 @@
    every status pairs its color with an icon and a word, so nothing depends on
    color alone. UNKNOWN and NOT_INDEPENDENT are deliberately not green. */
 
+/* Plus Jakarta Sans (variable weight), served from this computer: see ui/vendor/README.md */
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url("/vendor/plus-jakarta-sans.woff2") format("woff2");
+}
+
 :root {
   --bg: #fff8f2;
   --surface: #ffffff;
@@ -44,7 +53,8 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 1rem/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font: 1rem/1.5 "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-optical-sizing: auto;
 }
 
 h1, h2, h3 { line-height: 1.25; margin: 0 0 0.5rem; }
@@ -252,3 +262,63 @@ th, td { padding: 0.7rem 0.9rem; }
 .rich li { margin: 0.65rem 0; padding-left: 0.2rem; }
 .rich li::marker { color: var(--accent); }
 .rich strong { font-weight: 650; color: var(--text); }
+
+/* ---- Polish: type scale, depth, rhythm ---- */
+body { letter-spacing: 0.004em; word-spacing: 0.07em; }
+h1, h2, h3, .banner .big, .hero h1 { letter-spacing: -0.012em; word-spacing: 0.04em; font-weight: 700; }
+h2 { font-size: 1.2rem; margin: 1.6rem 0 0.7rem; }
+.card, .notice, .scroll, .findings li, .answerbox { box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12), 0 8px 24px rgba(0, 0, 0, 0.06); }
+.banner { box-shadow: 0 10px 34px rgba(0, 0, 0, 0.18); }
+.chip, .vchip { letter-spacing: 0.02em; }
+th { text-transform: uppercase; font-size: 0.76rem; letter-spacing: 0.07em; }
+tbody tr:hover td, tbody tr:hover th { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.mono, td.mono { font-variant-numeric: tabular-nums; }
+button, .linkbtn, select, textarea, input { transition: box-shadow 160ms ease, border-color 160ms ease, background-color 160ms ease; }
+button:not(:disabled):hover { box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 38%, transparent); }
+
+/* thin scroll-progress bar (audit page); drawn by fx.smooth(), invisible without it */
+.scrollbar { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 50; background: var(--accent);
+  transform: scaleX(0); transform-origin: 0 50%; pointer-events: none; }
+
+/* graph of a run (plain SVG; colours are the same pairs as the status chips) */
+.graphbox { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; overflow-x: auto; }
+.graphsvg { width: 100%; min-width: 34rem; height: auto; display: block; }
+.gedge { fill: none; stroke: var(--muted); stroke-width: 1.5; }
+.garrowhead { fill: var(--muted); }
+.gedgelabel { fill: var(--muted); font-size: 11px; }
+.gnode rect { stroke-width: 1.5; }
+.gtitle { font-size: 13px; font-weight: 700; }
+.gsub { font-size: 12px; }
+.gn-run rect { fill: var(--accent-soft); stroke: var(--accent); } .gn-run text { fill: var(--text); }
+.gn-ok rect { fill: var(--ok-bg); stroke: var(--ok-fg); } .gn-ok text { fill: var(--ok-fg); }
+.gn-fail rect { fill: var(--fail-bg); stroke: var(--fail-fg); } .gn-fail text { fill: var(--fail-fg); }
+.gn-unknown rect { fill: var(--unknown-bg); stroke: var(--unknown-fg); } .gn-unknown text { fill: var(--unknown-fg); }
+.gn-notind rect { fill: var(--notind-bg); stroke: var(--notind-fg); } .gn-notind text { fill: var(--notind-fg); }
+.gn-na rect { fill: var(--na-bg); stroke: var(--na-fg); } .gn-na text { fill: var(--na-fg); }
+.graphlist { margin: 0.5rem 0 0; padding-left: 1.2rem; overflow-wrap: anywhere; }
+
+/* icons, split-text letters and the cursor glow (drawn by fx.flair(); harmless without it) */
+.ico { width: 1.1em; height: 1.1em; margin-right: 0.45rem; vertical-align: -0.16em; color: var(--accent); flex: none; }
+.mode .ico { width: 1em; height: 1em; margin-right: 0.35rem; }
+.fxchar { display: inline-block; }
+.fxword { display: inline-block; white-space: nowrap; }
+[data-split] { display: block; }
+.spot { position: relative; }
+@media (hover: hover) {
+  .spot:hover { background-image: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), var(--accent-soft), transparent 70%); }
+}
+@media (prefers-reduced-motion: reduce) { .spot:hover { background-image: none; } }
+
+/* alert view (audit page) */
+.alertlist { display: grid; gap: 1rem; }
+.alertcard { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.9rem 1.1rem; }
+.alertcard header { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.alertcard h3 { margin: 0; font-size: 1.05rem; }
+.alertcard h4 { margin: 0.9rem 0 0.3rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.alertbar { height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; margin: 0.6rem 0 0.3rem; }
+.alertfill { height: 100%; border-radius: 999px; background: var(--na-fg); }
+.alertfill.fail { background: var(--fail-fg); } .alertfill.unknown { background: var(--unknown-fg); }
+.signals { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.25rem; }
+.evidence { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0.4rem 0 0; }
+.evpart { margin: 0.2rem 0 0.5rem; } .evpart p { margin: 0.2rem 0; }
+.alertfill.notind { background: var(--notind-fg); }

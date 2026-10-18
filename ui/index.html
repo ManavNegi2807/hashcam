@@ -7,8 +7,10 @@
   <meta name="color-scheme" content="light dark">
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/chat.css">
+  <link rel="stylesheet" href="/vendor/lenis.css">
 </head>
 <body>
+  <div id="scrollbar" class="scrollbar" aria-hidden="true"></div>
   <a class="skip" href="#main">Skip to the results</a>
   <div class="shell auditshell">
   <aside class="side" aria-label="Runs">
@@ -25,7 +27,7 @@
 
   <header class="bar">
     <div class="titleblock">
-      <h1>Hascham <span>audit view</span></h1>
+      <h1 data-split>Hascham <span>audit view</span></h1>
       <p class="lede">Shows what the offline verifier says about a run. It does not decide anything itself.</p>
     </div>
     <a id="run-link" class="linkbtn" href="/run" hidden>Give the agent a task</a>
@@ -89,6 +91,18 @@
       <div id="run-body" class="cards"></div>
     </section>
 
+    <section id="alerts" aria-labelledby="alerts-h" hidden>
+      <h2 id="alerts-h">Alerts</h2>
+      <p id="alerts-note" class="muted"></p>
+      <div id="alerts-body" class="alertlist"></div>
+    </section>
+
+    <section id="graph" aria-labelledby="graph-h" hidden>
+      <h2 id="graph-h">How this run hangs together</h2>
+      <p id="graph-note" class="muted"></p>
+      <div id="graph-body" class="graphbox"></div>
+    </section>
+
     <section id="events" aria-labelledby="events-h" hidden>
       <h2 id="events-h">Events</h2>
       <p id="events-note" class="muted"></p>
@@ -107,7 +121,14 @@
   </footer>
     </div>
   </div>
+  <script src="/vendor/motion.js"></script>
+  <script src="/vendor/gsap.min.js"></script>
+  <script src="/vendor/ScrollTrigger.min.js"></script>
+  <script src="/vendor/lenis.min.js"></script>
+  <script src="/fx.js"></script>
   <script src="/format.js"></script>
+  <script src="/graph.js"></script>
+  <script src="/alerts.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

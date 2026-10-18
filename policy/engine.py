@@ -46,6 +46,9 @@ REASON_CODES = (
     "SSRF_BLOCKED",
     "BUDGET_RESERVE_REACHED",
     "PROVIDER_QUOTA_EXHAUSTED",
+    "PAYMENT_KEY_NOT_TEST_MODE",
+    "PAYMENT_KEY_MISSING",
+    "ENRICHMENT_NOT_RUN",
 )
 
 #: Payload fields an offline check reads. A policy may not hide them: a receipt

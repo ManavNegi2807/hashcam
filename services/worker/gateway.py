@@ -376,7 +376,19 @@ class Gateway:
     @staticmethod
     def approval_summary(action: Action) -> str:
         """Exactly what the approver is shown, and the text whose digest they sign."""
-        return f"{action.action_type} {action.target} params={action.params_digest()}"
+        summary = f"{action.action_type} {action.target} params={action.params_digest()}"
+        readable = action.params.get("readable")
+        if isinstance(readable, str) and readable:
+            # Any adapter may put a sentence for the approver in `readable`. It is part of the
+            # params the digest covers, and the signature covers this whole text.
+            summary += " | " + readable[:200]
+        if action.action_type == "payment" and action.amount_minor_units is not None:
+            # A person approving money must READ the amount and who gets it, not a hash. The
+            # signature covers this whole text, so what they read is what they signed.
+            vendor = str(action.params.get("vendor", ""))[:80]
+            currency = str(action.params.get("currency", "")).upper()[:3]
+            summary += f" | PAY {action.amount_minor_units / 100:.2f} {currency} to {vendor}"
+        return summary
 
     def pending_approvals(self) -> list[dict[str, str]]:
         """What is waiting for a human, with the text they must be shown."""

@@ -54,6 +54,7 @@ function push(node) {
   $("hero").hidden = true;
   const thread = $("thread");
   thread.appendChild(node);
+  fx.enter(node);
   thread.scrollTop = thread.scrollHeight;
   return node;
 }
@@ -64,7 +65,7 @@ function currentMode() {
 }
 
 const ANSWER_MODES = ["search", "research"];
-const GATED = ["guarded", "realsite"];
+const GATED = ["guarded", "realsite", "pay", "endpoint"];
 
 // What a mode costs at worst, in cents; null when unknown.
 function costOf(mode) {
@@ -75,6 +76,17 @@ function costOf(mode) {
 }
 
 function updateSend() {
+  if (currentMode() === "endpoint") {
+    // Simulated events and a simulated isolation: only the analyst's signing key is needed.
+    $("task-run").disabled = !(info && info.endpoint && info.endpoint.approver_key_id);
+    return;
+  }
+  if (currentMode() === "pay") {
+    // Fake money only: a Stripe TEST key must be set on the server, and an approver key must exist.
+    const ok = info && info.pay && info.pay.test_key && info.pay.approver_key_id;
+    $("task-run").disabled = !ok;
+    return;
+  }
   if (currentMode() === "realsite") {
     // Uses no TinyFish credit: a real browser on this computer. The gate is the approval.
     const keyed = info && info.guarded && info.guarded.approver_key_id;
@@ -98,15 +110,23 @@ function applyMode() {
   const mode = currentMode();
   const guarded = mode === "guarded";
   const realsite = mode === "realsite";
+  const pay = mode === "pay";
+  const endpoint = mode === "endpoint";
   const answers = ANSWER_MODES.includes(mode);
   const cost = costOf(mode);
   // Until the page knows the costs, show neither the start page nor the cost switch.
-  $("field-url").hidden = guarded || realsite || answers || !info;
-  $("field-confirm").hidden = guarded || realsite || cost === 0 || !info;
-  $("task-cost").hidden = guarded || realsite || !info || !info.key_set || cost === null || cost === 0;
+  $("field-url").hidden = guarded || realsite || pay || endpoint || answers || !info;
+  $("field-confirm").hidden = guarded || realsite || pay || endpoint || cost === 0 || !info;
+  $("task-cost").hidden = guarded || realsite || pay || endpoint || !info || !info.key_set || cost === null || cost === 0;
   $("task-goal").readOnly = guarded;
-  $("task-run-label").textContent = realsite ? "Start (needs approval)" : guarded ? "Start demo task" : { search: "Search", research: "Start research" }[mode] || "Run task";
-  $("task-goal").placeholder = realsite
+  // Pay bills may start with an empty box: it then runs the three example bills.
+  $("task-goal").required = !pay && !endpoint;
+  $("task-run-label").textContent = endpoint ? "Review events (simulated)" : pay ? "Pay (test money)" : realsite ? "Start (needs approval)" : guarded ? "Start demo task" : { search: "Search", research: "Start research" }[mode] || "Run task";
+  $("task-goal").placeholder = endpoint
+    ? "Pick a scenario in a few words: phishing link in chat, big download at night, record queries. Leave empty to review all the simulated events."
+    : pay
+    ? "Bills to pay, for example: Pay Acme Supplies 12.00 USD; Pay Cloud Hosting 180 USD. Leave empty for the three example bills."
+    : realsite
     ? "A message to send through the form on httpbin.org, only if you approve"
     : answers
     ? "Ask anything, for example: what are the latest POCO phone prices?"
@@ -115,6 +135,11 @@ function applyMode() {
     $("task-goal").value = info.guarded.task;
   } else if (!guarded && info && info.guarded && $("task-goal").value === info.guarded.task) {
     $("task-goal").value = "";
+  }
+  if (pay && info && info.pay && !info.pay.test_key) {
+    runState("off", info.pay.key_set
+      ? "Pay bills is off: the Stripe key is not a TEST key. Test keys start with sk_test_."
+      : "Pay bills is off: STRIPE_TEST_KEY is not set where this server was started.");
   }
   updateSend();
 }
@@ -136,10 +161,12 @@ async function loadPast() {
     for (const name of receipts.slice().sort((a, b) => when(b) - when(a))) {
       const label = labels[name] || {};
       const date = label.when ? new Date(label.when * 1000).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
-      list.appendChild(el("li", {}, el("a", { href: "/run?receipt=" + encodeURIComponent(name), title: label.title || "Earlier run" },
+      const here = new URLSearchParams(location.search).get("receipt") === name;
+      list.appendChild(el("li", {}, el("a", { href: "/run?receipt=" + encodeURIComponent(name), title: label.title || "Earlier run", ...(here ? { "aria-current": "page" } : {}) },
         el("span", { class: "t" }, label.title || "Earlier run"), el("span", { class: "d" }, date))));
     }
     if (!receipts.length) list.appendChild(el("li", { class: "none" }, "No runs yet"));
+    fx.stagger(list.children);
   } catch (error) {
     list.appendChild(el("li", { class: "none" }, "Could not list runs"));
   }
@@ -204,6 +231,10 @@ function sayAnswer(reply, before, text, mode) {
     ? "Research report from TinyFish. It lists its sources; this page does not check them."
     : mode === "realsite"
     ? "Result of the run on a real website. Your message went to httpbin.org only if you approved."
+    : mode === "endpoint"
+    ? "The events were SIMULATED. Alerts are rule scores for a person to review, not proof of wrongdoing. Open the audit view for the full alert cards."
+    : mode === "pay"
+    ? "Test money only (Stripe test mode). Nothing real moved. Small bills paid on their own; larger ones needed your signature; the largest were refused."
     : mode === "guarded"
     ? "Result of the guarded run. The portal and the data are fake."
     : "Answer from TinyFish. This page does not check that it is true.";
@@ -247,12 +278,16 @@ async function showPast(name) {
 let askedFor = "";
 
 const RUNNING = {
+  endpoint: "Reviewing the endpoint events… ",
+  pay: "Paying the bills one at a time (test money)… ",
   guarded: "Running the demo task… ",
   realsite: "Measuring what can be claimed, then opening the real site (about a minute)… ",
   search: "Searching… ",
   research: "Researching on TinyFish (usually 5 to 20 minutes; keep this window open)… ",
 };
 const STATUS_DONE = {
+  endpoint: "The endpoint review finished.",
+  pay: "The payment run finished.",
   guarded: "The demo run finished.",
   realsite: "The real-website run finished.",
   search: "Here is what the web search found.",
@@ -267,6 +302,11 @@ function plainSummary(summary) {
   const what = { form_submit: "submit a form", navigate: "open a page", payment: "make a payment",
     download: "download a file", api_call: "call an API", form_fill: "fill in a form" }[match[1]] || match[1].replace(/_/g, " ");
   const bank = /\/bank/.test(match[2]) ? " This changes where a vendor's money is sent." : "";
+  // A payment's summary also carries the amount and who is paid, in words the approver can read.
+  const isolate = /\| (ISOLATE .+)$/.exec(summary);
+  if (isolate) return "The analyst is asked to approve: " + isolate[1];
+  const pays = /\| PAY (.+)$/.exec(summary);
+  if (pays) return "The agent wants to pay " + pays[1] + " (test money, Stripe test mode).";
   return "The agent wants to " + what + " at " + match[2] + "." + bank;
 }
 
@@ -302,12 +342,17 @@ function approvalCard(job, pending, reply, before, mode, typed) {
     el("details", { class: "raw" }, el("summary", {}, "The exact text you are signing"),
       el("p", { class: "mono" }, pending.summary)),
     typed ? el("p", { class: "approval-what" }, "Your message: " + typed) : null,
-    el("p", { class: "meta" }, mode === "realsite"
+    el("p", { class: "meta" }, mode === "endpoint"
+      ? "Policy holds any account action until a key signs a grant. The account is made up and the isolation is simulated: nothing real changes."
+      : mode === "pay"
+      ? "Policy held this payment back because it is over the limit a company agent may pay on its own. It is paid only if a key signs a grant. This is Stripe test mode: fake money, no real card or bank account."
+      : mode === "realsite"
       ? "Policy held this step back. It is sent only if a key signs a grant. This goes to a real public test site, httpbin.org, which will see your message."
       : "Policy held this step back. It is sent only if a key signs a grant. The portal and the data are fake; no money moves."),
     el("p", { class: "meta" }, keyId ? "You will sign with approver key " + keyId.slice(0, 22) + "… (a key signs, not a named person)." : "No approver key is available."),
     el("div", { class: "actions" }, approve, deny), status);
   reply.insertBefore(card, before);
+  fx.pop(card);
 }
 
 async function runTask(event) {
@@ -316,7 +361,7 @@ async function runTask(event) {
   const goal = mode === "guarded" ? info.guarded.task : $("task-goal").value;
   const url = mode === "agent" ? $("task-url").value : "";
   $("task-run").disabled = true;
-  push(el("div", { class: "msg you" }, el("p", {}, goal), el("p", { class: "meta" }, { guarded: "demo task on a fake portal", realsite: "real form on httpbin.org", search: "search", research: "research" }[mode] || "start at " + url)));
+  push(el("div", { class: "msg you" }, el("p", {}, goal), el("p", { class: "meta" }, { guarded: "demo task on a fake portal", realsite: "real form on httpbin.org", pay: "payments in Stripe test mode (fake money)", endpoint: "simulated endpoint events", search: "search", research: "research" }[mode] || "start at " + url)));
   const head = el("div", {});
   setHead(head, "run", "spin", "Starting the run…");
   const track = el("div", { class: "bar-track", "aria-hidden": "true" }, el("div", { class: "bar-fill" }));
@@ -400,6 +445,56 @@ for (const button of document.querySelectorAll(".idea")) {
 applyMode();
 loadPast();
 loadInfo();
+// The first screen eases in, and buttons answer a press.
+// The sidebar's list of what the console can do: one click picks that task type and jumps to the box.
+function buildModesNav() {
+  const nav = $("modes-nav");
+  if (!nav) return;
+  for (const radio of document.querySelectorAll("input[name=mode]")) {
+    const label = radio.parentElement.querySelector("b");
+    if (!label) continue;
+    const button = el("button", { type: "button", class: "modebtn", "data-mode": radio.value }, label.textContent.trim());
+    const mark = typeof fx === "object" ? fx.modeIcon(radio.value) : null;
+    if (mark) button.prepend(mark);
+    button.addEventListener("click", () => {
+      radio.checked = true;
+      radio.dispatchEvent(new Event("change", { bubbles: true }));
+      $("task-goal").focus();
+      $("task-form").scrollIntoView({ block: "end" });
+    });
+    nav.appendChild(el("li", {}, button));
+  }
+}
+
+// One line under the box: which task type is picked and what it does. On wide screens the sidebar
+// list picks the type and the grid of cards is hidden, so the descriptions live here.
+function syncModeCaption() {
+  const caption = $("mode-caption");
+  const radio = document.querySelector("input[name=mode]:checked");
+  if (!caption || !radio) return;
+  const label = radio.parentElement;
+  const name = label.querySelector("b");
+  const words = (label.querySelector("span").textContent || "").replace(name ? name.textContent : "", "").trim();
+  caption.replaceChildren(el("strong", {}, (name ? name.textContent : radio.value).trim()), " " + words);
+}
+
+// Mark the task type that is picked now, so the list shows where you are.
+function syncModesNav() {
+  const mode = currentMode();
+  syncModeCaption();
+  for (const button of document.querySelectorAll("#modes-nav .modebtn")) {
+    if (button.dataset.mode === mode) button.setAttribute("aria-current", "true");
+    else button.removeAttribute("aria-current");
+  }
+}
+
+buildModesNav();
+syncModesNav();
+for (const radio of document.querySelectorAll("input[name=mode]")) radio.addEventListener("change", syncModesNav);
+fx.stagger(document.querySelectorAll("#hero > *"), 0.07);
+fx.press("button, .idea, .newrun, .linkbtn");
 // /run?receipt=<name> opens an earlier run as the conversation it was.
 const wanted = new URLSearchParams(location.search).get("receipt");
 if (wanted) showPast(wanted);
+// Logos, icons, title letters, card glow and button lean (decoration only).
+fx.flair();

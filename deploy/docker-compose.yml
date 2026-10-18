@@ -27,7 +27,9 @@ services:
     secrets:
       - postgres_password
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # PostgreSQL 18+ images keep a version-named folder under /var/lib/postgresql, so the
+      # volume is mounted there, not at .../data (found on the first real run).
+      - postgres_data:/var/lib/postgresql
       - ./migrations:/docker-entrypoint-initdb.d:ro
     # Not published to the host (`R-OPS-04`).
     expose:
@@ -46,6 +48,18 @@ services:
           memory: 1g
     profiles: ["core"]
 
+  # Makes the signer's state folder writable by its non-root user, then exits. It mounts the
+  # state volume only: it never sees the key volume (found on the first real run: without this
+  # the signer stops with STATE_UNAVAILABLE).
+  signer-state-init:
+    image: alpine:3.21
+    command: ["sh", "-c", "chown -R 10002:10002 /state && chmod 700 /state"]
+    volumes:
+      - signer_state:/state
+    restart: "no"
+    networks: []
+    profiles: ["core"]
+
   # The one component that holds the signing key. It has no database
   # credentials, no published port, and its key volume is mounted nowhere else
   # (`R-SIG-01`, `R-SIG-02`, `R-OPS-03`).
@@ -62,6 +76,9 @@ services:
       ABB_SIGNER_INGESTION_PUBKEY_FILE: /run/secrets/ingestion_public_key
     secrets:
       - ingestion_public_key
+    depends_on:
+      signer-state-init:
+        condition: service_completed_successfully
     volumes:
       # Read-only, and this is the only service that may name it.
       - signer_keys:/keys:ro
@@ -77,7 +94,9 @@ services:
     networks:
       - signer
     healthcheck:
-      test: ["CMD", "/usr/local/bin/abb-signer", "--help"]
+      # `abb-signer --help` would start a second signer and fail for want of its key setting, so
+      # the check is that the port answers (found on the first real run: it showed unhealthy).
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 8081"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -136,6 +155,73 @@ services:
           memory: 512m
     profiles: ["core"]
 
+  # The run-graph database (profile `graph`). The graph is a COPY of what is inside a receipt, made
+  # so the audit page can draw it; the receipt stays the only source of truth, so losing this
+  # volume loses nothing that cannot be rebuilt. Published on this computer's loopback only.
+  # FalkorDB has no password here: that is acceptable only because of the 127.0.0.1 binding.
+  # Pinned by digest (tag `latest` on 2026-10-18). The server is SSPL-licensed.
+  graph:
+    image: falkordb/falkordb@sha256:b0bdcac2cbaff989e77cb0610439b7a9289e86de033ccbbd4368b66fb680ae7a
+    ports:
+      - "127.0.0.1:6390:6379"
+    volumes:
+      - falkor_data:/var/lib/falkordb/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    profiles: ["graph"]
+
+  # Artifact storage on an S3-compatible server (profile `storage`). The deck says MinIO, but MinIO's
+  # community edition was archived upstream in April 2026 and no longer publishes images, so this
+  # uses SeaweedFS 4.48 (Apache-2.0, released 2026-09-28), pinned by digest. The code only speaks the
+  # S3 API (`services/artifacts/s3_store.py`), so any S3 server, MinIO included, works the same.
+  # Authentication is ON: the identity file is a secret you create (see deploy/README.md), never
+  # committed. Published on this computer's loopback only.
+  storage:
+    image: chrislusf/seaweedfs@sha256:4e61d15fd35994cb1e43e1e553dff106794841fd9a99ade2fc8c8bfce4d7872d
+    command: ["server", "-s3", "-s3.config=/run/secrets/s3_config", "-dir=/data", "-volume.max=0", "-master.volumeSizeLimitMB=256"]
+    ports:
+      - "127.0.0.1:8333:8333"
+    volumes:
+      - storage_data:/data
+    secrets:
+      - s3_config
+    # The image starts as root and drops to its own user, which needs exactly these three
+    # capabilities (found on the first run); everything else is dropped.
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null --spider http://127.0.0.1:9333/cluster/status || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+    profiles: ["storage"]
+
 networks:
   # The database is reachable from the api only.
   data:
@@ -146,6 +232,8 @@ networks:
 
 volumes:
   postgres_data:
+  storage_data:
+  falkor_data:
   # Mounted by the signer and by nothing else. An operator puts
   # `signer.key` here with `abb keygen`, ideally from an offline machine.
   signer_keys:
@@ -159,3 +247,7 @@ secrets:
     file: ./secrets/postgres_password
   ingestion_public_key:
     file: ./secrets/ingestion_public_key
+  s3_config:
+    # The S3 identity file for the storage service (access key and secret). Created by the
+    # operator, never committed. `S3_CONFIG_FILE` may point elsewhere.
+    file: ${S3_CONFIG_FILE:-./secrets/s3.json}

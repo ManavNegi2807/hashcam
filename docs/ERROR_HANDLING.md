@@ -101,6 +101,9 @@ All HTTP errors use `application/problem+json` (RFC 9457 style):
 | `ADAPTER_BAD_RESPONSE` | Provider response failed schema checks |
 | `PROVIDER_QUOTA_EXHAUSTED` | Provider quota or credits are gone |
 | `BUDGET_RESERVE_REACHED` | Local reserve threshold hit; optional calls stop |
+| `PAYMENT_KEY_NOT_TEST_MODE` | The payment key is not a Stripe TEST key; refused before policy and before any request |
+| `PAYMENT_KEY_MISSING` | No payment test key is set; nothing was attempted |
+| `ENRICHMENT_NOT_RUN` | Web enrichment was not run (for example no TinyFish key); the alert says so, it is not a verdict |
 | `POLICY_DENIED` | Deterministic deny (recorded as `ACTION_BLOCKED`) |
 | `APPROVAL_REQUIRED` | Waiting for a signed approval |
 | `APPROVAL_EXPIRED` | Approval used after `expires_at` |

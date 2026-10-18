@@ -17,6 +17,8 @@
         <div><strong>Hascham</strong><span>Task console</span></div>
       </div>
       <a class="newrun" href="/run"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>New task</a>
+      <h2 class="side-h" id="modes-h">What it can do</h2>
+      <ul id="modes-nav" class="modesnav" aria-labelledby="modes-h"></ul>
       <h2 class="side-h">Past runs</h2>
       <ul id="past" class="past"></ul>
       <div class="side-foot">
@@ -26,11 +28,11 @@
       </div>
     </aside>
 
-    <section class="chat" aria-label="Task conversation">
+    <section class="chat" role="main" aria-label="Task conversation">
       <div id="thread" class="thread" role="log" aria-live="polite" tabindex="0">
         <div id="hero" class="hero">
           <svg class="hero-logo" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg>
-          <h1>What should the agent do?</h1>
+          <h1 data-split>What should the agent do?</h1>
           <p class="hero-sub">You give the task. The agent works in a remote browser. Everything it reports is written to a signed receipt you can check offline.</p>
           <div class="ideas" role="group" aria-label="Example tasks">
             <button type="button" class="idea" data-text="Tell about Spain." data-url="https://example.com">About Spain</button>
@@ -46,12 +48,15 @@
       </div>
 
       <form id="task-form" class="composer" aria-label="New task">
+        <p id="mode-caption" class="modecaption" aria-live="polite"></p>
         <fieldset class="modes" id="modes">
           <legend class="sr">What kind of task</legend>
           <label class="mode"><input type="radio" name="mode" value="search" checked><span><b>Search</b> fast ranked web results with links</span></label>
           <label class="mode"><input type="radio" name="mode" value="research"><span><b>Research</b> a written, cited report (5 to 20 minutes)</span></label>
           <label class="mode"><input type="radio" name="mode" value="agent"><span><b>Browse</b> TinyFish agent, read-only</span></label>
           <label class="mode"><input type="radio" name="mode" value="guarded"><span><b>Demo task</b> scripted bank-details change on a fake portal; waits for your signed approval</span></label>
+          <label class="mode"><input type="radio" name="mode" value="endpoint"><span><b>Endpoint review</b> simulated downloads, programs and clicked links are scored; alerts are explained; an analyst signs before any account is isolated</span></label>
+          <label class="mode"><input type="radio" name="mode" value="pay"><span><b>Pay bills</b> a company agent pays invoices with fake money (Stripe test mode); big ones wait for your signature</span></label>
           <label class="mode"><input type="radio" name="mode" value="realsite"><span><b>Real website</b> a real browser submits a real form; waits for your signed approval</span></label>
         </fieldset>
         <p id="task-cost" class="cost ready" role="status" hidden></p>
@@ -76,6 +81,9 @@
       <p id="status" class="sr" role="status" aria-live="polite"></p>
     </section>
   </div>
+  <script src="/vendor/motion.js"></script>
+  <script src="/vendor/gsap.min.js"></script>
+  <script src="/fx.js"></script>
   <script src="/format.js"></script>
   <script src="/run.js"></script>
 </body>

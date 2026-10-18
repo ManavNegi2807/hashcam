@@ -318,7 +318,13 @@ function renderAll(report, summary, origin) {
   renderDimensions(report);
   renderFindings(report);
   if (summary) { renderRun(summary, report); renderEvents(summary); }
-  else { show("run", false); show("events", false); }
+  else { show("run", false); show("events", false); show("graph", false); show("alerts", false); }
+  // The result eases in first, then the cards one after another.
+  fx.enter($("overall-body").firstChild);
+  fx.stagger(document.querySelectorAll("#channels-body .card, #run-body .card"), 0.05);
+  // Smooth scrolling and scroll-in effects for the sections that are showing now.
+  fx.smooth();
+  fx.reveal(document.querySelectorAll("main > section:not([hidden])"));
 }
 
 // ------------------------------------------------------------------ loading
@@ -337,7 +343,8 @@ function renderPast(names, labels) {
   for (const name of names) {
     const label = labels[name] || {};
     const date = label.when ? new Date(label.when * 1000).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
-    const link = el("a", { href: "/?receipt=" + encodeURIComponent(name), title: label.title || "Earlier run" },
+    const here = $("receipt").value === name;
+    const link = el("a", { href: "/?receipt=" + encodeURIComponent(name), title: label.title || "Earlier run", ...(here ? { "aria-current": "page" } : {}) },
       el("span", { class: "t" }, label.title || "Earlier run"), el("span", { class: "d" }, date));
     link.addEventListener("click", (event) => {
       event.preventDefault();
@@ -398,6 +405,8 @@ async function verifySelected(event) {
     const [report, summary] = await Promise.all([getJson("/api/verify" + query), getJson("/api/receipt" + query)]);
     renderAll(report, summary, "Verified just now by abb verify.");
     renderAnswer(name);
+    graphView.show(name);
+    alertView.show(name);
     say("Done.");
     $("main").focus();
   } catch (error) {
@@ -453,3 +462,8 @@ $("report-file").addEventListener("change", openReport);
 loadList();
 showRunLink();
 openFromQuery();
+// Smooth scrolling and scroll-in effects for what is already on the page (the limits notice).
+fx.smooth();
+fx.reveal(document.querySelectorAll("main > section:not([hidden])"));
+// Logos, icons, title letters, card glow and button lean (decoration only).
+fx.flair();

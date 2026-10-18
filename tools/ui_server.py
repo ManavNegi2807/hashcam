@@ -35,6 +35,12 @@ def main() -> int:
         help="let a person start a TinyFish run from the page (spends credit; needs "
         "TINYFISH_API_KEY, ABB_TEST_DSN, ABB_BIN and ABB_SIGNER_BIN in this environment)",
     )
+    parser.add_argument(
+        "--falkordb",
+        default=os.environ.get("ABB_FALKORDB_URL", ""),
+        help="FalkorDB on this computer, e.g. redis://127.0.0.1:6390 "
+        "(default: ABB_FALKORDB_URL; empty draws the graph from the receipt)",
+    )
     args = parser.parse_args()
     receipts = args.receipts.resolve()
     runner = None
@@ -42,8 +48,18 @@ def main() -> int:
         from services.dashboard.runner import Runner
 
         runner = Runner(receipts)
+    graph = None
+    if args.falkordb:
+        from services.graph.store import FalkorStore
+
+        graph = FalkorStore(args.falkordb)  # refuses any address that is not this computer
     config = Config(
-        receipts=receipts, keys=args.keys, abb=args.abb, profile=args.profile, runner=runner
+        receipts=receipts,
+        keys=args.keys,
+        abb=args.abb,
+        profile=args.profile,
+        runner=runner,
+        graph=graph,
     )
     server = serve(config, args.port)
     print(f"dashboard on http://127.0.0.1:{server.server_address[1]}  (Ctrl+C to stop)")

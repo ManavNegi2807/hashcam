@@ -159,3 +159,110 @@ What this does **not** show: the approval rule gates form *submissions*; other r
 policy-checked but not individually approved. A signature shows a key signed, not which person held
 it (the key is on the same machine). The message you type is sent to a public test service, but only
 if you approve.
+
+## A witness on a second computer
+
+A signer alone cannot show it was not rolled back. A **witness** keeps its own anti-rollback
+state, rebuilds the tree and co-signs; it only counts as independent if its key lives on another
+computer under another person's control. `tools/remote_witness.py` turns that into an exchange
+of small files. Only the public checkpoint, the public run-root records and your public signer
+key travel. The witness's private key never leaves its computer.
+
+| Step | Where | Command |
+|---|---|---|
+| 1. make a witness key | the witness's computer (needs only the `abb` program and Python) | `python tools/remote_witness.py witness-init --domain host:NAME-laptop/admin:NAME` |
+| 2. make a run and wait | your computer | `python tools/remote_witness.py host --dsn postgresql://... --work session` |
+| 3. send `session/request/` to the witness | chat or USB | |
+| 4. co-sign | the witness's computer | `python tools/remote_witness.py witness-sign --request request --reply reply` |
+| 5. send `reply/reply.json` back | chat or USB | put it at `session/reply/reply.json` |
+| 6. the receipt is built and verified | your computer | automatic; it prints what `abb verify` says |
+
+Measured here (`tests/contract/test_remote_witness.py`, two folders on one machine): the exchange
+works, the reply holds no secret, and a witness **refuses** a history that is not a continuation of
+what it signed before. **Not measured: independence.** On one machine the two sides share a
+computer, and the failure-domain label is a claim made in the key manifest, which you publish.
+A single witness is not a quorum either: read the verdict the verifier gives. It has not been
+tried with a second computer yet.
+
+## Company payments with fake money
+
+Pick **Pay bills** on the task page. It needs a Stripe **test** key in `STRIPE_TEST_KEY` (the launcher
+asks for it, hidden; a key that does not start with `sk_test_` is thrown away). Stripe test mode is
+an official sandbox: a real payment API, the published test card, fake money.
+
+| Bill | Rule (policy `company-spend`) | What happens |
+|---|---|---|
+| up to 50.00 | pays on its own | sent to Stripe test mode at once |
+| over 50.00 up to 500.00 | needs a signed approval | an approval card shows **the amount and who is paid**; sent only if you sign a grant |
+| over 500.00 | refused outright | never sent, recorded as blocked (`OVER_AMOUNT_LIMIT`) |
+
+Type bills like `Pay Acme Supplies 12.00 USD; Pay Cloud Hosting 180 USD; Pay Big Equipment 900 USD`
+(up to 5, USD/EUR/GBP/INR), or leave the box empty to run one example in each tier.
+
+Protections, each with a test: a live key is refused before any request; a reply that does not say
+`livemode: false` is not trusted; a hard ceiling of 1,000.00 that no policy can raise; the payment
+carries an idempotency key and is never retried (an unclear answer is recorded as unknown); the key
+and the free-text note never reach the receipt. Coverage is declared `STEP_OBSERVED`, not
+`STEP_GATED`: there is no bypass test battery for this adapter.
+
+Check your key once, without the page: `python tools/check_stripe_live.py` (one 1.00 test payment).
+**Not measured:** Stripe test mode against this project's client. The automated tests use a local
+stand-in that imitates Stripe's reply shape (the run says STAND-IN in its task text); they prove our
+side of the contract, not Stripe's behaviour.
+
+## Endpoint review: events in, explained alerts out, everything sealed
+
+This is the scenario from the deck (slide 7): an employee clicks a spoofed login link in chat. Pick
+**Endpoint review** on the task page (or `python tools/demo_endpoint.py ...`). For each reported event:
+
+1. the gateway records it and the collector's report is **sealed as an artifact** (by digest);
+2. explainable **rules** score it (a rule sum, not a probability); a score of 300,000 or more is an
+   alert, 600,000 or more is HIGH. An optional **Isolation Forest** gives a second, advisory opinion
+   (lower "REVIEW" tier when only it flags something);
+3. if the alert has a link, **TinyFish Search** (what web reports say) and **TinyFish Fetch** (what the
+   page itself says, read by TinyFish's servers) are asked through the gateway. No key: the alert says
+   "not asked", which is missing evidence, never "safe";
+4. for a HIGH alert the analyst is asked to approve isolating the account. They sign with `abb approve`
+   after reading who and why. **The isolation is simulated**: no real account exists or changes.
+
+The **Alerts** section of the audit view shows each alert: how serious, each rule that fired in words,
+the model's reasons, what TinyFish said (as the provider's claim), and whether an analyst signed.
+
+Where events come from:
+
+| Source | How | What it is |
+|---|---|---|
+| Built-in scenarios | type `phishing link in chat`, `big download at night`, `record queries`, or leave empty | **Simulated** events |
+| A link you paste | type a sentence containing a web link | Scored, never opened from this computer; with a TinyFish key it is searched and fetched by TinyFish |
+| The real collector | `python tools/endpoint_daemon.py --i-am-authorised --out events.jsonl --watch-downloads DIR --watch-processes --clicks-file links.txt`, then `python tools/demo_endpoint.py ... --events-file events.jsonl` | **Real events on this computer**, only what you point it at |
+
+**What the real collector sees (and never does):** new finished files in ONE folder you name (name,
+size, hour and where the browser says it came from; never contents, never the folder path); script
+shells (`powershell.exe`, `cmd.exe`, ...) that start while it runs, with the program that started them
+(names only, no command lines); and links you write to a file (it does **not** read browser history).
+It needs `--i-am-authorised`, writes one readable JSON-lines file, and sends nothing anywhere. It is a
+demo collector, not an endpoint security product.
+
+**Measured** (`docs/MEASUREMENTS.md`, `python tools/measure_endpoint.py`): on **synthetic** labelled
+events (made by the author of the rules, so optimistic, never real-world performance) the rules reach
+about 0.73 precision and 0.8 recall with a 0.10 false-alarm rate, the Isolation Forest alone about 0.3
+recall, and together they catch more of the hard phishing cases. Both miss most "hard" attacks built to
+evade them. Scoring takes about 0.06 ms (rules) and 0.14 ms (model) per event. From an event being
+recorded to its alert being written took about 3.3 to 4.4 s for the slowest alert in a full run on
+this machine (each ledger event is committed over HTTP to PostgreSQL and the signer).
+
+**Not measured / not built:** precision or recall on real traffic; TinyFish Fetch against the live
+service (tested against a local fake that follows the documented API; run `python
+tools/check_tinyfish_live.py --fetch` with your key); a real browser-history or chat integration; any
+real account isolation; ETW or deep telemetry (roadmap).
+
+## Artifacts in an S3-compatible object store
+
+The deck says MinIO. MinIO's community edition was **archived upstream in April 2026** and no longer
+publishes images (older releases carry a known high-severity flaw), so this project does not start new
+deployments on it. `services/artifacts/s3_store.py` speaks the standard S3 API (AWS Signature V4, with the
+standard library only) and works with any S3-compatible server, MinIO included. It was tested against
+**SeaweedFS 4.48** (Apache-2.0): the signing matches AWS's published example, an existing object is never
+overwritten, a swapped object is reported and never served, and a full endpoint run keeps its sealed
+artifacts in the bucket. Set `ABB_S3_ENDPOINT`, `ABB_S3_ACCESS_KEY`, `ABB_S3_SECRET_KEY` (and optionally
+`ABB_S3_BUCKET`) to use it; see `deploy/README.md` for the `storage` Docker profile.
