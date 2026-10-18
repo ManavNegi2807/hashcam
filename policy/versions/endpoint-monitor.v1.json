@@ -1,0 +1,30 @@
+{
+  "policy_id": "endpoint-monitor",
+  "version": 1,
+  "description": "A SIMULATED endpoint collector reporting downloads, process launches, clicked links and record queries. Reports are recorded, never blocked (a monitor cannot stop what a person already did). Web enrichment may only call TinyFish's search and fetch APIs. Isolating an account needs a person's signed approval.",
+  "allowed_action_types": [
+    "file_download",
+    "process_launch",
+    "url_click",
+    "record_query",
+    "api_call",
+    "account_isolation"
+  ],
+  "action_types_needing_target": [
+    "api_call"
+  ],
+  "allowed_hosts": [
+    "api.search.tinyfish.ai",
+    "api.fetch.tinyfish.ai"
+  ],
+  "denied_hosts": [],
+  "max_actions": 200,
+  "max_amount_minor_units": 0,
+  "approval_required": {
+    "action_types": [
+      "account_isolation"
+    ],
+    "hosts": [],
+    "target_contains": []
+  }
+}

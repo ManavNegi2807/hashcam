@@ -56,6 +56,20 @@ class Fake:
             {"position": 2, "title": "No link", "snippet": "x", "url": "javascript:alert(1)"},
         ]
         self.fail_times: dict[str, int] = {}  # path -> how many requests to fail with HTTP 500
+        self.base = ""  # the local server's address, set once it is listening
+        self.fetch_reply: dict[str, Any] = {
+            "results": [
+                {
+                    "url": "https://phish.example/login",
+                    "final_url": "https://phish.example/login?s=1",
+                    "title": "Sign in to your account",
+                    "text": "Enter your password to continue.",
+                    "format": "markdown",
+                    "latency_ms": 420,
+                }
+            ],
+            "errors": [],
+        }
 
     def wallet(self) -> dict[str, Any]:
         bal = self.balance.pop(0) if len(self.balance) > 1 else self.balance[0]
@@ -133,6 +147,8 @@ def server(monkeypatch: pytest.MonkeyPatch) -> Iterator[Fake]:
                     200,
                     {"query": "q", "results": fake.search_results, "total_results": 2, "page": 0},
                 )
+            if method == "POST" and self.path == "/":
+                return self._send(200, fake.fetch_reply)
             if method == "POST" and self.path == "/v1/automation/run-research-async":
                 return self._send(200, {"research_run_id": "rr-1", "error": None})
             if method == "POST" and self.path == "/v1/research-run/rr-1/cancel":
@@ -192,7 +208,7 @@ def server(monkeypatch: pytest.MonkeyPatch) -> Iterator[Fake]:
     httpd = HTTPServer(("127.0.0.1", 0), Handler)
     thread = threading.Thread(target=httpd.serve_forever, daemon=True)
     thread.start()
-    fake.base = f"http://127.0.0.1:{httpd.server_port}"  # type: ignore[attr-defined]
+    fake.base = f"http://127.0.0.1:{httpd.server_port}"
     yield fake
     httpd.shutdown()
 
@@ -475,3 +491,92 @@ def test_the_address_policy_is_asked_about_is_the_providers_own_api(server: Fake
     c = client(server, search_url=server.base)
     assert c.api_url("search") == server.base
     assert c.api_url("research").endswith("/v1/automation/run-research-async")
+
+
+# ---- fetch: the text of a page, read by TinyFish's servers -----------------------------------
+
+PAGE = "https://phish.example/login"
+
+
+def test_fetch_returns_the_page_text_with_its_title_and_final_address(server: Fake) -> None:
+    answer = client(server, fetch_url=server.base).run("fetch", "is this a phishing page?", PAGE)
+    assert answer["result"].startswith("**Page fetched by TinyFish**")
+    assert "- Title: Sign in to your account" in answer["result"]
+    assert "- Final address: https://phish.example/login?s=1" in answer["result"]
+    assert "Enter your password to continue." in answer["result"]
+    assert answer["usage"] == {"cents": 0, "urls": 1}
+    assert answer["steps"][0]["kind"] == "page_fetched"
+    assert answer["steps"][0]["url"] == "https://phish.example/login?s=1"
+    assert answer["execution_id"].startswith("fetch-")
+    sent = next(r for r in server.requests if r[0] == "POST" and r[1] == "/")
+    assert sent[2] == {
+        "urls": [PAGE],
+        "format": "markdown",
+        "purpose": "is this a phishing page?",
+        "per_url_timeout_ms": 30000,
+        "ttl": 3600,
+    }
+    assert sent[3] == DUMMY_KEY  # the key travels only in the documented header
+
+
+def test_a_page_that_could_not_be_fetched_is_a_failed_run_not_an_empty_success(
+    server: Fake,
+) -> None:
+    server.fetch_reply = {"results": [], "errors": [{"url": PAGE, "error": "bot_blocked"}]}
+    with pytest.raises(RunFailed) as caught:
+        client(server, fetch_url=server.base).run("fetch", "q", PAGE)
+    assert caught.value.code == "BOT_BLOCKED"
+    assert caught.value.cents == 0
+
+
+def test_a_very_long_page_is_cut_so_the_record_stays_small(server: Fake) -> None:
+    server.fetch_reply["results"][0]["text"] = "x" * 50_000
+    answer = client(server, fetch_url=server.base).run("fetch", "q", PAGE)
+    assert len(answer["result"]) < 3300
+
+
+def test_an_answer_without_a_results_list_is_a_bad_response(server: Fake) -> None:
+    server.fetch_reply = {"nope": 1}
+    with pytest.raises(BadResponse):
+        client(server, fetch_url=server.base).run("fetch", "q", PAGE)
+
+
+@pytest.mark.parametrize(
+    "address",
+    [
+        "http://127.0.0.1/admin",
+        "http://localhost:8080/",
+        "http://169.254.169.254/latest/meta-data/",
+        "http://10.0.0.5/",
+        "http://192.168.1.1/",
+        "http://[::1]/",
+        "http://metadata.google.internal/",
+        "http://nas.local/",
+        "ftp://files.example/a.zip",
+        "file:///etc/passwd",
+        "https://user:secret@phish.example/",
+        "https://phish.example/with space",
+    ],
+)
+def test_private_or_odd_addresses_are_refused_before_anything_is_sent(
+    server: Fake, address: str
+) -> None:
+    with pytest.raises(NotSupported):
+        client(server, fetch_url=server.base).run("fetch", "q", address)
+    assert not [r for r in server.requests if r[0] == "POST" and r[1] == "/"]
+
+
+def test_running_out_of_free_fetches_is_reported_as_no_quota_and_not_retried(server: Fake) -> None:
+    server.fail_http["/"] = (402, {"error": {"code": "INSUFFICIENT_CREDITS"}})
+    with pytest.raises(QuotaExhausted):
+        client(server, fetch_url=server.base).run("fetch", "q", PAGE)
+    assert len([r for r in server.requests if r[0] == "POST" and r[1] == "/"]) == 1
+
+
+def test_the_fetch_estimate_is_zero_when_the_rate_card_has_no_fetch_meter(server: Fake) -> None:
+    assert client(server, fetch_url=server.base).estimate_cents("fetch", "q") == 0
+
+
+def test_the_fetch_address_must_be_https_unless_it_is_loopback() -> None:
+    with pytest.raises(ValueError):
+        HttpTinyFishClient(fetch_url="http://api.fetch.tinyfish.ai")

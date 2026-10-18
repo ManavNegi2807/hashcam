@@ -26,6 +26,7 @@ loopback base URL, so tests can use a local fake server.
 from __future__ import annotations
 
 import hashlib
+import ipaddress
 import json
 import os
 import time
@@ -48,6 +49,8 @@ from adapters.tinyfish.client import (
 
 DEFAULT_BASE_URL = "https://agent.tinyfish.ai"
 DEFAULT_SEARCH_URL = "https://api.search.tinyfish.ai"
+#: Fetch: `POST` with `{"urls": [...]}`; free for 1,000 successful URLs a day, per the docs.
+DEFAULT_FETCH_URL = "https://api.fetch.tinyfish.ai"
 MAX_RESULTS_SHOWN = 8
 KEY_ENV = "TINYFISH_API_KEY"
 _LOOPBACK = {"127.0.0.1", "localhost", "::1"}
@@ -65,6 +68,42 @@ def _cents(dollars: Any, rounding: str) -> int:
     return int(value.to_integral_value(rounding=rounding))
 
 
+FETCH_TEXT_CHARS = 3000
+_PRIVATE_NAMES = ("localhost", "metadata.google.internal")
+_PRIVATE_SUFFIXES = (".local", ".internal", ".localhost", ".lan", ".home.arpa")
+
+
+def refuse_unsafe_page(page_url: str) -> str:
+    """Why this page address must not be sent to a fetch service, or an empty string.
+
+    TinyFish also rejects private addresses; this is our own check before anything leaves this
+    computer, so a crafted link cannot aim a fetch at an internal address."""
+    if not isinstance(page_url, str) or len(page_url) > 2000 or any(c.isspace() for c in page_url):
+        return "the page address is not a plain address"
+    parts = urlparse(page_url)
+    if parts.scheme not in ("http", "https"):
+        return "only http and https pages can be fetched"
+    if parts.username is not None or parts.password is not None:
+        return "an address with a login part is refused"
+    host = (parts.hostname or "").lower().rstrip(".")
+    if not host or host in _PRIVATE_NAMES or host.endswith(_PRIVATE_SUFFIXES):
+        return "a private or local address is refused"
+    try:
+        ip = ipaddress.ip_address(host)
+    except ValueError:
+        return ""
+    if (
+        ip.is_private
+        or ip.is_loopback
+        or ip.is_link_local
+        or ip.is_reserved
+        or ip.is_multicast
+        or ip.is_unspecified
+    ):
+        return "a private or local address is refused"
+    return ""
+
+
 class HttpTinyFishClient:
     def __init__(
         self,
@@ -78,6 +117,7 @@ class HttpTinyFishClient:
         deadline_seconds: float = 90.0,
         request_timeout: float = 20.0,
         search_url: str = DEFAULT_SEARCH_URL,
+        fetch_url: str = DEFAULT_FETCH_URL,
         research_deadline_seconds: float = 1500.0,
         research_poll_seconds: float = 5.0,
         sleep: Callable[[float], None] = time.sleep,
@@ -93,6 +133,9 @@ class HttpTinyFishClient:
             search.scheme == "http" and search.hostname in _LOOPBACK
         ):
             raise ValueError("the search URL must be https (http only for loopback)")
+        fetch = urlparse(fetch_url)
+        if fetch.scheme != "https" and not (fetch.scheme == "http" and fetch.hostname in _LOOPBACK):
+            raise ValueError("the fetch URL must be https (http only for loopback)")
         if not 1 <= max_steps <= 500:
             raise ValueError("max_steps must be 1..500")
         self._base = base_url.rstrip("/")
@@ -110,6 +153,7 @@ class HttpTinyFishClient:
         self._rates: dict[str, Decimal] = {}  # every meter on the wallet's rate card
         self._search_base = search_url.rstrip("/")
         self._search_host = search.netloc
+        self._fetch_base = fetch_url.rstrip("/")
         self._research_deadline = research_deadline_seconds
         self._research_poll = research_poll_seconds
 
@@ -206,6 +250,17 @@ class HttpTinyFishClient:
     def estimate_cents(self, kind: str, task: str) -> int | None:
         """An upper bound in whole cents, rounded up. Agent: the step cap times the step rate."
         Search and research: the per-use rate on the wallet's rate card (the card says 0 today)."""
+        if kind == "fetch":
+            # The docs: free up to 1,000 successful URLs a day, then wallet credit is needed (the
+            # price is not stated). The rate card, if it lists a Fetch meter, is used as is;
+            # otherwise 0, with HTTP 402 stopping the call if the free allowance is gone.
+            if not self._rates:
+                try:
+                    self._wallet()
+                except (AuthFailure, BadResponse, ProviderTimeout, RateLimited):
+                    return None
+            rate = next((r for label, r in self._rates.items() if "fetch" in label), None)
+            return 0 if rate is None else _cents(rate, ROUND_CEILING)
         if kind in ("search", "research"):
             if not self._rates:
                 try:
@@ -231,6 +286,8 @@ class HttpTinyFishClient:
         """Where a task of this kind is sent: what policy is asked about for search and research."""
         if kind == "search":
             return self._search_base
+        if kind == "fetch":
+            return self._fetch_base
         if kind == "research":
             return self._base + "/v1/automation/run-research-async"
         return self._base
@@ -240,6 +297,8 @@ class HttpTinyFishClient:
             return self._search(task)
         if kind == "research":
             return self._research(task)
+        if kind == "fetch":
+            return self._fetch(url, task)
         if kind != "agent":
             raise NotSupported("this operation is not implemented against the live API")
         before = self._wallet_cents_or_none()
@@ -375,6 +434,70 @@ class HttpTinyFishClient:
                 for i in items
             ],
             "usage": {"cents": 0, "results": len(items)},
+        }
+
+    # -- fetch: the text of a web page, read by TinyFish's servers (not this computer)
+
+    def _fetch(self, page_url: str, purpose: str) -> dict[str, Any]:
+        problem = refuse_unsafe_page(page_url)
+        if problem:
+            raise NotSupported(problem)
+        data = self._call(
+            "POST",
+            "",
+            {
+                "urls": [page_url],
+                "format": "markdown",
+                "purpose": purpose[:2000] or "security review of a link",
+                "per_url_timeout_ms": 30_000,
+                "ttl": 3600,
+            },
+            base=self._fetch_base,
+        )
+        if not isinstance(data, dict):
+            raise BadResponse("the fetch answer is not an object")
+        results = data.get("results")
+        errors = data.get("errors")
+        if not isinstance(results, list):
+            raise BadResponse("the fetch answer has no results list")
+        first = next((r for r in results if isinstance(r, dict)), None)
+        if first is None:
+            # A per-URL failure comes back as HTTP 200 with a code in `errors`.
+            bad = (
+                next((e for e in errors if isinstance(e, dict)), {})
+                if isinstance(errors, list)
+                else {}
+            )
+            code = (
+                str(bad.get("error", "FETCH_FAILED"))[:40].upper().replace(" ", "_")
+                or "FETCH_FAILED"
+            )
+            raise RunFailed(code, "TinyFish could not fetch the page: " + code.lower())
+        title = " ".join(str(first.get("title", "")).split())[:200]
+        final = str(first.get("final_url") or first.get("url") or page_url)[:500]
+        body = str(first.get("text", ""))[:FETCH_TEXT_CHARS]
+        text = chr(10).join(
+            [
+                "**Page fetched by TinyFish**",
+                "",
+                f"- Title: {title or '(none)'}",
+                f"- Final address: {final}",
+                "",
+                body,
+            ]
+        )
+        digest = hashlib.sha256(page_url.encode("utf-8")).hexdigest()[:16]
+        return {
+            "execution_id": "fetch-" + digest,
+            "result": text,
+            "steps": [
+                {
+                    "kind": "page_fetched",
+                    "url": final if final.startswith(("http://", "https://")) else page_url,
+                    "text": f"{title} \u2014 {body[:300]}".strip()[:500],
+                }
+            ],
+            "usage": {"cents": 0, "urls": 1},
         }
 
     # -- research: a written, cited report from a question (an async job, minutes long)

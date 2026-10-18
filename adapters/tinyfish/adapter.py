@@ -111,6 +111,13 @@ class TinyFishAdapter:
         """Ranked web results for a question. One request; the results are the provider's."""
         return self._run("search", task, self._api_url("search"))
 
+    def fetch(self, page_url: str, purpose: str) -> Outcome:
+        """The text of one web page, read by TinyFish's servers. The page is the provider's claim.
+
+        Policy is asked about the fetch service's own address; the page address travels as the
+        request itself (and the page's final address is recorded as an observation)."""
+        return self._run("fetch", purpose, self._api_url("fetch"), send_url=page_url)
+
     def research(self, task: str) -> Outcome:
         """A written, cited report from a question (minutes long)."""
         return self._run("research", task, self._api_url("research"))
@@ -126,7 +133,7 @@ class TinyFishAdapter:
         """The provider's autonomous web agent, starting at `url`."""
         return self._run("agent", task, url)
 
-    def _run(self, kind: str, task: str, url: str) -> Outcome:
+    def _run(self, kind: str, task: str, url: str, *, send_url: str | None = None) -> Outcome:
         if not self.opt_in:
             raise OptInRequired("TinyFish is optional and must be switched on for each run")
 
@@ -140,6 +147,11 @@ class TinyFishAdapter:
             params={
                 "kind": kind,
                 "task_digest": hashlib.sha256(task.encode()).hexdigest(),
+                **(
+                    {"page_digest": hashlib.sha256(send_url.encode()).hexdigest()}
+                    if send_url is not None
+                    else {}
+                ),
                 "via": self.client.host,
             },
         )
@@ -166,7 +178,7 @@ class TinyFishAdapter:
 
         # 3. The call. Each failure mode is recorded as what it is, and none is retried.
         try:
-            raw = self.client.run(kind, task, url)
+            raw = self.client.run(kind, task, send_url if send_url is not None else url)
         except QuotaExhausted:
             self.gateway.failed(action, error_code="PROVIDER_QUOTA_EXHAUSTED", retryable=False)
             return Outcome("QUOTA_EXHAUSTED", "the provider reports no quota; no fallback is tried")

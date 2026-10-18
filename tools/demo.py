@@ -65,6 +65,7 @@ from services.api.finalize import Finalizer  # noqa: E402
 from services.api.repository import Repository  # noqa: E402
 from services.api.signer_client import SignerClient  # noqa: E402
 from services.artifacts.component import ArtifactComponent  # noqa: E402
+from services.artifacts.s3_store import S3ArtifactStore  # noqa: E402
 from services.artifacts.store import ArtifactStore  # noqa: E402
 from services.worker.approval_client import HttpApprovalClient  # noqa: E402
 from services.worker.event_sink import HttpEventSink  # noqa: E402
@@ -722,7 +723,10 @@ def finalize_run(stack: Stack, run_id: str) -> Any:
 
 
 def artifact_store(stack: Stack) -> ArtifactStore:
-    """The demo's local content-addressed store (MinIO is not available here)."""
+    """The demo's artifact store: local by default, or an S3-compatible server when
+    `ABB_S3_ENDPOINT` (with `ABB_S3_ACCESS_KEY` and `ABB_S3_SECRET_KEY`) is set."""
+    if os.environ.get("ABB_S3_ENDPOINT"):
+        return S3ArtifactStore.from_environment(abb_path=stack.abb)
     return ArtifactStore(stack.work / "artifacts", abb_path=stack.abb)
 
 

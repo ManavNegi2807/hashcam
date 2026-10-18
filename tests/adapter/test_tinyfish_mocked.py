@@ -295,3 +295,21 @@ def test_there_is_no_fallback_path_in_the_adapter_source() -> None:
     code = "\n".join(line for line in text.splitlines() if not line.lstrip().startswith(("#", '"')))
     for word in ("while ", "for attempt", "retry(", "fallback("):
         assert word not in code, word
+
+
+def test_a_fetch_goes_through_the_gateway_and_sends_the_page_not_the_api_address() -> None:
+    adapter, sink, client, _ = make(good_answer(cents=0, steps=1))
+    outcome = adapter.fetch("https://phish.example/login", "is this phishing?")
+    assert outcome.status == "SUCCEEDED"
+    # The page travelled to the provider; policy was asked about the provider's own address.
+    assert client.urls == ["https://phish.example/login"]
+    requested = of(sink, "ACTION_REQUESTED")[0]["payload"]
+    assert requested["target"] == f"https://{HOST}"
+    assert "phish.example" not in json.dumps(requested)  # only a digest of the page is recorded
+    assert of(sink, "ACTION_SUCCEEDED") and of(sink, "BROWSER_OBSERVATION")
+
+
+def test_a_fetch_is_blocked_when_the_provider_host_is_not_allowed() -> None:
+    adapter, _, client, _ = make(hosts=("other.example",))
+    assert adapter.fetch("https://phish.example/login", "q").status == "BLOCKED"
+    assert client.calls == []  # nothing was sent
