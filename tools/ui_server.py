@@ -8,10 +8,13 @@ decides anything itself.
 
 from __future__ import annotations
 
+from dotenv import load_dotenv
 import argparse
 import os
 import sys
 from pathlib import Path
+
+load_dotenv()
 
 REPO = Path(__file__).resolve().parents[1]
 if str(REPO) not in sys.path:

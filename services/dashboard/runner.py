@@ -556,9 +556,20 @@ class Runner:
             line = json.dumps({k: signed[k] for k in SIGN_KEYS}) + chr(10)
             job.proc.stdin.write(line)
             job.proc.stdin.flush()
-        except (OSError, KeyError, subprocess.SubprocessError, ValueError):
-            job.pending = pending  # nothing was sent; the person can try again
-            raise Refused("could not sign or deliver the approval", 500) from None
+        except (OSError, KeyError, subprocess.SubprocessError, ValueError) as exc:
+            print(
+                f"APPROVAL DEBUG: {type(exc).__name__}: {exc!r}",
+                flush=True,
+            )
+
+            if isinstance(exc, subprocess.CalledProcessError):
+                print(f"APPROVAL STDERR: {exc.stderr!r}", flush=True)
+                print(f"APPROVAL STDOUT: {exc.stdout!r}", flush=True)
+
+            job.pending = pending
+            raise Refused(
+                "could not sign or deliver the approval", 500
+            ) from None
         job.approval = {"decision": str(decision), "key_id": signed["key_id"]}
         return job.approval
 

@@ -1,5 +1,7 @@
 # Third-party files served by the pages
 
+**Status:** `TESTED`: `tests/ui/test_vendor_and_motion.py` pins each file to the SHA-256 recorded below, checks that the pages load nothing from another site and that the content security policy stays strict. The recorded checksums against the upstream registry were checked by hand once and are `UNVERIFIED` by any test.
+
 The first two are copied unchanged from npm packages; the scroll files below come from the GSAP and Lenis repositories (Lenis's browser build from its npm release, because the repository holds only source). All were downloaded once into a folder outside the project, checked against the registry's
 published SHA-512 checksum, and read for network or code-evaluation calls (none). The pages load
 nothing from the internet: these files are served from this computer.

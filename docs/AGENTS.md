@@ -71,34 +71,33 @@ Requirement IDs look like `R-SIG-04`. Decision IDs look like `D-12`. Quote them 
 
 ## 5. Planned repository layout
 
-Not all of this exists yet. See `README.md` for the full tree.
+Most of this exists now; `docs/README.md` has the layout and each folder's `README.md` says what is built.
 
 ```
-core/ (Rust)   signer/   services/   adapters/   policy/   security/   ui/   vectors/   deploy/   docs/   tests/
+core/ (Rust)   signer/   services/   adapters/   policy/   security/   endpoint/   ui/   tools/   vectors/   deploy/   docs/   tests/   prototype/
 ```
 
-The Python prototype lives in the existing folders (`ledger/`, `agent/`, `guard/`, `payment/`, `ui/`, `tests/`). Keep it working as a demo; build v10 in new slices (decision D-09).
+The original Python prototype lives in `prototype/` (`ledger/`, `agent/`, `guard/`, `payment/`, `ui/`, `tests/` inside it). Keep it working as a demo; v10 is built in the folders above (decision D-09).
 
 ## 6. Commands
 
-Prototype (works today):
+Current system (needs Rust, Python 3.11+, PostgreSQL; Chromium for `tests/ui` and the Playwright adapter):
 
 ```bash
-pip install -r requirements.txt
-pytest -q                                   # 21 tests should pass
-docker compose up --build                   # needs a signing key in secrets/ first
+pip install -r requirements-dev.txt
+cargo build --manifest-path core/Cargo.toml     # builds abb and abb-signer
+cargo test  --manifest-path core/Cargo.toml     # Rust unit and property tests
+abb vectors check                               # conformance vectors
+pytest -q                                       # set ABB_BIN, ABB_SIGNER_BIN, ABB_TEST_DSN; tests that need
+                                                # a missing service skip or error, they never pass silently
+pytest tests/contract tests/tamper -q           # contract and tamper suites
+pytest tests/graph -q                           # graph builder; add ABB_TEST_FALKORDB=redis://127.0.0.1:6390 for the store
+docker compose -f deploy/docker-compose.yml --profile core up --build
 ```
 
-Target (planned, will exist once built):
+Prototype (kept as a demo; see `prototype/README.md`): `pytest -q` inside `prototype/`.
 
-```bash
-cargo test --workspace                      # Rust unit and property tests
-abb vectors check                           # conformance vectors
-pytest tests/contract tests/tamper -q       # contract and tamper suites
-docker compose --profile testing up         # integration tests
-```
-
-If a command here does not exist yet, say so instead of inventing output.
+Do not quote a test count from memory: run `pytest --collect-only -q`. If a command here does not work, say so instead of inventing output.
 
 ## 7. Style and conventions
 
