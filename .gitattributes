@@ -1,0 +1,2 @@
+# Third-party files are pinned by SHA-256 (ui/vendor/README.md): git must never change their bytes.
+ui/vendor/* -text
