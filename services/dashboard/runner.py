@@ -39,8 +39,6 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from adapters.payments.client import KEY_ENV as STRIPE_KEY_ENV
-from adapters.payments.client import TEST_PREFIXES
 from adapters.tinyfish.budget import Budget
 from adapters.tinyfish.http_client import KEY_ENV, HttpTinyFishClient
 from policy.engine import Policy
@@ -203,9 +201,7 @@ class Runner:
                 "approver_key_id": self.approver_key_id(),
             },
             "pay": {
-                # whether, never what: the key itself is never sent to the page
-                "key_set": bool(os.environ.get(STRIPE_KEY_ENV)),
-                "test_key": os.environ.get(STRIPE_KEY_ENV, "").startswith(TEST_PREFIXES),
+                "simulated": True,
                 "approver_key_id": self.approver_key_id(),
             },
             "guarded": {
@@ -369,13 +365,7 @@ class Runner:
         ]
 
     def _start_pay(self, goal: Any) -> str:
-        """Company payments with fake money (Stripe test mode); big ones wait for approval."""
-        key = os.environ.get(STRIPE_KEY_ENV, "")
-        if not key:
-            raise Refused(f"{STRIPE_KEY_ENV} is not set in the environment of this server")
-        if not key.startswith(TEST_PREFIXES):
-            # Never repeat any part of the key. Only say that it is the wrong kind.
-            raise Refused("that is not a Stripe TEST key (it must start with sk_test_); refused")
+        """Local mock payments; no API key or external payment service is used."""
         if not isinstance(goal, str) or len(goal) > MAX_GOAL:
             raise Refused(f"the task must be at most {MAX_GOAL} characters")
         if any(ord(c) < 32 and c not in "\n\t" for c in goal):
@@ -388,7 +378,7 @@ class Runner:
                 started=time.time(),
                 goal=goal.strip()
                 or "Pay the three example bills (small, needs approval, too large)",
-                url="Stripe test mode (fake money)",
+                url="Local mock payment simulation",
                 mode="pay",
             )
             self._jobs[job.job_id] = job
