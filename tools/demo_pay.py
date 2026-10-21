@@ -1,6 +1,5 @@
 """An agent pays company bills with FAKE money, under a spend policy and a person's approval.
 
-    set STRIPE_TEST_KEY=sk_test_...        (your own Stripe TEST key; never a live key)
     python tools/demo_pay.py --dsn postgresql://abb@127.0.0.1:55432/postgres \
         --people-dir ~/.abb/people --out <receipts dir> \
         --goal "Pay Acme Supplies 12.00 USD; Pay Cloud Hosting 180 USD; Pay Big Equipment 900 USD"
@@ -16,8 +15,7 @@ over 500.00 is refused outright. Silence or a denial leaves the payment unsent.
 Protocol with whatever started this script (the run console): `APPROVAL_PENDING <json>` on stdout,
 then one line of JSON on stdin from `abb approve`, or `{}` for nobody. Same as `demo_guarded.py`.
 
-A valid receipt shows that a key signed. It does not show which person held that key, and it does
-not show that Stripe did what it said.
+A valid receipt shows that a key signed. It does not show which person held that key. Payment outcomes are simulations only.
 """
 
 from __future__ import annotations
