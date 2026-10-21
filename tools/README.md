@@ -9,7 +9,7 @@ the `check_*_live.py` tools make a real network call with your own key and are `
 | `demo.py` | The main demo: replay, approval, receipt, tamper. |
 | `demo_guarded.py`, `demo_playwright.py`, `demo_realsite.py` | A risky task waiting for a signed approval; a real browser with measured coverage; a real website with an approval gate. |
 | `demo_tinyfish.py`, `check_tinyfish_live.py` | One real TinyFish run recorded in a receipt; one live Search or Research check. Spends credit. |
-| `demo_pay.py`, `check_stripe_live.py` | Fake-money payments under a spend policy; one live Stripe test-mode check. |
+| `demo_pay.py` | Local mock payments under a spend policy; no external payment service or API key. |
 | `demo_endpoint.py`, `endpoint_daemon.py`, `measure_endpoint.py` | Endpoint review end to end; the opt-in collector; measurement on synthetic events. |
 | `approval_bridge.py` | The stdin/stdout approval protocol the run console uses. |
 | `remote_witness.py` | A witness on a second computer co-signs a checkpoint. |
