@@ -82,8 +82,8 @@ function updateSend() {
     return;
   }
   if (currentMode() === "pay") {
-    // Fake money only: a Stripe TEST key must be set on the server, and an approver key must exist.
-    const ok = info && info.pay && info.pay.test_key && info.pay.approver_key_id;
+    // Local mock only: no payment API key is needed; signed approval key is still required.
+    const ok = info && info.pay && info.pay.simulated && info.pay.approver_key_id;
     $("task-run").disabled = !ok;
     return;
   }
@@ -136,10 +136,8 @@ function applyMode() {
   } else if (!guarded && info && info.guarded && $("task-goal").value === info.guarded.task) {
     $("task-goal").value = "";
   }
-  if (pay && info && info.pay && !info.pay.test_key) {
-    runState("off", info.pay.key_set
-      ? "Pay bills is off: the Stripe key is not a TEST key. Test keys start with sk_test_."
-      : "Pay bills is off: STRIPE_TEST_KEY is not set where this server was started.");
+  if (pay && info && info.pay && info.pay.simulated) {
+    runState("on", "Pay bills uses a local mock gateway. No API key, network payment, or real money.");
   }
   updateSend();
 }
@@ -234,7 +232,7 @@ function sayAnswer(reply, before, text, mode) {
     : mode === "endpoint"
     ? "The events were SIMULATED. Alerts are rule scores for a person to review, not proof of wrongdoing. Open the audit view for the full alert cards."
     : mode === "pay"
-    ? "Test money only (Stripe test mode). Nothing real moved. Small bills paid on their own; larger ones needed your signature; the largest were refused."
+    ? "Simulated payment only (local mock gateway). No external service was called and no real money moved. Small bills paid on their own; larger ones needed your signature; the largest were refused."
     : mode === "guarded"
     ? "Result of the guarded run. The portal and the data are fake."
     : "Answer from TinyFish. This page does not check that it is true.";
