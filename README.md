@@ -1,4 +1,4 @@
-# Hascham (Agent Black Box)
+# Hashcam (Agent Black Box)
 
 A flight recorder for AI agents. Every step an agent takes goes through a policy gateway, risky steps wait for a person's **signed approval**, and the whole run is written to a **signed, tamper-evident receipt** that anyone can verify offline.
 
