@@ -1,7 +1,7 @@
 {
   "policy_id": "company-spend",
   "version": 1,
-  "description": "An agent paying company bills with FAKE money (Stripe test mode). Up to 50.00 it pays on its own; from over 50.00 up to 500.00 it waits for a person's signed approval; over 500.00 is refused outright. Only the Stripe API address is allowed.",
+  "description": "An agent paying company bills with FAKE money (local mock simulation). Up to 50.00 it pays on its own; from over 50.00 up to 500.00 it waits for a person's signed approval; over 500.00 is refused outright. Only the local mock gateway address is allowed.",
   "allowed_action_types": [
     "payment"
   ],
@@ -9,7 +9,7 @@
     "payment"
   ],
   "allowed_hosts": [
-    "api.stripe.com"
+    "mock-payments.local"
   ],
   "denied_hosts": [],
   "max_actions": 20,
