@@ -82,8 +82,8 @@ function updateSend() {
     return;
   }
   if (currentMode() === "pay") {
-    // Fake money only: a Stripe TEST key must be set on the server, and an approver key must exist.
-    const ok = info && info.pay && info.pay.test_key && info.pay.approver_key_id;
+    // Local mock only: no payment API key is needed; signed approval key is still required.
+    const ok = info && info.pay && info.pay.simulated && info.pay.approver_key_id;
     $("task-run").disabled = !ok;
     return;
   }
@@ -136,10 +136,8 @@ function applyMode() {
   } else if (!guarded && info && info.guarded && $("task-goal").value === info.guarded.task) {
     $("task-goal").value = "";
   }
-  if (pay && info && info.pay && !info.pay.test_key) {
-    runState("off", info.pay.key_set
-      ? "Pay bills is off: the Stripe key is not a TEST key. Test keys start with sk_test_."
-      : "Pay bills is off: STRIPE_TEST_KEY is not set where this server was started.");
+  if (pay && info && info.pay && info.pay.simulated) {
+    runState("on", "Pay bills uses a local mock gateway. No API key, network payment, or real money.");
   }
   updateSend();
 }
@@ -234,7 +232,7 @@ function sayAnswer(reply, before, text, mode) {
     : mode === "endpoint"
     ? "The events were SIMULATED. Alerts are rule scores for a person to review, not proof of wrongdoing. Open the audit view for the full alert cards."
     : mode === "pay"
-    ? "Test money only (Stripe test mode). Nothing real moved. Small bills paid on their own; larger ones needed your signature; the largest were refused."
+    ? "Simulated payment only (local mock gateway). No external service was called and no real money moved. Small bills paid on their own; larger ones needed your signature; the largest were refused."
     : mode === "guarded"
     ? "Result of the guarded run. The portal and the data are fake."
     : "Answer from TinyFish. This page does not check that it is true.";
@@ -306,7 +304,7 @@ function plainSummary(summary) {
   const isolate = /\| (ISOLATE .+)$/.exec(summary);
   if (isolate) return "The analyst is asked to approve: " + isolate[1];
   const pays = /\| PAY (.+)$/.exec(summary);
-  if (pays) return "The agent wants to pay " + pays[1] + " (test money, Stripe test mode).";
+  if (pays) return "The agent wants to pay " + pays[1] + " (simulated payment, local mock gateway).";
   return "The agent wants to " + what + " at " + match[2] + "." + bank;
 }
 
@@ -345,7 +343,7 @@ function approvalCard(job, pending, reply, before, mode, typed) {
     el("p", { class: "meta" }, mode === "endpoint"
       ? "Policy holds any account action until a key signs a grant. The account is made up and the isolation is simulated: nothing real changes."
       : mode === "pay"
-      ? "Policy held this payment back because it is over the limit a company agent may pay on its own. It is paid only if a key signs a grant. This is Stripe test mode: fake money, no real card or bank account."
+      ? "Policy held this payment back because it is over the limit a company agent may pay on its own. It is paid only if a key signs a grant. This is a local mock simulation: no external service, card, or bank account."
       : mode === "realsite"
       ? "Policy held this step back. It is sent only if a key signs a grant. This goes to a real public test site, httpbin.org, which will see your message."
       : "Policy held this step back. It is sent only if a key signs a grant. The portal and the data are fake; no money moves."),
@@ -361,7 +359,7 @@ async function runTask(event) {
   const goal = mode === "guarded" ? info.guarded.task : $("task-goal").value;
   const url = mode === "agent" ? $("task-url").value : "";
   $("task-run").disabled = true;
-  push(el("div", { class: "msg you" }, el("p", {}, goal), el("p", { class: "meta" }, { guarded: "demo task on a fake portal", realsite: "real form on httpbin.org", pay: "payments in Stripe test mode (fake money)", endpoint: "simulated endpoint events", search: "search", research: "research" }[mode] || "start at " + url)));
+  push(el("div", { class: "msg you" }, el("p", {}, goal), el("p", { class: "meta" }, { guarded: "demo task on a fake portal", realsite: "real form on httpbin.org", pay: "simulated payments (local mock gateway)", endpoint: "simulated endpoint events", search: "search", research: "research" }[mode] || "start at " + url)));
   const head = el("div", {});
   setHead(head, "run", "spin", "Starting the run…");
   const track = el("div", { class: "bar-track", "aria-hidden": "true" }, el("div", { class: "bar-fill" }));

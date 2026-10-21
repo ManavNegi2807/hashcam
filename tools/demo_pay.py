@@ -1,14 +1,12 @@
 """An agent pays company bills with FAKE money, under a spend policy and a person's approval.
 
-    set STRIPE_TEST_KEY=sk_test_...        (your own Stripe TEST key; never a live key)
     python tools/demo_pay.py --dsn postgresql://abb@127.0.0.1:55432/postgres \
         --people-dir ~/.abb/people --out <receipts dir> \
         --goal "Pay Acme Supplies 12.00 USD; Pay Cloud Hosting 180 USD; Pay Big Equipment 900 USD"
 
-What is real: Stripe's own test mode (a real payment API, fake money, the published test card),
+What is real: a local mock payment gateway (no external API, no card data, no real money),
 the gateway, the policy `company-spend`, the signed approval, the receipt and the offline verifier.
-What is not: no real money, no real card, no bank account. A live key is refused before anything
-is sent, and any reply that does not say `livemode: false` is not trusted.
+What is not: no real money, no real card, no bank account. No payment API is contacted and no credentials are needed.
 
 The policy, like a company's spend rules: up to 50.00 an agent pays on its own; over 50.00 up to
 500.00 it WAITS for a person's signed approval (the approver is shown the amount and who is paid);
@@ -17,8 +15,7 @@ over 500.00 is refused outright. Silence or a denial leaves the payment unsent.
 Protocol with whatever started this script (the run console): `APPROVAL_PENDING <json>` on stdout,
 then one line of JSON on stdin from `abb approve`, or `{}` for nobody. Same as `demo_guarded.py`.
 
-A valid receipt shows that a key signed. It does not show which person held that key, and it does
-not show that Stripe did what it said.
+A valid receipt shows that a key signed. It does not show which person held that key. Payment outcomes are simulations only.
 """
 
 from __future__ import annotations
@@ -44,12 +41,7 @@ from adapters.payments.adapter import (  # noqa: E402
     IN_SCOPE_ACTIONS,
     PaymentAdapter,
 )
-from adapters.payments.client import (  # noqa: E402
-    CURRENCIES,
-    AuthRejected,
-    NotTestMode,
-    StripeTestClient,
-)
+from adapters.payments.client import CURRENCIES, MockPaymentClient  # noqa: E402
 from policy.engine import Decision, Policy  # noqa: E402
 from security.semantic.monitor import run_monitor  # noqa: E402
 from services.api.canonical import Canonicalizer  # noqa: E402
@@ -119,12 +111,7 @@ def main() -> int:
     parser.add_argument("--out", type=Path)
     parser.add_argument("--wait-seconds", type=int, default=600)
     parser.add_argument("--keep", action="store_true")
-    parser.add_argument(
-        "--stand-in-url",
-        default="",
-        help="TEST ONLY: a local imitation of the payment service (loopback only). The run is "
-        "labelled STAND-IN in its task and uses the policy company-spend-standin.",
-    )
+    parser.add_argument("--scenario", choices=("success", "decline", "unknown"), default="success", help="simulated gateway outcome")
     args = parser.parse_args()
     for stream in (sys.stdout, sys.stderr):
         getattr(stream, "reconfigure", lambda **_: None)(encoding="utf-8", errors="replace")
@@ -134,14 +121,8 @@ def main() -> int:
     except ValueError as exc:
         print(f"cannot read the payments: {exc}")
         return 2
-    client = StripeTestClient(args.stand_in_url) if args.stand_in_url else StripeTestClient()
-    try:
-        client.check_key()
-    except (NotTestMode, AuthRejected) as exc:
-        print(f"{exc}. Nothing was started.")
-        return 2
-
-    policy = Policy.load("company-spend-standin" if args.stand_in_url else "company-spend", 1)
+    client = MockPaymentClient(args.scenario)
+    policy = Policy.load("company-spend", 1)
     abb = demo.binary("abb", "ABB_BIN")
     signer_bin = demo.binary("abb-signer", "ABB_SIGNER_BIN")
     migration = pathsafe.read_migrations(REPO / "deploy" / "migrations")
@@ -194,8 +175,7 @@ def main() -> int:
         demo.start_stack(stack)
         base_url = f"http://127.0.0.1:{stack.api_port}"
         task = (
-            ("[STAND-IN, NOT STRIPE] " if args.stand_in_url else "")
-            + "Pay company bills (test money): "
+            "Pay company bills (local mock simulation): "
             + "; ".join(f"{v} {money(a, c)}" for v, a, c in payments)
         )
         run_id = demo.create_run(
@@ -242,7 +222,7 @@ def main() -> int:
             requested="STEP_OBSERVED", declared="STEP_OBSERVED", reason=COVERAGE_REASON
         )
 
-        demo.say("1. pay, one bill at a time", "Stripe test mode, fake money")
+        demo.say("1. pay, one bill at a time", "local mock simulation, fake money")
         rows: list[tuple[str, str, str]] = []
         for vendor, amount, currency in payments:
             out = adapter.pay(
@@ -272,8 +252,8 @@ def main() -> int:
             "BLOCKED": "**not paid**",
             "DECLINED": "**declined** by the test card",
             "OUTCOME_UNKNOWN": "**unknown**: no clear answer, and it was not retried",
-            "AUTH_FAILED": "**not paid**: Stripe did not accept the key",
-            "NOT_TEST_MODE": "**not paid**: the key was not a test key",
+            "AUTH_FAILED": "**not paid**: local mock authentication error",
+            "NOT_TEST_MODE": "**not paid**: live mode is unsupported",
             "FAILED": "**failed**",
         }
         lines = []
@@ -292,7 +272,7 @@ def main() -> int:
             f" Approvals signed by key `{str(seen['key_id'])[:20]}…`." if seen["key_id"] else ""
         )
         text = (
-            "# Company payments (Stripe test mode, fake money)\n"
+            "# Company payments (local mock simulation, fake money)\n"
             + "\n".join(lines)
             + "\n- Rules: up to 50.00 pays on its own; over 50.00 up to 500.00 needs a signed "
             "approval; over 500.00 is refused."

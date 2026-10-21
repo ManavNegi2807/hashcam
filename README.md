@@ -10,7 +10,7 @@ It is an evidence and auditing system. A valid receipt shows that the recorded h
 
 *Both screenshots show a fresh copy with no runs. The amber note on the task page is the real state of a copy with no TinyFish key set.*
 
-**Pick what the agent should do** from the sidebar list (the task page on the right): Search, Research and Browse use TinyFish; Demo task, Endpoint review, Pay bills (fake money, Stripe test mode) and Real website pause for your signed approval before anything sensitive happens.
+**Pick what the agent should do** from the sidebar list (the task page on the right): Search, Research and Browse use TinyFish; Demo task, Endpoint review, Pay bills (local mock simulation) and Real website pause for your signed approval before anything sensitive happens.
 
 **Alerts in the audit view** (a real signed run; TinyFish shows "not asked" because no key was set):
 
@@ -24,7 +24,7 @@ It is an evidence and auditing system. A valid receipt shows that the recorded h
 - **Hidden fields.** A value such as a card number can be committed to without being stored, and shredded later.
 - **Adapters.** A scripted replay adapter, a real-browser Playwright adapter whose coverage claim (`STEP_GATED`) is declared only after a bypass test battery passes, and optional TinyFish adapters (Browse, Search, Research) that are capped at `STEP_OBSERVED`.
 - **Two pages** (plain HTML, served from your own computer): an audit view of receipts and a chat-style task page with a sign-and-approve card.
-- **Company-style payments with fake money.** An agent pays bills through Stripe's official test mode under a spend policy: up to 50.00 it pays on its own, over 50.00 up to 500.00 it waits for a person's signed approval (shown the amount and who is paid), over 500.00 is refused. A live key is refused before any request.
+- **Company-style payments with fake money.** An in-process local mock gateway simulates bill payments under a spend policy: up to 50.00 it pays on its own, over 50.00 up to 500.00 it waits for a person's signed approval (shown the amount and who is paid), over 500.00 is refused. No API key, external payment request, card details, or real money is involved.
 - **Endpoint review (the deck's phishing-link scenario).** Reported endpoint events are sealed, scored by explainable rules (plus an optional Isolation Forest), explained in an **Alerts** section of the audit view, enriched with TinyFish Search and Fetch when a link is present, and an analyst signs before any (simulated) account isolation. A small opt-in collector can report real downloads, script launches and links on your own computer.
 - **A graph of each run**, stored in FalkorDB (on this computer only) and drawn on the audit page: the run, its actions, which policy decided, which signed approval settled it. It is a picture made from the receipt, never a verdict; without FalkorDB it is drawn straight from the receipt and the page says so.
 
@@ -38,7 +38,7 @@ It is an evidence and auditing system. A valid receipt shows that the recorded h
 | TinyFish Browse (cost = steps x $0.016) | `MEASURED` on real runs. Some tasks sat at 0 steps until cancelled; cause unknown |
 | TinyFish Search and Research | `UNVERIFIED` live with this project's client. Search's response shape was checked against a real answer |
 | Independent witnesses and anchors | The co-signing exchange between two folders is `TESTED` (`tools/remote_witness.py`). Independence is `UNVERIFIED`: it has not been tried on a second computer, so the verifier reports `NOT_INDEPENDENT` |
-| Payments with fake money (Stripe test mode) | The policy tiers, the refusal of live keys, ordering and the signed approval are `TESTED` end to end against a **local stand-in** for Stripe's reply (real signing, real verifier). Stripe test mode itself is `UNVERIFIED` until you run `tools/check_stripe_live.py` with your own test key |
+| Payments with fake money (local mock gateway) | Policy tiers, local simulated outcomes, gateway ordering, signed approvals and receipt verification are covered by automated tests. The payment provider is simulated in-process; no external payment API is called |
 | Endpoint review: events, rules, alerts, evidence, signed decision | `TESTED` end to end with real signing and the real verifier. The events are **simulated** (or collected by the opt-in collector), the isolation is **simulated**, and TinyFish's answers are a scripted fake in the tests |
 | Real opt-in collector (`tools/endpoint_daemon.py`) | `TESTED` on this computer: new files in one folder, script-shell launches, links from a file. Not a security product; sees only what it is pointed at |
 | Isolation Forest (optional, scikit-learn) | `MEASURED` on **synthetic** labelled events only (`docs/MEASUREMENTS.md`): about 0.3 recall alone, more of the hard phishing cases with the rules. Not real-world performance |

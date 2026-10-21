@@ -200,29 +200,24 @@ tried with a second computer yet.
 
 ## Company payments with fake money
 
-Pick **Pay bills** on the task page. It needs a Stripe **test** key in `STRIPE_TEST_KEY` (the launcher
-asks for it, hidden; a key that does not start with `sk_test_` is thrown away). Stripe test mode is
-an official sandbox: a real payment API, the published test card, fake money.
+Pick **Pay bills** on the task page. Payments use an in-process **local mock gateway**. No Stripe,
+API key, card details, external payment request, or real money is involved.
 
 | Bill | Rule (policy `company-spend`) | What happens |
 |---|---|---|
-| up to 50.00 | pays on its own | sent to Stripe test mode at once |
-| over 50.00 up to 500.00 | needs a signed approval | an approval card shows **the amount and who is paid**; sent only if you sign a grant |
-| over 500.00 | refused outright | never sent, recorded as blocked (`OVER_AMOUNT_LIMIT`) |
+| up to 50.00 | pays on its own | simulated locally |
+| over 50.00 up to 500.00 | needs a signed approval | an approval card shows **the amount and who is paid**; simulated only if you sign a grant |
+| over 500.00 | refused outright | never dispatched, recorded as blocked (`OVER_AMOUNT_LIMIT`) |
 
 Type bills like `Pay Acme Supplies 12.00 USD; Pay Cloud Hosting 180 USD; Pay Big Equipment 900 USD`
 (up to 5, USD/EUR/GBP/INR), or leave the box empty to run one example in each tier.
 
-Protections, each with a test: a live key is refused before any request; a reply that does not say
-`livemode: false` is not trusted; a hard ceiling of 1,000.00 that no policy can raise; the payment
-carries an idempotency key and is never retried (an unclear answer is recorded as unknown); the key
-and the free-text note never reach the receipt. Coverage is declared `STEP_OBSERVED`, not
-`STEP_GATED`: there is no bypass test battery for this adapter.
-
-Check your key once, without the page: `python tools/check_stripe_live.py` (one 1.00 test payment).
-**Not measured:** Stripe test mode against this project's client. The automated tests use a local
-stand-in that imitates Stripe's reply shape (the run says STAND-IN in its task text); they prove our
-side of the contract, not Stripe's behaviour.
+The mock can simulate a successful payment, a decline, or an uncertain outcome. The default demo uses
+success; pass `--scenario decline` or `--scenario unknown` to `tools/demo_pay.py` to exercise the
+other paths. Idempotency keys prevent duplicate simulated charges within a client instance. Amounts
+have a hard ceiling of 1,000.00. The gateway records outcomes, and the offline verifier checks the
+receipt. Coverage remains `STEP_OBSERVED`, not `STEP_GATED`: there is no bypass test battery for
+this adapter. These results demonstrate the policy and audit workflow only, not actual money movement.
 
 ## Endpoint review: events in, explained alerts out, everything sealed
 

@@ -10,7 +10,7 @@ The order is fixed and cannot be skipped from here:
 
 Coverage is declared `STEP_OBSERVED`, never `STEP_GATED`: the code path here is gated, but no bypass
 test battery exists for it, so claiming more would be a false claim (`R-COV-01`). The money is test
-money (Stripe test mode); see `client.py` for the protections that keep it that way.
+money (local mock simulation); see `client.py` for the protections that keep it that way.
 """
 
 from __future__ import annotations
@@ -26,12 +26,12 @@ from adapters.payments.client import (
     NotTestMode,
     Payment,
     PaymentError,
-    StripeTestClient,
+    MockPaymentClient,
     Unclear,
 )
 from policy.engine import Action
 
-ADAPTER_NAME = "payments-stripe-test"
+ADAPTER_NAME = "payments-local-mock"
 ADAPTER_VERSION = "0.1.0"
 IN_SCOPE_ACTIONS = ["payment"]
 CEILING_COVERAGE: Coverage = "STEP_OBSERVED"
@@ -54,7 +54,7 @@ class PaymentAdapter:
     def __init__(
         self,
         gateway: Any,
-        client: StripeTestClient,
+        client: MockPaymentClient,
         *,
         approver: Any = None,
         run_key: str = "run",
@@ -70,7 +70,7 @@ class PaymentAdapter:
             adapter_name=ADAPTER_NAME,
             adapter_version=ADAPTER_VERSION,
             execution_id=f"payments-{self._run_key}"[:60],
-            mode="LIVE_EXTERNAL",
+            mode="LIVE_LOCAL",
             observed_coverage=CEILING_COVERAGE,
         )
 
@@ -148,7 +148,7 @@ class PaymentAdapter:
             ).hexdigest(),
             extra={
                 "provider_execution_id": payment.payment_id,
-                "usage": {"amount_minor_units": payment.amount_minor_units, "livemode": False},
+                "usage": {"amount_minor_units": payment.amount_minor_units, "simulated": True},
             },
         )
         self.gateway.succeeded(action, evidence=[observed.event_id])
