@@ -1,11 +1,10 @@
-# adapters/payments — pay bills with fake money (Stripe test mode)
+# adapters/payments — local mock payment gateway
 
-**Status:** `TESTED` against a local stand-in that imitates the shape of Stripe's reply (`tests/adapter/test_payments.py`): policy tiers, the order (never sent before the gateway allows), a live key refused, no retries. It says nothing about how real Stripe test mode behaves. One real test-mode call is a manual check
-(`tools/check_stripe_live.py`) and is `UNVERIFIED` until you run it with your own key. No real money, ever: the project's rules forbid it.
+**Status:** Local-only simulation. No Stripe integration, API key, card data, external HTTP request, or real money is used. The mock supports deterministic success, decline, and uncertain outcomes; default demo behavior is success. Idempotency keys prevent duplicate simulated charges within a client instance.
 
 | File | What it does |
 |---|---|
-| `client.py` | A Stripe client that can only spend TEST money: a key without a test prefix is refused before any request; every reply must say `livemode: false`; a hard ceiling no policy can raise; idempotency keys. The key comes from `STRIPE_TEST_KEY` and is never printed or stored. |
-| `adapter.py` | Every payment passes the gateway first (policy `company-spend`: auto up to 50.00, signed approval up to 500.00, refused above). |
+| `client.py` | `MockPaymentClient`: in-process local payment simulation with amount/currency validation, a hard ceiling, idempotency, and selectable outcomes. |
+| `adapter.py` | Every simulated payment passes the gateway first (policy `company-spend`: auto up to 50.00, signed approval over 50.00 up to 500.00, refused above). The gateway records simulated outcomes. |
 
-Run: `python tools/demo_pay.py ...` (`docs/DEMO.md`, "Company payments with fake money").
+Run: `python tools/demo_pay.py ...` (`docs/DEMO.md`, "Company payments with fake money"). The dashboard still requires an approver key for the human approval flow; the mock gateway itself requires no credentials.
