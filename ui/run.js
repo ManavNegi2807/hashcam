@@ -304,7 +304,7 @@ function plainSummary(summary) {
   const isolate = /\| (ISOLATE .+)$/.exec(summary);
   if (isolate) return "The analyst is asked to approve: " + isolate[1];
   const pays = /\| PAY (.+)$/.exec(summary);
-  if (pays) return "The agent wants to pay " + pays[1] + " (test money, Stripe test mode).";
+  if (pays) return "The agent wants to pay " + pays[1] + " (simulated payment, local mock gateway).";
   return "The agent wants to " + what + " at " + match[2] + "." + bank;
 }
 
@@ -343,7 +343,7 @@ function approvalCard(job, pending, reply, before, mode, typed) {
     el("p", { class: "meta" }, mode === "endpoint"
       ? "Policy holds any account action until a key signs a grant. The account is made up and the isolation is simulated: nothing real changes."
       : mode === "pay"
-      ? "Policy held this payment back because it is over the limit a company agent may pay on its own. It is paid only if a key signs a grant. This is Stripe test mode: fake money, no real card or bank account."
+      ? "Policy held this payment back because it is over the limit a company agent may pay on its own. It is paid only if a key signs a grant. This is a local mock simulation: no external service, card, or bank account."
       : mode === "realsite"
       ? "Policy held this step back. It is sent only if a key signs a grant. This goes to a real public test site, httpbin.org, which will see your message."
       : "Policy held this step back. It is sent only if a key signs a grant. The portal and the data are fake; no money moves."),
@@ -359,7 +359,7 @@ async function runTask(event) {
   const goal = mode === "guarded" ? info.guarded.task : $("task-goal").value;
   const url = mode === "agent" ? $("task-url").value : "";
   $("task-run").disabled = true;
-  push(el("div", { class: "msg you" }, el("p", {}, goal), el("p", { class: "meta" }, { guarded: "demo task on a fake portal", realsite: "real form on httpbin.org", pay: "payments in Stripe test mode (fake money)", endpoint: "simulated endpoint events", search: "search", research: "research" }[mode] || "start at " + url)));
+  push(el("div", { class: "msg you" }, el("p", {}, goal), el("p", { class: "meta" }, { guarded: "demo task on a fake portal", realsite: "real form on httpbin.org", pay: "simulated payments (local mock gateway)", endpoint: "simulated endpoint events", search: "search", research: "research" }[mode] || "start at " + url)));
   const head = el("div", {});
   setHead(head, "run", "spin", "Starting the run…");
   const track = el("div", { class: "bar-track", "aria-hidden": "true" }, el("div", { class: "bar-fill" }));
