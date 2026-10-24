@@ -27,10 +27,12 @@ def _run_demo(*extra: str) -> subprocess.CompletedProcess[str]:
         pytest.skip("set ABB_TEST_DSN to run the Playwright receipt tests")
     pytest.importorskip("playwright")
     env = dict(os.environ)
-    env.setdefault(
-        "PLAYWRIGHT_BROWSERS_PATH",
-        os.environ.get("ABB_PLAYWRIGHT_BROWSERS", str(Path.home() / "AppData/Local/ms-playwright")),
-    )
+    # Let Playwright use its platform-specific default cache unless the caller
+    # explicitly supplies a shared browser directory. The old Windows path made
+    # Linux CI look for Chromium under ~/AppData/Local/ms-playwright.
+    browser_path = os.environ.get("ABB_PLAYWRIGHT_BROWSERS")
+    if browser_path:
+        env["PLAYWRIGHT_BROWSERS_PATH"] = browser_path
     done = subprocess.run(  # noqa: S603 - fixed argv
         [sys.executable, str(REPO / "tools" / "demo_playwright.py"), "--dsn", dsn, *extra],
         capture_output=True,
@@ -40,7 +42,8 @@ def _run_demo(*extra: str) -> subprocess.CompletedProcess[str]:
         cwd=str(REPO),
         timeout=600,
     )
-    if "Chromium" in done.stderr and "Executable doesn't exist" in done.stderr:
+    output = done.stdout + "\n" + done.stderr
+    if "Chromium" in output and "Executable doesn't exist" in output:
         pytest.skip("Chromium is not installed")
     if "ABB_BIN" in done.stderr or ("abb-signer" in done.stderr and done.returncode != 0):
         pytest.skip("the abb binaries are not available (set ABB_BIN and ABB_SIGNER_BIN)")
