@@ -93,6 +93,10 @@ jobs:
           ABB_BIN: core/target/debug/abb
           ABB_SIGNER_BIN: core/target/debug/abb-signer
         run: pytest -q tests/fault
+      # The tamper suite includes two end-to-end Playwright receipt tests.
+      # Install Chromium before that suite, not later in the browser-test step.
+      - name: Install Chromium for receipt tests
+        run: python -m playwright install --with-deps chromium
       # The core promise: every way of altering history, caught and named.
       - name: Tamper suite (TESTING.md section 4)
         env:
@@ -121,9 +125,7 @@ jobs:
           ABB_TEST_DSN: postgresql://abb:abb@127.0.0.1:5432/postgres
           ABB_BIN: core/target/debug/abb
           ABB_SIGNER_BIN: core/target/debug/abb-signer
-        run: |
-          python -m playwright install --with-deps chromium
-          pytest -q tests/adapter tests/ui
+        run: pytest -q tests/adapter tests/ui
       - name: Gated Playwright demo (measured coverage, then verify offline)
         env:
           ABB_BIN: core/target/debug/abb
