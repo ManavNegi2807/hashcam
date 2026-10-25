@@ -6,7 +6,8 @@
 
 What is real: a local mock payment gateway (no external API, no card data, no real money),
 the gateway, the policy `company-spend`, the signed approval, the receipt and the offline verifier.
-What is not: no real money, no real card, no bank account. No payment API is contacted and no credentials are needed.
+What is not: no real money, no real card, no bank account. No payment API is contacted and no
+credentials are needed.
 
 The policy, like a company's spend rules: up to 50.00 an agent pays on its own; over 50.00 up to
 500.00 it WAITS for a person's signed approval (the approver is shown the amount and who is paid);
@@ -15,7 +16,8 @@ over 500.00 is refused outright. Silence or a denial leaves the payment unsent.
 Protocol with whatever started this script (the run console): `APPROVAL_PENDING <json>` on stdout,
 then one line of JSON on stdin from `abb approve`, or `{}` for nobody. Same as `demo_guarded.py`.
 
-A valid receipt shows that a key signed. It does not show which person held that key. Payment outcomes are simulations only.
+A valid receipt shows that a key signed. It does not show which person held that key. Payment
+outcomes are simulations only.
 """
 
 from __future__ import annotations
@@ -111,7 +113,12 @@ def main() -> int:
     parser.add_argument("--out", type=Path)
     parser.add_argument("--wait-seconds", type=int, default=600)
     parser.add_argument("--keep", action="store_true")
-    parser.add_argument("--scenario", choices=("success", "decline", "unknown"), default="success", help="simulated gateway outcome")
+    parser.add_argument(
+        "--scenario",
+        choices=("success", "decline", "unknown"),
+        default="success",
+        help="simulated gateway outcome",
+    )
     args = parser.parse_args()
     for stream in (sys.stdout, sys.stderr):
         getattr(stream, "reconfigure", lambda **_: None)(encoding="utf-8", errors="replace")
@@ -174,9 +181,8 @@ def main() -> int:
     try:
         demo.start_stack(stack)
         base_url = f"http://127.0.0.1:{stack.api_port}"
-        task = (
-            "Pay company bills (local mock simulation): "
-            + "; ".join(f"{v} {money(a, c)}" for v, a, c in payments)
+        task = "Pay company bills (local mock simulation): " + "; ".join(
+            f"{v} {money(a, c)}" for v, a, c in payments
         )
         run_id = demo.create_run(
             base_url, tokens["operator"], policy, adapter="payments", task=task

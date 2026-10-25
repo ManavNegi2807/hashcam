@@ -1,8 +1,9 @@
 """Tests for local-only mock payments and policy-gateway ordering."""
+
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, Literal
 
 import pytest
 
@@ -35,8 +36,12 @@ def test_policy_spending_tiers_and_local_target() -> None:
 def test_mock_success_is_local_and_idempotent() -> None:
     client = MockPaymentClient()
     client.check_key()
-    first = client.charge(amount_minor_units=1200, currency="USD", description="invoice", idempotency_key="same")
-    second = client.charge(amount_minor_units=1200, currency="usd", description="invoice", idempotency_key="same")
+    first = client.charge(
+        amount_minor_units=1200, currency="USD", description="invoice", idempotency_key="same"
+    )
+    second = client.charge(
+        amount_minor_units=1200, currency="usd", description="invoice", idempotency_key="same"
+    )
     assert first == second
     assert first.payment_id.startswith("mock_")
     assert first.status == "simulated_succeeded"
@@ -45,15 +50,21 @@ def test_mock_success_is_local_and_idempotent() -> None:
 
 def test_mock_decline_and_unknown_scenarios() -> None:
     with pytest.raises(Declined):
-        MockPaymentClient("decline").charge(amount_minor_units=100, currency="usd", description="x", idempotency_key="d")
+        MockPaymentClient("decline").charge(
+            amount_minor_units=100, currency="usd", description="x", idempotency_key="d"
+        )
     with pytest.raises(Unclear):
-        MockPaymentClient("unknown").charge(amount_minor_units=100, currency="usd", description="x", idempotency_key="u")
+        MockPaymentClient("unknown").charge(
+            amount_minor_units=100, currency="usd", description="x", idempotency_key="u"
+        )
 
 
 @pytest.mark.parametrize("amount", [0, -1, 100_001])
 def test_invalid_amounts_are_rejected(amount: int) -> None:
     with pytest.raises(ValueError):
-        MockPaymentClient().charge(amount_minor_units=amount, currency="usd", description="x", idempotency_key="k")
+        MockPaymentClient().charge(
+            amount_minor_units=amount, currency="usd", description="x", idempotency_key="k"
+        )
 
 
 class Relay:
@@ -67,11 +78,14 @@ class Relay:
 def approver_saying(answer: str) -> Any:
     def approve(gateway: Gateway, action: Action) -> Decision:
         return gateway.submit_approval(action, statement_b64="stmt", key_id="key", signature="sig")
-    approve.relay = Relay("GRANTED" if answer == "ALLOW" else "DENIED")
+
+    approve.relay = Relay("GRANTED" if answer == "ALLOW" else "DENIED")  # type: ignore[attr-defined]
     return approve
 
 
-def adapter_for(approver: Any = None, scenario: str = "success") -> tuple[PaymentAdapter, MemorySink, MockPaymentClient]:
+def adapter_for(
+    approver: Any = None, scenario: Literal["success", "decline", "unknown"] = "success"
+) -> tuple[PaymentAdapter, MemorySink, MockPaymentClient]:
     sink = MemorySink()
     policy = real_policy()
     client = MockPaymentClient(scenario)
@@ -96,9 +110,11 @@ def event_types(sink: MemorySink) -> list[str]:
 
 def test_small_payment_is_gated_recorded_and_simulated() -> None:
     adapter, sink, client = adapter_for()
-    outcome = adapter.pay(vendor="Acme", amount_minor_units=1200, currency="usd", note="private note")
+    outcome = adapter.pay(
+        vendor="Acme", amount_minor_units=1200, currency="usd", note="private note"
+    )
     assert outcome.status == "PAID"
-    assert outcome.payment_id.startswith("mock_")
+    assert outcome.payment_id is not None and outcome.payment_id.startswith("mock_")
     assert client.charge_calls == 1
     kinds = event_types(sink)
     assert kinds.index("ACTION_REQUESTED") < kinds.index("ACTION_AUTHORIZED")
@@ -118,11 +134,17 @@ def test_approval_is_required_before_mock_charge() -> None:
 
 def test_denied_approval_never_charges_but_granted_approval_does_once() -> None:
     denied, _, denied_client = adapter_for(approver=approver_saying("DENY"))
-    assert denied.pay(vendor="Acme", amount_minor_units=18000, currency="usd", note="x").status == "BLOCKED"
+    assert (
+        denied.pay(vendor="Acme", amount_minor_units=18000, currency="usd", note="x").status
+        == "BLOCKED"
+    )
     assert denied_client.charge_calls == 0
 
     granted, sink, granted_client = adapter_for(approver=approver_saying("ALLOW"))
-    assert granted.pay(vendor="Acme", amount_minor_units=18000, currency="usd", note="x").status == "PAID"
+    assert (
+        granted.pay(vendor="Acme", amount_minor_units=18000, currency="usd", note="x").status
+        == "PAID"
+    )
     assert granted_client.charge_calls == 1
     assert "ACTION_SUCCEEDED" in event_types(sink)
 
@@ -137,11 +159,17 @@ def test_over_cap_is_blocked_before_mock_charge() -> None:
 
 def test_decline_and_uncertain_outcomes_are_recorded_without_retry() -> None:
     declined, sink, client = adapter_for(scenario="decline")
-    assert declined.pay(vendor="Acme", amount_minor_units=1000, currency="usd", note="x").status == "DECLINED"
+    assert (
+        declined.pay(vendor="Acme", amount_minor_units=1000, currency="usd", note="x").status
+        == "DECLINED"
+    )
     assert client.charge_calls == 1
     assert "ACTION_FAILED" in event_types(sink)
 
     unclear, sink2, client2 = adapter_for(scenario="unknown")
-    assert unclear.pay(vendor="Acme", amount_minor_units=1000, currency="usd", note="x").status == "OUTCOME_UNKNOWN"
+    assert (
+        unclear.pay(vendor="Acme", amount_minor_units=1000, currency="usd", note="x").status
+        == "OUTCOME_UNKNOWN"
+    )
     assert client2.charge_calls == 1
     assert "OUTCOME_UNKNOWN" in event_types(sink2)

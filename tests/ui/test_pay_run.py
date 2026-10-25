@@ -1,4 +1,5 @@
 """End-to-end tests for local mock payments through the run console."""
+
 from __future__ import annotations
 
 import os
@@ -116,7 +117,9 @@ def test_graph_contains_simulated_payments_and_approval(tmp_path: Path) -> None:
     assert any(n["label"] == "Approval" for n in graph["nodes"])
 
 
-def test_payment_demo_requires_no_payment_api_key(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_payment_demo_requires_no_payment_api_key(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.delenv("STRIPE_TEST_KEY", raising=False)
     runner = make_runner(tmp_path)
     assert runner.info()["pay"]["simulated"] is True

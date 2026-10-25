@@ -3,6 +3,7 @@
 No API keys, network requests, card data, external service, or real money are involved.
 The gateway simulates outcomes and keeps an in-memory idempotency ledger for one process.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -67,7 +68,11 @@ class MockPaymentClient:
     def charge(
         self, *, amount_minor_units: int, currency: str, description: str, idempotency_key: str
     ) -> Payment:
-        if not isinstance(amount_minor_units, int) or isinstance(amount_minor_units, bool) or amount_minor_units <= 0:
+        if (
+            not isinstance(amount_minor_units, int)
+            or isinstance(amount_minor_units, bool)
+            or amount_minor_units <= 0
+        ):
             raise ValueError("the amount must be a positive whole number of minor units")
         if amount_minor_units > HARD_CEILING_MINOR_UNITS:
             raise ValueError("over the hard ceiling for simulated payments")
@@ -85,13 +90,13 @@ class MockPaymentClient:
 
         self.charge_calls += 1
         if self.scenario == "decline":
-            error = Declined("mock gateway simulated a decline")
-            self._idempotency[idempotency_key] = error
-            raise error
+            declined = Declined("mock gateway simulated a decline")
+            self._idempotency[idempotency_key] = declined
+            raise declined
         if self.scenario == "unknown":
-            error = Unclear("mock gateway simulated an uncertain outcome")
-            self._idempotency[idempotency_key] = error
-            raise error
+            unclear = Unclear("mock gateway simulated an uncertain outcome")
+            self._idempotency[idempotency_key] = unclear
+            raise unclear
 
         digest = hashlib.sha256(idempotency_key.encode()).hexdigest()[:16]
         payment = Payment(f"mock_{digest}", "simulated_succeeded", amount_minor_units, currency)
