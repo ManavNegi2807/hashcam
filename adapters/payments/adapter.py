@@ -23,10 +23,10 @@ from adapters.base import Coverage, Provenance
 from adapters.payments.client import (
     AuthRejected,
     Declined,
+    MockPaymentClient,
     NotTestMode,
     Payment,
     PaymentError,
-    MockPaymentClient,
     Unclear,
 )
 from policy.engine import Action

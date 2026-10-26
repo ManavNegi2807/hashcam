@@ -8,11 +8,12 @@ decides anything itself.
 
 from __future__ import annotations
 
-from dotenv import load_dotenv
 import argparse
 import os
 import sys
 from pathlib import Path
+
+from dotenv import load_dotenv
 
 load_dotenv()
 

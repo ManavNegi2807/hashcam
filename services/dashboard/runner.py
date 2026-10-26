@@ -557,9 +557,7 @@ class Runner:
                 print(f"APPROVAL STDOUT: {exc.stdout!r}", flush=True)
 
             job.pending = pending
-            raise Refused(
-                "could not sign or deliver the approval", 500
-            ) from None
+            raise Refused("could not sign or deliver the approval", 500) from None
         job.approval = {"decision": str(decision), "key_id": signed["key_id"]}
         return job.approval
 

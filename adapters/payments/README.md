@@ -1,6 +1,6 @@
 # adapters/payments — local mock payment gateway
 
-**Status:** Local-only simulation. No Stripe integration, API key, card data, external HTTP request, or real money is used. The mock supports deterministic success, decline, and uncertain outcomes; default demo behavior is success. Idempotency keys prevent duplicate simulated charges within a client instance.
+**Status:** `TESTED` (`tests/adapter/test_payments.py`, `tests/ui/test_pay_run.py` when PostgreSQL and the Rust binaries are present). Local-only simulation. No Stripe integration, API key, card data, external HTTP request, or real money is used. The mock supports deterministic success, decline, and uncertain outcomes; default demo behavior is success. Idempotency keys prevent duplicate simulated charges within a client instance.
 
 | File | What it does |
 |---|---|
