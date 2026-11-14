@@ -14,7 +14,7 @@
   "background": { "service_worker": "background.js", "type": "module" },
   "permissions": ["sidePanel", "storage", "tabs", "webNavigation", "scripting", "downloads"],
   "host_permissions": ["http://127.0.0.1/*"],
-  "optional_host_permissions": ["https://*/*", "http://*/*"],
+  "optional_host_permissions": ["https://*/*", "http://*/*", "<all_urls>"],
   "web_accessible_resources": [
     { "resources": ["blocked.html", "blocked.js", "panel.css", "vendor/plus-jakarta-sans.woff2"],
       "matches": ["https://*/*", "http://*/*"], "use_dynamic_url": true }

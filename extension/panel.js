@@ -110,9 +110,16 @@ $("passkeyBtn").addEventListener("click", () => guarded(async () => {
 $("armBtn").addEventListener("click", () => guarded(async () => {
   const hosts = $("hosts").value.split(/[\s,]+/).map((h) => h.trim().toLowerCase()).filter(Boolean);
   if (!hosts.length) throw new Error("Give the passport at least one site.");
-  // Asked in the click itself: the browser only grants access to the passport's sites.
-  const granted = await chrome.permissions.request({ origins: hostPatterns(hosts) });
-  if (!granted) throw new Error("Without access to those sites HashCam cannot watch the agent there.");
+  // Asked in the click itself (one prompt): the passport's sites, plus all-sites access only if
+  // screenshots are wanted, because the browser allows tab capture with nothing narrower.
+  const wantShots = $("shots").checked;
+  const origins = hostPatterns(hosts).concat(wantShots ? ["<all_urls>"] : []);
+  const granted = await chrome.permissions.request({ origins });
+  if (!granted) {
+    throw new Error(wantShots
+      ? "Access was not granted. Untick Screenshots for Replay to record without screenshots."
+      : "Without access to those sites HashCam cannot watch the agent there.");
+  }
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab || !/^https?:/.test(tab.url || "")) throw new Error("Open the agent's tab (a web page) first.");
   const started = await api("/sessions", {
@@ -349,6 +356,9 @@ $("killBtn").addEventListener("click", () => guarded(async () => {
 async function renderReplay() {
   if (!view) return;
   const frames = view.timeline.filter((e) => e.snapshot != null);
+  $("replayEmpty").textContent = view.timeline.some((e) => e.observed)
+    ? "No screenshots in this session: Screenshots for Replay was off, or the agent's tab was not visible."
+    : "Snapshots appear here as the agent loads pages.";
   $("replayEmpty").hidden = frames.length > 0;
   $("replayFrame").hidden = frames.length === 0;
   $("scrub").hidden = frames.length === 0;

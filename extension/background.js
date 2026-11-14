@@ -254,6 +254,8 @@ async function finish(killed) {
   if (killed) await chrome.tabs.remove(rec.tabId).catch(() => {});
   await chrome.scripting.unregisterContentScripts({ ids: [SCRIPT_ID, SCRIPT_ID + "-main"] }).catch(() => {});
   await chrome.storage.session.remove("rec");
+  // All-sites access was only for screenshots during this session: give it back now.
+  await chrome.permissions.remove({ origins: ["<all_urls>"] }).catch(() => {});
   const sealed = await api(`/sessions/${rec.sessionId}/stop`, { killed });
   broadcast({ type: "sealed", sessionId: rec.sessionId });
   return sealed;
