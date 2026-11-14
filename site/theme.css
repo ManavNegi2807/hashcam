@@ -1,0 +1,90 @@
+/* HashCam "Night Observatory" design tokens.
+   ONE source of truth: ui/theme.css. extension/theme.css is a byte-identical copy (a test checks
+   this), because a Manifest V3 extension may only load its own files.
+
+   Verdict colours are reserved: they mean what the offline verifier said and nothing else.
+   UNKNOWN, PARTIAL and NOT_INDEPENDENT are violet, never green. */
+
+@font-face {
+  font-family: "HC Sans";
+  src: url("vendor/plus-jakarta-sans.woff2") format("woff2");
+  font-weight: 200 800;
+  font-display: swap;
+}
+
+:root {
+  --hc-bg: #0A0F1E;
+  --hc-surface: #111A2E;
+  --hc-raised: #18233B;
+  --hc-line: #22304D;
+  --hc-text: #EAF0FA;
+  --hc-muted: #8A9BB8;
+
+  --hc-gold: #F5B841;        /* recording, focus, primary buttons */
+  --hc-gold-ink: #1A1204;    /* text on gold */
+  --hc-cyan: #5CC8FF;        /* links, data */
+
+  --hc-valid: #3DDC97;       /* VALID, PASS: nothing else */
+  --hc-invalid: #FF5C6C;     /* INVALID, FAIL: nothing else */
+  --hc-unknown: #B9A7FF;     /* UNKNOWN, PARTIAL, NOT_INDEPENDENT, INCOMPLETE */
+
+  --hc-paper: #F3EEE3;       /* the receipt */
+  --hc-paper-2: #E6DFCF;
+  --hc-paper-ink: #1E2433;
+  --hc-paper-faint: #6F7890;
+
+  --hc-sans: "HC Sans", "Segoe UI", system-ui, sans-serif;
+  --hc-mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace;
+  --hc-radius: 14px;
+  --hc-glow: 0 0 24px rgba(245, 184, 65, .35);
+  color-scheme: dark;
+}
+
+/* Verdict helpers, shared by the console and the extension. */
+.v-VALID, .d-PASS { color: var(--hc-valid); }
+.v-INVALID, .v-UNREADABLE, .d-FAIL { color: var(--hc-invalid); }
+.v-PARTIAL, .v-INCOMPLETE, .v-UNSUPPORTED, .v-UNKNOWN, .v-NOT_INDEPENDENT,
+.d-UNKNOWN, .d-NOT_INDEPENDENT { color: var(--hc-unknown); }
+.d-NOT_APPLICABLE { color: var(--hc-muted); }
+
+/* Paper-cut: layered paper with a torn edge (style 2). */
+.paper {
+  position: relative;
+  background:
+    repeating-linear-gradient(0deg, rgba(30, 36, 51, .035) 0 1px, transparent 1px 3px),
+    var(--hc-paper);
+  color: var(--hc-paper-ink);
+  font-family: var(--hc-mono);
+  border-radius: 4px 4px 0 0;
+  box-shadow: 0 2px 0 var(--hc-paper-2), 0 4px 0 #cfc6b2, 0 18px 34px rgba(0, 0, 0, .45);
+}
+.paper::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -10px; height: 12px;
+  background: var(--hc-paper);
+  -webkit-mask: conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) 50% / 14px 100%;
+          mask: conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) 50% / 14px 100%;
+}
+.strip {
+  position: relative;
+  background: var(--hc-paper);
+  clip-path: polygon(0 3%, 6% 0, 14% 4%, 22% 1%, 31% 3%, 40% 0, 52% 3%, 61% 1%, 72% 4%, 83% 0, 92% 3%, 100% 1%,
+                     100% 97%, 93% 100%, 84% 96%, 73% 99%, 62% 97%, 51% 100%, 41% 96%, 30% 99%, 19% 97%, 9% 100%, 0 98%);
+  filter: drop-shadow(0 2px 0 var(--hc-paper-2));
+}
+
+/* Domino reveal (style 8): one tile per verifier dimension. */
+.dominoes { display: flex; flex-wrap: wrap; gap: 8px; perspective: 600px; }
+.domino {
+  width: 30px; height: 54px; border-radius: 6px; background: var(--hc-raised);
+  border: 1px solid var(--hc-line); transform-origin: 50% 100%;
+  display: grid; place-items: center; font: 700 9px var(--hc-mono); color: var(--hc-muted);
+  writing-mode: vertical-rl; text-orientation: mixed; letter-spacing: .06em;
+}
+.domino.d-PASS { background: color-mix(in srgb, var(--hc-valid) 18%, var(--hc-raised)); border-color: color-mix(in srgb, var(--hc-valid) 55%, transparent); color: var(--hc-valid); }
+.domino.d-FAIL { background: color-mix(in srgb, var(--hc-invalid) 22%, var(--hc-raised)); border-color: var(--hc-invalid); color: var(--hc-invalid); }
+.domino.d-UNKNOWN, .domino.d-NOT_INDEPENDENT { color: var(--hc-unknown); border-color: color-mix(in srgb, var(--hc-unknown) 50%, transparent); }
+.domino.fallen { transform: rotateX(78deg); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

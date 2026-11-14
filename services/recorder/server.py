@@ -1,8 +1,13 @@
-"""The recorder's HTTP API, for the browser extension only.
+"""The recorder's HTTP API, for the browser extension (and, read-only, the HashCam website).
 
-Served on 127.0.0.1. Every request needs the pairing token in `X-HashCam-Token`, a loopback
-`Host`, and either no `Origin` or a `chrome-extension://` one: a web page the agent opens cannot
-drive this API, because it cannot read the token and its origin is refused.
+Served on 127.0.0.1. Every request needs a loopback `Host` and a token in `X-HashCam-Token`.
+
+* The extension (a `chrome-extension://` origin, or no origin for local tools) uses the pairing
+  token and may do everything.
+* A web page may call only if its origin is on the `web_origins` list given at start (the public
+  HashCam site), only the read-only routes (status, sessions, one session, a snapshot), and only
+  with the separate **viewer token**. It can look; it cannot start, report, approve or stop.
+* Any other origin is refused: a page the agent opens cannot drive this API.
 """
 
 from __future__ import annotations
@@ -20,12 +25,21 @@ from services.recorder.session import Recorder, RecorderError
 
 MAX_BODY = 8_000_000
 _LOOPBACK = re.compile(r"^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$")
+_VIEWER_ROUTE = re.compile(
+    r"^/(status|sessions|sessions/[0-9a-f]{12}|sessions/[0-9a-f]{12}/snapshot/\d+)$"
+)
 
 
-def make_handler(recorder: Recorder, token: str) -> type[BaseHTTPRequestHandler]:
+def make_handler(
+    recorder: Recorder,
+    token: str,
+    viewer_token: str | None = None,
+    web_origins: tuple[str, ...] = (),
+) -> type[BaseHTTPRequestHandler]:
     class Handler(BaseHTTPRequestHandler):
         server_version = "HashCamRecorder"
         sys_version = ""
+        cors_origin: str | None = None
 
         def log_message(self, *_: Any) -> None:  # nothing about requests is logged
             return
@@ -39,17 +53,57 @@ def make_handler(recorder: Recorder, token: str) -> type[BaseHTTPRequestHandler]
             self.send_header("Content-Length", str(len(data)))
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
+            self._cors_headers()
             self.end_headers()
             self.wfile.write(data)
 
-        def _guard(self) -> str | None:
+        def _cors_headers(self) -> None:
+            if self.cors_origin:
+                self.send_header("Access-Control-Allow-Origin", self.cors_origin)
+                self.send_header("Vary", "Origin")
+
+        def do_OPTIONS(self) -> None:
+            origin = self.headers.get("Origin")
+            path = self.path.split("?", 1)[0]
+            if (
+                origin in web_origins
+                and _LOOPBACK.match(self.headers.get("Host", ""))
+                and self.headers.get("Access-Control-Request-Method") == "GET"
+                and _VIEWER_ROUTE.match(path)
+            ):
+                self.send_response(204)
+                self.send_header("Access-Control-Allow-Origin", origin)
+                self.send_header("Access-Control-Allow-Methods", "GET")
+                self.send_header("Access-Control-Allow-Headers", "X-HashCam-Token")
+                # Chrome's Private Network Access: a public page may reach this computer only
+                # if this answer says so.
+                self.send_header("Access-Control-Allow-Private-Network", "true")
+                self.send_header("Access-Control-Max-Age", "600")
+                self.send_header("Vary", "Origin")
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return
+            self.send_response(403)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+
+        def _guard(self, method: str) -> str | None:
             if not _LOOPBACK.match(self.headers.get("Host", "")):
                 return "loopback only"
             origin = self.headers.get("Origin")
+            given = self.headers.get("X-HashCam-Token", "").encode()
+            if origin is not None and origin in web_origins:
+                # The website: read-only routes, viewer token only.
+                self.cors_origin = origin
+                path = self.path.split("?", 1)[0]
+                if method != "GET" or not _VIEWER_ROUTE.match(path):
+                    return "the website may only read sessions"
+                if not viewer_token or not secrets.compare_digest(given, viewer_token.encode()):
+                    return "paste the viewer key from the recorder first"
+                return None
             if origin is not None and not origin.startswith("chrome-extension://"):
                 return "this API answers the HashCam extension only"
-            given = self.headers.get("X-HashCam-Token", "")
-            if not secrets.compare_digest(given.encode(), token.encode()):
+            if not secrets.compare_digest(given, token.encode()):
                 return "pair the extension first"
             return None
 
@@ -67,7 +121,7 @@ def make_handler(recorder: Recorder, token: str) -> type[BaseHTTPRequestHandler]
             return body
 
         def _handle(self, method: str) -> None:
-            problem = self._guard()
+            problem = self._guard(method)
             if problem:
                 self._send(403, {"error": problem})
                 return
@@ -211,5 +265,13 @@ def _counts(timeline: list[dict[str, Any]]) -> dict[str, int]:
     return counts
 
 
-def serve(recorder: Recorder, token: str, port: int) -> ThreadingHTTPServer:
-    return ThreadingHTTPServer(("127.0.0.1", port), make_handler(recorder, token))
+def serve(
+    recorder: Recorder,
+    token: str,
+    port: int,
+    *,
+    viewer_token: str | None = None,
+    web_origins: tuple[str, ...] = (),
+) -> ThreadingHTTPServer:
+    handler = make_handler(recorder, token, viewer_token, web_origins)
+    return ThreadingHTTPServer(("127.0.0.1", port), handler)

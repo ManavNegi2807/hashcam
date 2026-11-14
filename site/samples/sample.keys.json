@@ -1,0 +1,29 @@
+{
+  "note": "demo key manifest; in production this is published out of band",
+  "keys": [
+    {
+      "key_id": "ed25519:5126ce536480ad285cd1d55b25a42248f6bf96993c552a3087c2d1bbaa963182",
+      "public_key_hex": "d26cf9c956311ce8bc6d05e6819615ee2b1c8f19fa02d196a4f11ccce43d9b08",
+      "role": "signer",
+      "failure_domain": "host:demo-machine/admin:demo",
+      "valid_from": 0,
+      "status": "active"
+    },
+    {
+      "key_id": "ed25519:171652b0f3415c82e6c694acf23c3cab5665e23ad6f79c0cfad65eae57e8870e",
+      "public_key_hex": "6e72a6c2849141c8213032206b3508603ba37c50d6bba5f983d932c2fc841879",
+      "role": "approver",
+      "failure_domain": "person:approver-device",
+      "valid_from": 0,
+      "status": "active"
+    },
+    {
+      "key_id": "ed25519:a18dfac2896291cd77b43d5639704f2cab8d364d29129ce3413c298c966fb994",
+      "public_key_hex": "166a4dbd86de7090fb81bdba07b184d3feb0b4e7f6e8657206c3236175033025",
+      "role": "mandate_issuer",
+      "failure_domain": "person:mandate_issuer-device",
+      "valid_from": 0,
+      "status": "active"
+    }
+  ]
+}

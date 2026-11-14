@@ -1,0 +1,15 @@
+/* Only what the public showcase adds on top of the console's styles. */
+.sample-note { border: 1px dashed color-mix(in srgb, var(--hc-unknown) 60%, transparent); background: rgba(185, 167, 255, .06);
+  color: #D9D2FF; border-radius: 10px; padding: 10px 14px; font-size: 14px; }
+.sample-switch { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+.tag.built { color: var(--hc-cyan); border: 1px solid color-mix(in srgb, var(--hc-cyan) 50%, transparent); }
+footer.sec { border-top: 1px solid var(--hc-line); }
+
+.connect { margin-bottom: 14px; }
+.connect-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+.connect-row label { display: grid; gap: 4px; font-size: 12px; color: var(--hc-muted); }
+.connect-row input { background: #070B16; color: var(--hc-text); border: 1px solid var(--hc-line); border-radius: 8px; padding: 9px 10px; font: 13px var(--hc-mono); min-width: 0; }
+.connect-row #viewerKey { width: min(320px, 100%); }
+.connect-row #viewerPort { width: 90px; }
+.details ul { font: 12px var(--hc-mono); color: #C9D4E8; padding-left: 18px; }
+.details li { margin: 4px 0; overflow-wrap: anywhere; }

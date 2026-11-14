@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["abb-jcs", "abb-merkle", "abb-checkpoint", "abb-event", "abb-verify", "abb-receipt", "abb-cli", "../signer"]
+members = ["abb-jcs", "abb-merkle", "abb-checkpoint", "abb-event", "abb-verify", "abb-receipt", "abb-cli", "abb-wasm", "../signer"]
 
 [workspace.package]
 version = "0.1.0"
