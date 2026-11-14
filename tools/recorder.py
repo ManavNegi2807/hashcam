@@ -25,7 +25,7 @@ from services.recorder.session import Recorder  # noqa: E402
 
 DEFAULT_PORT = 8770
 #: The public HashCam site. It may READ sessions (never change them) with the viewer key.
-DEFAULT_SITE = "https://hashcam-ai.vercel.app"
+DEFAULT_SITE = "https://hashcam.vercel.app"
 
 
 def write_token(path: Path) -> str:
