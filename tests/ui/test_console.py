@@ -45,7 +45,7 @@ def test_the_extension_uses_the_same_theme_and_animations_as_the_console() -> No
 
 def test_verdict_colours_are_reserved_and_unknown_is_never_green() -> None:
     theme = (REPO / "ui" / "theme.css").read_text(encoding="utf-8")
-    assert "--hc-valid: #3DDC97" in theme
+    assert "--hc-valid: #10B981" in theme
     assert "--hc-unknown: #B9A7FF" in theme
     for line in theme.splitlines():
         if "UNKNOWN" in line and "{" in line:

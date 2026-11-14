@@ -1,0 +1,144 @@
+/* The Gatekeeper Sandbox. Tokens come from theme.css; the colours below are the ones the page's
+   meaning rests on: emerald = verified, crimson = broken, amber = held for a person. */
+
+.sb { --ok: #10b981; --bad: #ef4444; --hold: #f59e0b; --hold2: #fbbf24;
+  max-width: 1240px; margin: 0 auto; padding: 28px clamp(16px, 4vw, 48px) 72px; }
+.sb h2 { font-size: 17px; margin: 0 0 10px; }
+.sb-head h1 { font-size: clamp(28px, 4.4vw, 46px); line-height: 1.1; margin: 6px 0 12px; letter-spacing: -.02em; }
+.sim-chip { display: inline-block; font: 600 12px var(--hc-mono); letter-spacing: .1em; color: var(--hold2);
+  border: 1px solid rgba(245, 158, 11, .5); background: rgba(245, 158, 11, .08); padding: 6px 14px; border-radius: 999px; margin: 6px 0; max-width: 100%; }
+.sim-note { max-width: 800px; }
+.banner { border: 1px solid var(--bad); color: #fecaca; background: rgba(239, 68, 68, .1); padding: 12px 14px; border-radius: 10px; }
+
+.sb-grid { display: grid; grid-template-columns: minmax(290px, 400px) minmax(0, 1fr); gap: 16px; align-items: start; margin-top: 20px; }
+.sb-col { display: grid; gap: 16px; min-width: 0; }
+.sb .panel { min-width: 0; }
+@media (max-width: 920px) { .sb-grid { grid-template-columns: minmax(0, 1fr); } }
+
+.btn[disabled] { opacity: .45; cursor: default; box-shadow: none; }
+.btn.danger { background: transparent; color: #fca5a5; box-shadow: inset 0 0 0 1.5px var(--bad); }
+.btn.small[aria-pressed="true"] { background: var(--bad); color: #fff; box-shadow: none; }
+
+/* ------------------------------------------------------------ test flights */
+.flights { display: grid; gap: 4px; }
+.flight { text-align: left; min-height: 44px; padding: 10px 14px; border-radius: 10px; cursor: pointer; width: 100%;
+  background: var(--hc-raised); color: var(--hc-text); border: 1px solid var(--hc-line); font: 700 14px var(--hc-sans);
+  transition: border-color .2s, transform .15s; }
+.flight:hover:not([disabled]) { border-color: var(--hold2); }
+.flight:active:not([disabled]) { transform: translateY(1px); }
+.flight[disabled] { opacity: .45; cursor: default; }
+.flights small { display: block; color: var(--hc-muted); font-size: 12px; margin: 0 4px 10px; }
+
+/* ------------------------------------------------------------ the liquid escrow meter */
+.meter { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 18px; align-items: center; }
+.meter-glass { position: relative; height: 220px; border: 2px solid var(--hc-line); border-radius: 14px 14px 24px 24px; overflow: hidden; background: #060910; }
+.meter-liquid { position: absolute; left: 0; right: 0; bottom: 0; height: var(--level, 100%);
+  background: linear-gradient(#10b981, #047857); transition: height .9s cubic-bezier(.2, .8, .2, 1); }
+.meter-wave { position: absolute; left: 0; top: -11px; width: 200%; height: 12px; fill: #10b981; animation: waveSlide 3.2s linear infinite; }
+@keyframes waveSlide { to { transform: translateX(-50%); } }
+.meter-hold { position: absolute; left: 0; right: 0; bottom: var(--bottom, 0); height: var(--height, 0);
+  background: linear-gradient(45deg, #f59e0b 25%, #111827 25% 50%, #f59e0b 50% 75%, #111827 75%); background-size: 20px 20px;
+  transition: bottom .9s cubic-bezier(.2, .8, .2, 1), height .9s cubic-bezier(.2, .8, .2, 1); animation: hazardSlide 1s linear infinite; opacity: .92; }
+.meter-ticks { position: absolute; right: 5px; top: 0; bottom: 0; margin: 0; padding: 4px 0; list-style: none; display: flex; flex-direction: column;
+  justify-content: space-between; font: 10px var(--hc-mono); color: rgba(234, 240, 250, .7); text-shadow: 0 0 3px #000; }
+.meter-facts { display: grid; gap: 8px; margin: 0; }
+.meter-facts div { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dotted var(--hc-line); padding-bottom: 4px; }
+.meter-facts dt { color: var(--hc-muted); font-size: 13px; }
+.meter-facts dd { margin: 0; font: 700 14px var(--hc-mono); }
+@media (max-width: 420px) { .meter { grid-template-columns: 84px minmax(0, 1fr); gap: 12px; } }
+
+/* ------------------------------------------------------------ the gate (POLICY_HOLD) */
+.gate { border-width: 2px; transition: border-color .3s, box-shadow .3s; }
+.gate[data-state="held"] { border-color: var(--hold); box-shadow: 0 0 0 1px rgba(245, 158, 11, .4), 0 0 30px rgba(245, 158, 11, .22); }
+.gate[data-state="released"] { border-color: var(--ok); box-shadow: 0 0 24px rgba(16, 185, 129, .2); }
+.gate[data-state="halted"] { border-color: var(--bad); }
+.latch { height: 44px; display: flex; align-items: center; justify-content: space-between; margin: 4px 0 10px; }
+.jaw { width: 36%; height: 30px; background: #1f2937; border: 2px solid #374151; border-radius: 6px;
+  transition: width .5s cubic-bezier(.2, .8, .2, 1), background .3s, border-color .3s; }
+.lane { flex: 1; height: 4px; margin: 0 6px; background: repeating-linear-gradient(90deg, rgba(56, 189, 248, .75) 0 8px, transparent 8px 16px);
+  animation: lane 1s linear infinite; transition: opacity .3s; }
+@keyframes lane { to { background-position: 16px 0; } }
+.gate[data-state="held"] .jaw, .gate[data-state="halted"] .jaw { width: 49%; }
+.gate[data-state="held"] .lane, .gate[data-state="halted"] .lane { opacity: 0; }
+.gate[data-state="held"] .jaw { background: linear-gradient(45deg, #f59e0b 25%, #111827 25% 50%, #f59e0b 50% 75%, #111827 75%); background-size: 20px 20px; border-color: var(--hold); }
+.gate[data-state="halted"] .jaw { background: #7f1d1d; border-color: var(--bad); }
+.gate[data-state="released"] .jaw { border-color: var(--ok); }
+.hazard { height: 34px; border-radius: 8px; display: grid; place-items: center; opacity: .25; transition: opacity .3s;
+  background: linear-gradient(45deg, #f59e0b 25%, #111827 25% 50%, #f59e0b 50% 75%, #111827 75%); background-size: 40px 40px; }
+.hazard span { font: 800 13px var(--hc-mono); letter-spacing: .2em; padding: 3px 12px; background: #111827; color: var(--hold2); border-radius: 4px; }
+.gate[data-state="held"] .hazard { opacity: 1; animation: hazardSlide 1s linear infinite; }
+@keyframes hazardSlide { to { background-position: 40px 0; } }
+.gate-state { font: 700 14px var(--hc-mono); margin: 12px 0 6px; }
+.gate[data-state="held"] .gate-state { color: var(--hold2); }
+.gate[data-state="released"] .gate-state { color: var(--ok); }
+.gate[data-state="halted"] .gate-state { color: #fca5a5; }
+.gate-what { font-size: 14px; color: #CBD5E1; margin: 6px 0; overflow-wrap: anywhere; }
+.gate-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+
+/* ------------------------------------------------------------ the radar */
+.radar { width: min(100%, 330px); height: auto; display: block; margin: 0 auto; }
+.radar .ring { fill: rgba(16, 185, 129, .03); stroke: rgba(16, 185, 129, .35); stroke-width: 1; }
+.radar .cross { stroke: rgba(16, 185, 129, .25); stroke-width: 1; }
+.radar .sweep { transform-box: view-box; transform-origin: 120px 120px; animation: radarSweep 4s linear infinite; }
+@keyframes radarSweep { to { transform: rotate(360deg); } }
+.blip { stroke: #080B12; stroke-width: 1.5; cursor: pointer; outline: none; }
+.blip.allow { fill: var(--ok); }
+.blip.deny { fill: var(--bad); }
+.blip.hold { fill: var(--hold); }
+.blip.released { fill: var(--ok); stroke: var(--hold); stroke-width: 3; }
+.blip.sel, .blip:focus-visible { stroke: #fff; stroke-width: 2.5; }
+.pulse { fill: none; stroke: var(--hold); stroke-width: 2; transform-box: fill-box; transform-origin: center; animation: ping 1.4s ease-out infinite; }
+@keyframes ping { from { transform: scale(1); opacity: .9; } to { transform: scale(3.4); opacity: 0; } }
+.why { display: grid; gap: 6px; margin-top: 12px; }
+.why-head { font: 700 13px var(--hc-mono); color: var(--hc-muted); margin: 0; }
+.why-plain { margin: 0 0 4px; font-size: 15px; }
+.badge { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 10px; align-items: start; padding: 8px 10px; border: 1px solid var(--hc-line); border-radius: 8px; background: #0B101B; }
+.badge .k { font: 700 11px var(--hc-mono); letter-spacing: .08em; color: var(--hold2); }
+.badge .v { font-size: 13px; overflow-wrap: anywhere; }
+.badge.deny .v { color: #fecaca; }
+.badge.allow .v { color: #a7f3d0; }
+.badge.hold .v { color: #fde68a; }
+@media (max-width: 560px) { .badge { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
+
+/* ------------------------------------------------------------ the ledger */
+.ledger-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 4px; }
+.ledger-head h2 { margin: 0; }
+.tools { display: flex; flex-wrap: wrap; gap: 8px; }
+.chain-status { font: 700 14px var(--hc-mono); padding: 10px 12px; border-radius: 10px; border: 1px solid var(--hc-line); margin: 12px 0; overflow-wrap: anywhere; }
+.chain-status.ok { color: var(--ok); border-color: var(--ok); background: rgba(16, 185, 129, .08); }
+.chain-status.bad { color: var(--bad); border-color: var(--bad); background: rgba(239, 68, 68, .08); }
+.ledger { list-style: none; margin: 0; padding: 6px 0 0 24px; max-height: 720px; overflow: auto; }
+.ev { position: relative; margin: 0 0 16px; padding: 10px 12px; background: #0B101B; border: 1px solid var(--hc-line);
+  border-left: 4px solid var(--hc-line); border-radius: 8px; --link: var(--hc-line); transition: border-color .35s, background .35s; }
+.ev.ok { border-left-color: var(--ok); --link: var(--ok); }
+.ev.bad { border-left-color: var(--bad); --link: var(--bad); background: rgba(239, 68, 68, .07); }
+.ev::before { content: ""; position: absolute; left: -22px; top: -17px; width: 3px; height: 17px; background: var(--link); transition: background .35s; }
+.ev:first-child::before { display: none; }
+.ev::after { content: ""; position: absolute; left: -28px; top: 14px; width: 12px; height: 12px; border-radius: 50%; background: var(--link); border: 2px solid #080B12; transition: background .35s; }
+.ev-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+.ev-n { font: 700 12px var(--hc-mono); color: var(--hc-muted); }
+.ev-head b { font: 700 13px var(--hc-mono); overflow-wrap: anywhere; }
+.ev-status { margin-left: auto; font: 800 11px var(--hc-mono); letter-spacing: .06em; }
+.ev.ok .ev-status { color: var(--ok); }
+.ev.bad .ev-status { color: var(--bad); }
+.ev-sum { margin: 4px 0; font-size: 14px; overflow-wrap: anywhere; }
+.ev-hash { display: block; font-size: 11px; color: var(--hc-muted); background: none; padding: 0; overflow-wrap: anywhere; }
+.ev-note { margin: 4px 0 0; font-size: 12px; color: #fca5a5; overflow-wrap: anywhere; }
+.ev-note:empty { display: none; }
+.ev-json { display: block; width: 100%; margin-top: 8px; background: #060910; color: #CBD5E1; border: 1px solid var(--hc-line); border-radius: 8px;
+  padding: 8px 10px; font: 12px/1.5 var(--hc-mono); resize: vertical; }
+.ev-json:focus { outline: 2px solid var(--hold2); outline-offset: 1px; }
+
+/* ------------------------------------------------------------ the rules table */
+.sb-rules { margin-top: 16px; }
+.rules { width: 100%; border-collapse: collapse; font-size: 14px; }
+.rules th, .rules td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--hc-line); vertical-align: top; }
+.rules th { color: var(--hc-muted); font: 700 11px var(--hc-mono); letter-spacing: .08em; text-transform: uppercase; }
+.rules td:last-child { font: 700 12px var(--hc-mono); white-space: nowrap; }
+.sb-rules { overflow-x: auto; }
+
+.mono { font-family: var(--hc-mono); }
+
+@media (prefers-reduced-motion: reduce) {
+  .meter-wave, .lane, .sweep, .pulse, .meter-hold { animation: none; }
+}

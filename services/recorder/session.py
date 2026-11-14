@@ -96,6 +96,9 @@ class Session:
     state: str = "recording"
     receipt: str | None = None
     verdict: dict[str, Any] | None = None
+    # A sensitive agent: the website's viewer gets no task text, paths or screenshots, and no
+    # screen shows its raw records (see services/recorder/public.py and ui/readable.js).
+    sensitive: bool = False
     lock: threading.Lock = field(default_factory=threading.Lock)
 
 
@@ -175,7 +178,9 @@ class Recorder:
 
     # -------------------------------------------------------------- sessions
 
-    def start_session(self, *, task: str, agent: str, passport: dict[str, Any]) -> Session:
+    def start_session(
+        self, *, task: str, agent: str, passport: dict[str, Any], sensitive: bool = False
+    ) -> Session:
         task = str(task).strip()[:500]
         agent = str(agent).strip()[:60] or "AI agent"
         if not task:
@@ -256,6 +261,7 @@ class Recorder:
             repo=repo,
             started=time.time(),
             task_hosts=sorted({m.lower() for m in _HOSTLIKE.findall(task)}),
+            sensitive=bool(sensitive),
         )
         with self._lock:
             self.sessions[session_id] = session
@@ -476,6 +482,7 @@ class Recorder:
                 "run_id": session.run_id,
                 "agent": session.agent,
                 "task": session.task,
+                "sensitive": session.sensitive,
                 "passport": session.passport,
                 "state": session.state,
                 "started": session.started,

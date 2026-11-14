@@ -20,21 +20,100 @@
       <a href="#live">Live</a>
       <a href="#receipt">Receipts</a>
       <a href="#how">How it works</a>
-      <a href="https://github.com/ManavNegi2807/hashcam">GitHub</a>
+      <a href="sandbox.html">Sandbox</a>
     </nav>
   </header>
 
   <main id="main">
     <section class="hero" id="top">
       <div class="hero-copy">
+        <p class="status-pill" role="note"><span class="pill-dot" aria-hidden="true"></span>ZERO SAAS • PLAIN HTML • OFFLINE VERIFIABLE</p>
         <p class="kicker">A flight recorder for AI agents</p>
         <h1>Every agent action, <em>on the record.</em></h1>
         <p class="lead">Attach HashCam to an AI agent. It records what the agent does, holds risky steps for your passkey, and seals a signed receipt anyone can check offline.</p>
         <div class="cta">
-          <a class="btn" href="https://github.com/ManavNegi2807/hashcam">Get it on GitHub</a>
+          <a class="btn" href="sandbox.html" id="launchSandbox">Launch the Gatekeeper Sandbox</a>
           <a class="btn ghost" href="#how">See how it works</a>
         </div>
         <p class="honest small">This is the public showcase. HashCam itself runs on your own computer: the recorder, the extension and the HashCam Console. This site does not watch any agent and collects nothing.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="bus" aria-labelledby="bus-h">
+      <h2 id="bus-h">The telemetry bus</h2>
+      <div class="panel bus">
+        <p class="muted small">Every agent action rides the same four stops, in this order. Click a stop (or press Enter on it) to read, in plain words, a real sample made in your browser a moment ago. The raw record is behind "Technical details".</p>
+        <svg class="bus-svg" id="busSvg" viewBox="0 0 960 190" role="group" aria-label="Telemetry bus with four stops in order: 1 SHA-256 chain, 2 deterministic policy, 3 fake-money gate, 4 human sign-off">
+          <path class="bus-rail" d="M200 95 H270"/>
+          <path class="bus-rail" d="M450 95 H520"/>
+          <path class="bus-rail" d="M700 95 H770"/>
+          <path class="packet" pathLength="100" d="M200 95 H270"/>
+          <path class="packet later" pathLength="100" d="M200 95 H270"/>
+          <path class="packet" pathLength="100" d="M450 95 H520"/>
+          <path class="packet later" pathLength="100" d="M450 95 H520"/>
+          <path class="packet" pathLength="100" d="M700 95 H770"/>
+          <path class="packet later" pathLength="100" d="M700 95 H770"/>
+          <g class="bus-node on" role="button" tabindex="0" data-i="0" aria-pressed="true" aria-label="1. SHA-256 Chain: show a sample record">
+            <rect x="20" y="40" width="180" height="110" rx="16"/>
+            <circle cx="46" cy="66" r="14"/><text class="num" x="46" y="71" text-anchor="middle">1</text>
+            <text class="name" x="110" y="104" text-anchor="middle">SHA-256</text>
+            <text class="name" x="110" y="126" text-anchor="middle">Chain</text>
+          </g>
+          <g class="bus-node" role="button" tabindex="0" data-i="1" aria-pressed="false" aria-label="2. Deterministic Policy: show a sample record">
+            <rect x="270" y="40" width="180" height="110" rx="16"/>
+            <circle cx="296" cy="66" r="14"/><text class="num" x="296" y="71" text-anchor="middle">2</text>
+            <text class="name" x="360" y="104" text-anchor="middle">Deterministic</text>
+            <text class="name" x="360" y="126" text-anchor="middle">Policy</text>
+          </g>
+          <g class="bus-node" role="button" tabindex="0" data-i="2" aria-pressed="false" aria-label="3. Fake-Money Gate: show a sample record">
+            <rect x="520" y="40" width="180" height="110" rx="16"/>
+            <circle cx="546" cy="66" r="14"/><text class="num" x="546" y="71" text-anchor="middle">3</text>
+            <text class="name" x="610" y="104" text-anchor="middle">Fake-Money</text>
+            <text class="name" x="610" y="126" text-anchor="middle">Gate</text>
+          </g>
+          <g class="bus-node" role="button" tabindex="0" data-i="3" aria-pressed="false" aria-label="4. Human Sign-Off: show a sample record">
+            <rect x="770" y="40" width="180" height="110" rx="16"/>
+            <circle cx="796" cy="66" r="14"/><text class="num" x="796" y="71" text-anchor="middle">4</text>
+            <text class="name" x="860" y="104" text-anchor="middle">Human</text>
+            <text class="name" x="860" y="126" text-anchor="middle">Sign-Off</text>
+          </g>
+        </svg>
+        <p class="bus-title" id="busTitle" role="status">1. SHA-256 Chain</p>
+        <div class="plain" id="busPlain" tabindex="0" aria-label="Plain-language sample for the selected stop">Computing a real sample…</div>
+        <p class="muted small">This sample uses the sandbox's simplified chain so every step is visible. Real receipts hash canonical JSON with domain tags into a Merkle tree and are checked by the Rust verifier.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="story" aria-labelledby="story-h">
+      <h2 id="story-h">One action, four steps</h2>
+      <div class="story">
+        <div class="story-stage">
+          <ol class="stage-list" aria-label="The four steps">
+            <li class="on" data-i="0"><b>1</b> Record</li>
+            <li data-i="1"><b>2</b> Decide</li>
+            <li data-i="2"><b>3</b> Limit</li>
+            <li data-i="3"><b>4</b> Sign</li>
+          </ol>
+          <div class="plain" id="storyPlain" aria-live="polite"></div>
+        </div>
+        <ol class="story-steps">
+          <li class="story-step on" data-i="0" tabindex="-1">
+            <h3>The agent acts. HashCam writes it down.</h3>
+            <p>Every action becomes an event. Each event carries the SHA-256 of the event before it, so changing anything that already happened changes its hash, and every hash after it.</p>
+          </li>
+          <li class="story-step" data-i="1" tabindex="-1">
+            <h3>A fixed rule decides first.</h3>
+            <p>Before anything is sent, a deterministic policy answers allow, deny or hold. Same input, same answer, every time. No model gets a vote: machine-learning scores can only make a decision stricter.</p>
+          </li>
+          <li class="story-step" data-i="2" tabindex="-1">
+            <h3>Money is fake, limits are real.</h3>
+            <p>Payments run against a local mock gateway, so no real money ever moves. Spending still has tiers: small amounts pass, larger ones wait for a person, and anything over the cap is refused even if someone clicks approve.</p>
+          </li>
+          <li class="story-step" data-i="3" tabindex="-1">
+            <h3>A person signs. Anyone can check.</h3>
+            <p>The approval card shows who, what and where. Your passkey unlocks a signature over exactly that text. The sealed receipt then verifies offline with <code>abb verify</code>: valid means the record has not changed, nothing more.</p>
+          </li>
+        </ol>
       </div>
     </section>
 
@@ -66,6 +145,33 @@
           </ol>
           <p class="muted small">Full examples are in the console that ships with the repo.</p>
         </article>
+      </div>
+    </section>
+
+    <section class="sec" id="quickstart" aria-labelledby="quickstart-h">
+      <h2 id="quickstart-h">Quickstart</h2>
+      <div class="panel qs">
+        <div class="qs-tabs" role="tablist" aria-label="Quickstart steps">
+          <button class="qs-tab" role="tab" id="qt0" aria-controls="qp0" aria-selected="true" type="button">1. Python Recorder</button>
+          <button class="qs-tab" role="tab" id="qt1" aria-controls="qp1" aria-selected="false" tabindex="-1" type="button">2. Verify Offline</button>
+          <button class="qs-tab" role="tab" id="qt2" aria-controls="qp2" aria-selected="false" tabindex="-1" type="button">3. Export HTML Receipt</button>
+        </div>
+        <div class="qs-panel" role="tabpanel" id="qp0" aria-labelledby="qt0">
+          <p class="muted small">About 30 seconds once the prerequisites are in place (Rust build of <code>abb</code>, a PostgreSQL you can create databases on). First-time setup takes longer: see the README.</p>
+          <div class="codebox"><pre><code>git clone https://github.com/ManavNegi2807/hashcam.git &amp;&amp; cd hashcam
+pip install -r requirements.txt
+python tools/recorder.py --dsn postgresql://abb@127.0.0.1:5432/postgres</code></pre><button class="copy" type="button">Copy</button></div>
+        </div>
+        <div class="qs-panel" role="tabpanel" id="qp1" aria-labelledby="qt1" hidden>
+          <p class="muted small">No server, no network: the verifier reads the receipt and the public key manifest, nothing else. Exit code 0 means VALID, 1 means INVALID.</p>
+          <div class="codebox"><pre><code>abb verify run.abbreceipt --keys run.abbreceipt.keys.json --profile LOCAL_ONLY</code></pre><button class="copy" type="button">Copy</button></div>
+        </div>
+        <div class="qs-panel" role="tabpanel" id="qp2" aria-labelledby="qt2" hidden>
+          <p class="muted small">The Gatekeeper Sandbox exports a self-contained <code>.html</code> receipt that re-checks itself offline in any browser. (The real recorder exports <code>.abbreceipt</code> files, checked with <code>abb verify</code> or the receipt checker below.) You can also just double-click <code>site/sandbox.html</code>.</p>
+          <div class="codebox"><pre><code>python -m http.server 8000 --directory site
+# then open http://localhost:8000/sandbox.html, run the test flights,
+# sign the gate, and press "Export Verified Receipt (.html)"</code></pre><button class="copy" type="button">Copy</button></div>
+        </div>
       </div>
     </section>
 
@@ -112,10 +218,11 @@
       <p class="state" id="receiptState" role="status"></p>
       <div class="verdict-row">
         <div><p class="muted small">The offline verifier says</p><div class="stamp" id="stamp"></div></div>
-        <p class="small muted honest-note">A valid receipt means the record has not changed since it was signed. It does not mean the agent was honest, or that a page told the truth.</p>
+        <p class="small muted honest-note" id="verdictPlain" role="status">A valid receipt means the record has not changed since it was signed. It does not mean the agent was honest, or that a page told the truth.</p>
       </div>
+      <p class="small muted" id="engineNote" role="status"></p>
       <div id="dominoes"></div>
-      <details class="details" id="detailsBox" hidden><summary>What the verifier wrote</summary><ul id="details"></ul></details>
+      <details class="details" id="detailsBox" hidden><summary>Each check, in words (technical detail from the verifier)</summary><ul id="details"></ul></details>
     </section>
 
     <section class="sec" id="how" aria-labelledby="how-h">
@@ -126,14 +233,20 @@
         <div class="panel"><h3>The maths</h3><div id="maths"></div></div>
       </div>
       <div class="panel"><h3>A risky step, from start to seal</h3><div id="cartoon"></div></div>
+      <p class="cta"><a class="btn" href="sandbox.html">Now try the Gatekeeper Sandbox</a></p>
     </section>
 
     <footer class="sec small muted">
-      HashCam is open source: <a href="https://github.com/ManavNegi2807/hashcam">github.com/ManavNegi2807/hashcam</a>. Built by team StarkFlow.
+      Built by team StarkFlow.
     </footer>
   </main>
 
   <script src="vendor/gsap.min.js"></script>
-  <script type="module" src="site.js"></script>
+  <script src="chain.js"></script>
+  <script src="readable.js"></script>
+  <script src="fallback.js"></script>
+  <script src="fx3d.js"></script>
+  <script src="site.js"></script>
+  <script src="showcase.js"></script>
 </body>
 </html>

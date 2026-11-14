@@ -3,6 +3,7 @@
 
 import { api, approvalChallenge, b64urlDecode, b64urlEncode, hostPatterns, settings } from "./lib/api.js";
 import { dominoes, glowAtom, signFormula } from "./fx3d.js";
+import { describe, technical, verdictText } from "./readable.js";
 
 const $ = (id) => document.getElementById(id);
 const gsap = window.gsap;
@@ -50,7 +51,6 @@ async function guarded(fn) {
   try { await fn(); } catch (error) { showError(String(error.message || error)); }
 }
 const clock = (s) => [s / 3600, (s % 3600) / 60, s % 60].map((x) => String(Math.floor(x)).padStart(2, "0")).join(":");
-const host = (u) => { try { return new URL(u).host; } catch { return u || ""; } };
 
 // ------------------------------------------------------------------ tabs
 
@@ -116,6 +116,11 @@ $("passkeyBtn").addEventListener("click", () => guarded(async () => {
   stage("arm");
 }));
 
+$("sensitive").addEventListener("change", () => {
+  // A sensitive agent's pages should not be photographed unless the person asks for it.
+  if ($("sensitive").checked) $("shots").checked = false;
+});
+
 $("armBtn").addEventListener("click", () => guarded(async () => {
   const hosts = $("hosts").value.split(/[\s,]+/).map((h) => h.trim().toLowerCase()).filter(Boolean);
   if (!hosts.length) throw new Error("Give the passport at least one site.");
@@ -134,6 +139,7 @@ $("armBtn").addEventListener("click", () => guarded(async () => {
   const started = await api("/sessions", {
     task: $("task").value, agent: $("agent").value,
     passport: { hosts, minutes: Number($("minutes").value) || 30 },
+    sensitive: $("sensitive").checked,
   });
   sessionId = started.session_id;
   shownLines = 0;
@@ -251,20 +257,24 @@ async function decide(waiting, decision) {
 const LINK = `<svg class="link" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M9 15l6-6M8 11l-2 2a3.5 3.5 0 0 0 5 5l2-2M16 13l2-2a3.5 3.5 0 0 0-5-5l-2 2"/></svg>`;
 const SEAL = `<svg class="seal" viewBox="0 0 60 60" aria-hidden="true"><path fill="#A3161A" d="M30 3l5 4 6-2 3 6 6 1 0 6 5 4-3 5 3 6-5 3 0 6-6 1-3 6-6-2-5 4-5-4-6 2-3-6-6-1 0-6-5-3 3-6-3-5 5-4 0-6 6-1 3-6 6 2z"/><circle cx="30" cy="30" r="15" fill="none" stroke="#E7B9A0" stroke-width="1.4" opacity=".7"/><text x="30" y="34" text-anchor="middle" font-family="Consolas, monospace" font-weight="800" font-size="10" fill="#F6D9C6">OK</text></svg>`;
 
+// One plain sentence per step. The raw record (and the leaf hash) is behind a closed "Technical
+// details" opener, and is replaced by a note when the agent or the step is sensitive.
 function lineFor(e) {
+  const ctx = { agent: view?.agent, sensitive: view?.sensitive === true };
+  const said = describe(e, ctx);
+  const tech = technical(e, ctx);
   const at = new Date(e.at * 1000).toLocaleTimeString([], {
     hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23",
   });
-  const kind = { navigate: "PAGE", form_submit: "SUBMIT", download: "DOWNLOAD", secret: "SECRET", SESSION: "ARMED", SEALED: "SEALED" }[e.kind] || e.kind;
   const li = el("li", { class: "line", "data-action": e.action_id || "", "data-n": String(e.n) },
     el("span", { class: "t" }, at),
-    el("span", { class: "k" }, kind + (e.field_kind ? ` · ${e.field_kind}` : "")),
-    el("span", { class: `stamp-s s-${e.status}` }, e.status.replace("_", " ")),
-    e.target ? el("span", { class: "tgt" }, host(e.target) + new URL(e.target, "https://x").pathname.slice(0, 40)) : null,
-    e.reasons && e.reasons.length ? el("span", { class: "why" }, e.reasons.join(" · ").toLowerCase()) : null,
-    e.tripwire ? el("span", { class: "flag trip" }, `⚠ tripwire: ${e.tripwire.verdict} (${e.tripwire.reasons.join(", ")})`) : null,
-    e.drift ? el("span", { class: "flag drift" }, `↯ off-task: ${e.drift.host} is not in the task`) : null,
-    e.leaf ? el("span", { class: "why hash" }, `leaf ${e.leaf.slice(0, 16)}…`) : null,
+    el("span", { class: "k" }, said.title),
+    el("span", { class: `stamp-s s-${e.status} tone-${said.tone}` }, said.badge),
+    said.why ? el("span", { class: "why" }, said.why) : null,
+    ...said.notes.map((note) => el("span", { class: "flag trip" }, note)),
+    el("details", { class: "tech" },
+      el("summary", {}, tech.withheld ? "Technical details (hidden)" : "Technical details"),
+      el(tech.withheld ? "p" : "pre", { class: tech.withheld ? "tech-withheld" : "tech-text" }, tech.text)),
   );
   li.append(svg(LINK));
   return li;
@@ -308,7 +318,7 @@ function renderVerdict() {
   box.append(el("div", { class: "verdict" },
     el("div", { class: "muted small" }, "The offline verifier says"),
     el("div", { class: `big-stamp v-${overall}` }, overall),
-    el("p", { class: "small muted" }, "A valid receipt means this record has not changed since it was signed. It does not mean the agent was honest."),
+    el("p", { class: "small muted" }, verdictText(overall)),
     el("div", { class: "row" },
       el("button", { class: "btn", onclick: () => download("receipt") }, "Save receipt"),
       el("button", { class: "btn ghost", onclick: () => download("receipt-keys") }, "Save key manifest"),
@@ -386,7 +396,7 @@ async function renderReplay() {
     const img = $("replayImg");
     if (img.src) URL.revokeObjectURL(img.src);
     img.src = URL.createObjectURL(await response.blob());
-    $("replayCaption").textContent = `#${e.n} · ${new Date(e.at * 1000).toLocaleTimeString()} · ${host(e.target)} · ${e.status}`;
+    $("replayCaption").textContent = `#${e.n} · ${new Date(e.at * 1000).toLocaleTimeString()} · ${describe(e, { sensitive: view.sensitive === true }).title}`;
   };
   scrub.oninput = () => guarded(show);
   await guarded(show);
@@ -416,6 +426,7 @@ async function verifyFiles(files) {
     out.append(el("div", { class: "verdict" },
       el("div", { class: "muted small" }, `${receipt.name}${keys ? "" : " · no key manifest: signatures are UNKNOWN, never passed"}`),
       el("div", { class: `big-stamp v-${report.overall}` }, String(report.overall)),
+      el("p", { class: "small muted" }, verdictText(report.overall)),
       dims,
     ));
   });

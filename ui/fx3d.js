@@ -194,12 +194,14 @@ export function merkle(host, mathsHost) {
   const stage = el("div", { class: "mk-stage" });
   const tree = el("div", { class: "mk-tree" });
   stage.append(tree);
-  const edges = svg("svg", { class: "mk-edges", viewBox: `0 0 ${W} 330`, "aria-hidden": "true" });
+  const edges = svg("svg", { class: "mk-edges", viewBox: `0 0 ${W} 394`, "aria-hidden": "true" });
   tree.append(edges);
   const nodes = []; // nodes[level][i]
   const posOf = (level, i) => {
     const count = 8 >> level;
-    return { x: (W / count) * (i + 0.5), y: 300 - level * 92 };
+    // The root sits 88px below the top, leaving a clear band for the signature pill above it
+    // (it grows when the text changes to "no longer matches: INVALID", and tilts with the tree).
+    return { x: (W / count) * (i + 0.5), y: 364 - level * 92 };
   };
   for (let level = 0; level < 4; level++) {
     nodes.push([]);
@@ -408,7 +410,7 @@ function short(status) {
 // The agent is the nucleus. Events orbit in shells by kind; a pending approval is the glowing
 // valence electron; the number of lit shells shows the trust level (100 = all four).
 const SHELLS = [
-  ["navigate", "#5CC8FF"], ["form_submit", "#F5B841"], ["secret", "#B9A7FF"], ["download", "#7FD3C4"],
+  ["navigate", "#38BDF8"], ["form_submit", "#F59E0B"], ["secret", "#B9A7FF"], ["download", "#7FD3C4"],
 ];
 export function glowAtom(canvas, getState) {
   const ctx = canvas.getContext("2d");
@@ -446,13 +448,13 @@ export function glowAtom(canvas, getState) {
       if (s === SHELLS.length - 1 && state.waiting > 0) {
         const a = t * 0.9;
         const pulse = 7 + Math.sin(t * 5) * 2;
-        dot(ctx, Math.cos(a) * rx, Math.sin(a) * ry, pulse, "#F5B841", 26);
+        dot(ctx, Math.cos(a) * rx, Math.sin(a) * ry, pulse, "#F59E0B", 26);
       }
       ctx.restore();
     });
     // nucleus
     const g = ctx.createRadialGradient(cx, cy, 2, cx, cy, 26);
-    g.addColorStop(0, "rgba(255,226,160,1)"); g.addColorStop(0.45, "rgba(245,184,65,.85)"); g.addColorStop(1, "rgba(245,184,65,0)");
+    g.addColorStop(0, "rgba(255,226,160,1)"); g.addColorStop(0.45, "rgba(245, 158, 11,.85)"); g.addColorStop(1, "rgba(245, 158, 11,0)");
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, 26, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = "#1A1204"; ctx.font = "700 11px ui-monospace, Consolas, monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.fillText((state.agent || "AI").slice(0, 2).toUpperCase(), cx, cy + 0.5);

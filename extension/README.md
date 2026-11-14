@@ -21,6 +21,8 @@ happened into a signed receipt anyone can verify offline.
 | **Secret shield** | A typed password or card number becomes a salted SHA-256 commitment inside the page. The value never leaves the page; the salt is thrown away. |
 | **Kill switch** | Lift the cover, press KILL: the agent's tab closes, anything waiting stays unsent, and the receipt is sealed. |
 | **Replay** | Scrub through the session's screenshots. |
+| **Plain words** | Every step in the flight record is one sentence ("Stopped from opening evil.test", "Typed a password on shop.test. The value was never recorded"), not a code or JSON. The raw record is behind a closed "Technical details" opener. |
+| **Sensitive agent** | Tick "This agent handles sensitive data" when arming: its task, sites and raw records stay off the website's viewer, no screen here shows its raw records, and screenshots start off. A typed password or card number is never recorded either way. |
 | **Verify** | Drop a `.abbreceipt` (and its `.keys.json`) to see the offline verifier's verdict. |
 
 ## What it does not do (read this)
@@ -39,9 +41,14 @@ happened into a signed receipt anyone can verify offline.
 
 ## Look and feel
 
-The panel uses the **Night Observatory** theme shared with the HashCam Console (`theme.css`, `fx3d.js`, byte-identical copies of the files in `ui/`). It shows four of the console's animation styles: the **Glow Atom** session core (events orbit by kind, a glowing outer electron means an approval is waiting), the **paper-cut** receipt roll, the **domino** verdict (a FAIL stops the row) and a small **maths** line in the approval card (what you sign). Every one has a still version for reduced motion. `TESTED`: no sideways overflow at 320, 400 and 480 px with an approval card showing.
+The panel uses the **Night Observatory** theme shared with the HashCam Console (`theme.css`, `fx3d.js`, `readable.js`, byte-identical copies of the files in `ui/`). It shows four of the console's animation styles: the **Glow Atom** session core (events orbit by kind, a glowing outer electron means an approval is waiting), the **paper-cut** receipt roll, the **domino** verdict (a FAIL stops the row) and a small **maths** line in the approval card (what you sign). Every one has a still version for reduced motion. `TESTED`: no sideways overflow at 320, 400 and 480 px with an approval card showing.
 
 ## Run it
+
+**On Windows, with no terminal:** double-click `HashCam.bat` (it starts the recorder and copies the
+pairing token to your clipboard), then, once, `HashCam-Extension-Setup.bat` (a few clicks to add the
+extension), then paste the token in the side panel. See the root `README.md`. The steps below are
+the same thing by hand.
 
 1. Start the local service (needs the built `abb` binaries and a PostgreSQL you can create
    databases on, as for the other demos):

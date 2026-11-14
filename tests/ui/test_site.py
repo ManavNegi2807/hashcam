@@ -18,14 +18,14 @@ import subprocess
 import tempfile
 import threading
 from collections.abc import Iterator
-from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from http.server import ThreadingHTTPServer
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import Any
 
 import pytest
 
-REPO = Path(__file__).resolve().parents[2]
-SITE = REPO / "site"
+from tests.ui.sitehelp import SITE, SiteHandler
+
 pytestmark = pytest.mark.skipif(
     not (
         os.environ.get("ABB_BIN")
@@ -36,30 +36,6 @@ pytestmark = pytest.mark.skipif(
     reason="needs site/verifier.wasm, ABB_BIN, ABB_SIGNER_BIN and ABB_TEST_DSN",
 )
 sync_api = pytest.importorskip("playwright.sync_api")
-
-
-def vercel_headers() -> dict[str, str]:
-    config = json.loads((SITE / "vercel.json").read_text(encoding="utf-8"))
-    return {h["key"]: h["value"] for h in config["headers"][0]["headers"]}
-
-
-class SiteHandler(SimpleHTTPRequestHandler):
-    extensions_map: ClassVar[dict[str, str]] = {  # type: ignore[misc]
-        **SimpleHTTPRequestHandler.extensions_map,
-        ".wasm": "application/wasm",
-        ".js": "text/javascript",
-    }
-
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, directory=str(SITE), **kwargs)
-
-    def end_headers(self) -> None:
-        for key, value in vercel_headers().items():
-            self.send_header(key, value)
-        super().end_headers()
-
-    def log_message(self, *_: Any) -> None:
-        return
 
 
 @pytest.fixture(scope="module")
