@@ -41,8 +41,43 @@ pytestmark = pytest.mark.skipif(
 )
 playwright_api = pytest.importorskip("playwright.sync_api")
 
-EXTENSION = Path(__file__).resolve().parents[2] / "extension"
+SOURCE = Path(__file__).resolve().parents[2] / "extension"
+
+
+def extension_with_screenshots_granted(into: Path) -> Path:
+    """A copy of the extension as it is after the person clicked Allow on the screenshot prompt.
+
+    A headless browser cannot answer that prompt, so the all-sites access the screenshot option
+    asks for is granted up front here. The prompt itself is NOT covered by this test.
+    """
+    import json
+    import shutil
+
+    copy = into / "extension"
+    shutil.copytree(SOURCE, copy)
+    manifest = json.loads((copy / "manifest.json").read_text(encoding="utf-8"))
+    manifest["host_permissions"].append("<all_urls>")
+    (copy / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    return copy
+
+
 TOKEN = secrets.token_urlsafe(16)
+SHOTS = Path(tempfile.gettempdir()) / "hashcam-panel-widths"
+# Elements whose right edge passes the window, plus the page's own sideways scroll.
+OVERFLOW = """() => {
+    const w = document.documentElement.clientWidth;
+    const out = [];
+    if (document.documentElement.scrollWidth > w) out.push("page scrolls sideways");
+    for (const id of ["killBtn", "killCover", "gauge", "stopBtn", "atom", "rollLines"]) {
+        const n = document.getElementById(id);
+        const shown = n && n.getClientRects().length;
+        if (shown && n.getBoundingClientRect().right > w + 0.5) out.push(id);
+    }
+    for (const n of document.querySelectorAll(".approval .btn")) {
+        if (n.getBoundingClientRect().right > w + 0.5) out.push("approval button");
+    }
+    return out;
+}"""
 ON_BLOCKED_PAGE = (
     "async () => (await chrome.tabs.query({})).some(t => (t.url || '').includes('/blocked.html?'))"
 )
@@ -130,12 +165,14 @@ def wait_until(check: Any, seconds: float = 30, what: str = "condition") -> Any:
 
 def test_agent_submit_is_held_until_the_passkey_approves(stack: dict[str, Any]) -> None:
     site: Site = stack["site"]
+    extension = extension_with_screenshots_granted(stack["work"])
+    SHOTS.mkdir(exist_ok=True)
     with playwright_api.sync_playwright() as p:
         context = p.chromium.launch_persistent_context(
             str(stack["work"] / "profile"),
             headless=True,
             channel="chromium",  # the full build: the headless shell cannot load extensions
-            args=[f"--disable-extensions-except={EXTENSION}", f"--load-extension={EXTENSION}"],
+            args=[f"--disable-extensions-except={extension}", f"--load-extension={extension}"],
         )
         try:
             worker = (
@@ -195,6 +232,8 @@ def test_agent_submit_is_held_until_the_passkey_approves(stack: dict[str, Any]) 
             wait_until(
                 lambda: any(e["kind"] == "navigate" for e in session.timeline), what="first page"
             )
+            # The page the agent is on is visible, so Replay must get a screenshot of it.
+            wait_until(lambda: session.snapshots, seconds=15, what="a page snapshot")
 
             # The agent goes to checkout, types a password, and clicks Buy.
             agent.click("a[href='/form']")
@@ -213,6 +252,15 @@ def test_agent_submit_is_held_until_the_passkey_approves(stack: dict[str, Any]) 
             # The person approves in the side panel with the passkey.
             panel.reload()
             panel.wait_for_selector(".approval")
+            # The widest state (approval card, atom, roll, kill switch) fits every side-panel
+            # width from 320px: nothing scrolls sideways, the kill switch stays inside.
+            for width in (320, 400, 480):
+                panel.set_viewport_size({"width": width, "height": 900})
+                panel.wait_for_timeout(300)
+                overflow = panel.evaluate(OVERFLOW)
+                assert overflow == [], (width, overflow)
+                panel.screenshot(path=str(SHOTS / f"panel-{width}.png"))
+            panel.set_viewport_size({"width": 1280, "height": 720})
             panel.click(".approval .btn:not(.deny)")
             wait_until(lambda: site.posts, what="the approved form to arrive")
             assert "name=Ada" in site.posts[0]

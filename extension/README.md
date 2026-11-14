@@ -37,6 +37,10 @@ happened into a signed receipt anyone can verify offline.
   inside the browser is **not built**.
 - It watches one tab at a time and is not a security product.
 
+## Look and feel
+
+The panel uses the **Night Observatory** theme shared with the HashCam Console (`theme.css`, `fx3d.js`, byte-identical copies of the files in `ui/`). It shows four of the console's animation styles: the **Glow Atom** session core (events orbit by kind, a glowing outer electron means an approval is waiting), the **paper-cut** receipt roll, the **domino** verdict (a FAIL stops the row) and a small **maths** line in the approval card (what you sign). Every one has a still version for reduced motion. `TESTED`: no sideways overflow at 320, 400 and 480 px with an approval card showing.
+
 ## Run it
 
 1. Start the local service (needs the built `abb` binaries and a PostgreSQL you can create

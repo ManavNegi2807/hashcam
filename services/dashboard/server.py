@@ -30,6 +30,7 @@ from urllib.parse import parse_qs, urlparse
 
 import pathsafe
 from endpoint.alerts import alerts_from
+from services.dashboard.console import MAX_UPLOAD, ConsoleError, inspect_upload
 from services.dashboard.runner import Refused
 from services.graph.build import build as build_graph
 from services.graph.store import FalkorStore, GraphUnavailable
@@ -56,6 +57,12 @@ STATIC = {
     "/vendor/lenis.min.js": ("vendor/lenis.min.js", "text/javascript; charset=utf-8"),
     "/vendor/lenis.css": ("vendor/lenis.css", "text/css; charset=utf-8"),
     "/vendor/plus-jakarta-sans.woff2": ("vendor/plus-jakarta-sans.woff2", "font/woff2"),
+    # The HashCam Console (one page, several sections) and the shared theme.
+    "/console": ("console.html", "text/html; charset=utf-8"),
+    "/console.css": ("console.css", "text/css; charset=utf-8"),
+    "/console.js": ("console.js", "text/javascript; charset=utf-8"),
+    "/fx3d.js": ("fx3d.js", "text/javascript; charset=utf-8"),
+    "/theme.css": ("theme.css", "text/css; charset=utf-8"),
 }
 SECURITY_HEADERS = {
     # Everything the page needs comes from this origin; nothing is inlined.
@@ -79,6 +86,7 @@ class Config:
     profile: str = "LOCAL_ONLY"
     runner: Any = None  # a `runner.Runner`; `None` keeps the server strictly read-only
     graph: FalkorStore | None = None  # FalkorDB on this computer; `None` = draw from the receipt
+    recorder: Any = None  # a `console.RecorderLink`; `None` = the console's live view is off
 
 
 def list_receipts(config: Config) -> list[str]:
@@ -273,7 +281,7 @@ def make_handler(config: Config) -> type[BaseHTTPRequestHandler]:
 
         def do_GET(self) -> None:
             url = urlparse(self.path)
-            if self._run_get(url):
+            if self._run_get(url) or self._live_get(url):
                 return
             try:
                 if url.path in STATIC:
@@ -301,6 +309,63 @@ def make_handler(config: Config) -> type[BaseHTTPRequestHandler]:
                 # Never a path, a trace or a message from inside the receipt.
                 self._json(500, {"error": "could not read that receipt"})
 
+        def _live_get(self, url: Any) -> bool:
+            """The console's read-only view of the local recorder. False when not a live route."""
+            if not url.path.startswith("/api/live/"):
+                return False
+            if config.recorder is None:
+                self._json(
+                    503, {"error": "start ui_server.py with --recorder to see live sessions"}
+                )
+                return True
+            query = parse_qs(url.query)
+            try:
+                if not _loopback(self.headers.get("Host")):
+                    raise ConsoleError("loopback only", 403)
+                if url.path == "/api/live/sessions":
+                    self._json(200, config.recorder.sessions())
+                elif url.path == "/api/live/session":
+                    self._json(200, config.recorder.session(query.get("id", [""])[0]))
+                elif url.path == "/api/live/snapshot":
+                    data, kind = config.recorder.snapshot(
+                        query.get("id", [""])[0], query.get("n", [""])[0]
+                    )
+                    self._send(
+                        200,
+                        data,
+                        "image/png" if kind.startswith("image/png") else "application/octet-stream",
+                    )
+                else:
+                    self._json(404, {"error": "not found"})
+            except ConsoleError as exc:
+                self._json(exc.status, {"error": str(exc)})
+            return True
+
+        def _inspect(self) -> None:
+            """A dropped receipt, checked by `abb verify`. Nothing is stored."""
+            length = int(self.headers.get("Content-Length") or 0)
+            if not 0 < length <= MAX_UPLOAD:
+                self.rfile.read(min(max(length, 0), 4096))
+                self._json(413, {"error": "the receipt is too large (30 MB at most)"})
+                return
+            raw = self.rfile.read(length)
+            try:
+                if not _loopback(self.headers.get("Host")):
+                    raise ConsoleError("loopback only", 403)
+                origin = self.headers.get("Origin")
+                if origin is not None and not _loopback(urlparse(origin).netloc):
+                    raise ConsoleError("same-origin only", 403)
+                body = json.loads(raw)
+                if not isinstance(body, dict):
+                    raise ConsoleError("bad request")
+                self._json(200, inspect_upload(config, body))
+            except ConsoleError as exc:
+                self._json(exc.status, {"error": str(exc)})
+            except (ValueError, UnicodeDecodeError):
+                self._json(400, {"error": "bad request"})
+            except (OSError, subprocess.SubprocessError):
+                self._json(500, {"error": "could not check that receipt"})
+
         def _run_get(self, url: Any) -> bool:
             """The run console's two GET routes. False when they do not apply."""
             runner = config.runner
@@ -320,6 +385,9 @@ def make_handler(config: Config) -> type[BaseHTTPRequestHandler]:
         def do_POST(self) -> None:
             runner = config.runner
             route = urlparse(self.path).path
+            if route == "/api/inspect":
+                self._inspect()
+                return
             if runner is None or route not in {"/api/run/start", "/api/run/approve"}:
                 # Read what was sent first, so the client sees the 405 and not a reset.
                 self.rfile.read(min(int(self.headers.get("Content-Length") or 0), 4096))
@@ -360,6 +428,13 @@ def make_handler(config: Config) -> type[BaseHTTPRequestHandler]:
         do_PUT = do_DELETE = do_PATCH = do_POST
 
     return Handler
+
+
+def _loopback(host: str | None) -> bool:
+    return (
+        bool(host)
+        and re.match(r"^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$", host or "") is not None
+    )
 
 
 def serve(config: Config, port: int) -> ThreadingHTTPServer:
