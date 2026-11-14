@@ -45,6 +45,17 @@ def main() -> int:
         help="FalkorDB on this computer, e.g. redis://127.0.0.1:6390 "
         "(default: ABB_FALKORDB_URL; empty draws the graph from the receipt)",
     )
+    parser.add_argument(
+        "--recorder",
+        default="http://127.0.0.1:8770",
+        help="the local HashCam recorder, for the console's live view (empty turns it off)",
+    )
+    parser.add_argument(
+        "--recorder-token-file",
+        type=Path,
+        default=Path.home() / ".hashcam" / "recorder-token",
+        help="the recorder's pairing token file; read here, never sent to the page",
+    )
     args = parser.parse_args()
     receipts = args.receipts.resolve()
     runner = None
@@ -57,6 +68,13 @@ def main() -> int:
         from services.graph.store import FalkorStore
 
         graph = FalkorStore(args.falkordb)  # refuses any address that is not this computer
+    recorder = None
+    if args.recorder:
+        from services.dashboard.console import RecorderLink
+
+        if not args.recorder.startswith(("http://127.0.0.1:", "http://localhost:")):
+            parser.error("--recorder must be on this computer (http://127.0.0.1:PORT)")
+        recorder = RecorderLink(args.recorder.rstrip("/"), args.recorder_token_file)
     config = Config(
         receipts=receipts,
         keys=args.keys,
@@ -64,9 +82,11 @@ def main() -> int:
         profile=args.profile,
         runner=runner,
         graph=graph,
+        recorder=recorder,
     )
     server = serve(config, args.port)
     print(f"dashboard on http://127.0.0.1:{server.server_address[1]}  (Ctrl+C to stop)")
+    print(f"HashCam Console on http://127.0.0.1:{server.server_address[1]}/console")
     if args.keys is None:
         print("no --keys given: signatures cannot be judged and the page will say so")
     try:

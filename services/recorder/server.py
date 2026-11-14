@@ -97,6 +97,26 @@ def make_handler(recorder: Recorder, token: str) -> type[BaseHTTPRequestHandler]
                         "sessions": len(recorder.sessions),
                     },
                 )
+            if method == "GET" and path == "/sessions":
+                return (
+                    {
+                        "sessions": [
+                            {
+                                k: view[k]
+                                for k in (
+                                    "session_id",
+                                    "agent",
+                                    "task",
+                                    "state",
+                                    "started",
+                                    "trust",
+                                )
+                            }
+                            | {"counts": _counts(view["timeline"]), "waiting": len(view["waiting"])}
+                            for view in (recorder.view(s) for s in list(recorder.sessions.values()))
+                        ]
+                    },
+                )
             if method == "POST" and path == "/passkey/challenge":
                 body = self._body()
                 return (
@@ -172,6 +192,23 @@ def make_handler(recorder: Recorder, token: str) -> type[BaseHTTPRequestHandler]
                 return recorder.verify(path)
 
     return Handler
+
+
+def _counts(timeline: list[dict[str, Any]]) -> dict[str, int]:
+    """How many events ended in each outcome, for the console's 3D overview."""
+    counts = {"allowed": 0, "approved": 0, "blocked": 0, "tripwire": 0}
+    for e in timeline:
+        if e["kind"] in ("SESSION", "SEALED"):
+            continue
+        if e.get("tripwire"):
+            counts["tripwire"] += 1
+        if e["status"] in ("ALLOWED", "COMMITTED"):
+            counts["allowed"] += 1
+        elif e["status"] == "APPROVED":
+            counts["approved"] += 1
+        elif e["status"] in ("BLOCKED", "DENIED", "TIMED_OUT", "NOT_SENT"):
+            counts["blocked"] += 1
+    return counts
 
 
 def serve(recorder: Recorder, token: str, port: int) -> ThreadingHTTPServer:

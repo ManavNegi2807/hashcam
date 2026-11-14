@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HashCam Console</title>
+<link rel="stylesheet" href="/theme.css">
+<link rel="stylesheet" href="/console.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="HashCam Console, top">
+      <span class="brand-dot" aria-hidden="true"></span> HashCam <b>Console</b>
+    </a>
+    <nav aria-label="Sections">
+      <a href="#attach">Attach</a>
+      <a href="#live">Live</a>
+      <a href="#receipt">Check a receipt</a>
+      <a href="#how">How it works</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- Hero (style 4: synthwave) -->
+    <section class="hero" id="top">
+      <div class="hero-copy">
+        <p class="kicker">A flight recorder for AI agents</p>
+        <h1>Every agent action, <em>on the record.</em></h1>
+        <p class="lead">Attach HashCam to an AI agent. It records what the agent does, holds risky steps for your passkey, and seals a signed receipt anyone can check offline.</p>
+        <div class="cta">
+          <a class="btn" href="#attach">Attach an agent</a>
+          <a class="btn ghost" href="#receipt">Check a receipt</a>
+        </div>
+        <p class="honest small">This page runs on your computer. It sees live sessions only from your own HashCam recorder, and receipts you drop in. It cannot watch an agent running on someone else's machine.</p>
+      </div>
+    </section>
+
+    <!-- Attach -->
+    <section class="sec" id="attach" aria-labelledby="attach-h">
+      <h2 id="attach-h">Attach HashCam to an agent</h2>
+      <div class="cards3">
+        <article class="card">
+          <header><span class="light" data-light="recorder" aria-hidden="true"></span><h3>Browser agents</h3></header>
+          <p class="muted">Claude in Chrome, Comet, browser-use, or you, in Chrome or Edge.</p>
+          <ol>
+            <li>Start the recorder: <code>python tools/recorder.py --dsn …</code></li>
+            <li>Load the <code>extension/</code> folder (Developer mode, Load unpacked).</li>
+            <li>Open its side panel, pair, register your passkey.</li>
+            <li>Open the agent's tab, set the passport, press <b>Record this tab</b>.</li>
+          </ol>
+          <p class="state" data-state="recorder">Checking the recorder…</p>
+        </article>
+        <article class="card">
+          <header><span class="light off" aria-hidden="true"></span><h3>MCP agents</h3><span class="tag planned">PLANNED</span></header>
+          <p class="muted">Claude Code, Cursor, Claude Desktop.</p>
+          <p>An MCP proxy that sends every tool call through the same gateway and ledger. It is not built yet.</p>
+        </article>
+        <article class="card">
+          <header><span class="light" data-light="recorder" aria-hidden="true"></span><h3>Custom agents</h3></header>
+          <p class="muted">Your own agent reports each step to the local recorder.</p>
+          <ol>
+            <li><code>POST /sessions</code>: task, agent name, passport.</li>
+            <li><code>POST /sessions/{id}/events</code>: <code>navigate</code>, <code>form_submit</code>, <code>download</code> or <code>secret</code>.</li>
+            <li><code>POST /sessions/{id}/stop</code>: seals the receipt.</li>
+          </ol>
+          <details>
+            <summary>curl and Python</summary>
+<pre><code># the token is read from its file, never typed or printed
+T=$(cat ~/.hashcam/recorder-token)
+curl -s -H "X-HashCam-Token: $T" -H "Content-Type: application/json" \
+  -d '{"task":"Buy one notebook on shop.test","agent":"my-agent","passport":{"hosts":["shop.test"],"minutes":30}}' \
+  http://127.0.0.1:8770/sessions</code></pre>
+<pre><code>import json, pathlib, urllib.request
+TOKEN = (pathlib.Path.home() / ".hashcam" / "recorder-token").read_text().strip()
+
+def call(path, body):
+    req = urllib.request.Request("http://127.0.0.1:8770" + path, data=json.dumps(body).encode(),
+        headers={"X-HashCam-Token": TOKEN, "Content-Type": "application/json"})
+    return json.load(urllib.request.urlopen(req))
+
+s = call("/sessions", {"task": "Buy one notebook on shop.test", "agent": "my-agent",
+                       "passport": {"hosts": ["shop.test"], "minutes": 30}})
+step = call(f"/sessions/{s['session_id']}/events", {"kind": "navigate", "url": "https://shop.test/"})
+if step["decision"] != "ALLOW":
+    raise SystemExit("not allowed: " + ", ".join(step["reasons"]))</code></pre>
+          </details>
+          <p class="muted small">Risky steps from a custom agent wait for approval; approving them outside the extension is not built yet, so they time out unsent.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Live (styles 3 and 9) -->
+    <section class="sec" id="live" aria-labelledby="live-h">
+      <h2 id="live-h">Live sessions</h2>
+      <p class="muted">From your recorder on this computer. Approvals and the kill switch stay in the extension, where your passkey is.</p>
+      <p class="state" id="liveState" role="status">Checking the recorder…</p>
+      <div class="live-grid">
+        <div class="panel"><h3>Events per session</h3><div id="bars"></div></div>
+        <div class="panel" id="sessionPanel" hidden>
+          <h3 id="sessionTitle">Session</h3>
+          <canvas id="atom" class="atom" role="img" aria-label="Session core"></canvas>
+          <p class="atom-key small muted">Nucleus: the agent. Shells: pages (cyan), submits (gold), secrets (violet), downloads (teal). The glowing outer electron: an approval is waiting. Lit shells: trust.</p>
+          <dl class="facts" id="sessionFacts"></dl>
+          <ol class="roll paper" id="liveRoll" aria-label="Session timeline"></ol>
+        </div>
+      </div>
+      <ul class="session-list" id="sessionList" aria-label="Sessions"></ul>
+    </section>
+
+    <!-- Receipt viewer (styles 8, 2) -->
+    <section class="sec" id="receipt" aria-labelledby="receipt-h">
+      <h2 id="receipt-h">Check a receipt</h2>
+      <label class="drop" id="drop">
+        <input type="file" id="files" multiple accept=".abbreceipt,.json">
+        <span class="drop-icon" aria-hidden="true">⛓</span>
+        <span><b>Drop a .abbreceipt</b> and its <code>.keys.json</code>, or click to choose.</span>
+        <span class="muted small">Checked by the offline verifier <code>abb verify</code> on this computer. Nothing is stored.</span>
+      </label>
+      <p class="state" id="receiptState" role="status"></p>
+      <div id="receiptOut" hidden>
+        <div class="verdict-row">
+          <div><p class="muted small">The offline verifier says</p><div class="stamp" id="stamp"></div></div>
+          <p class="small muted honest-note">A valid receipt means this record has not changed since it was signed. It does not mean the agent was honest, or that a page told the truth.</p>
+        </div>
+        <div id="dominoes"></div>
+        <div class="receipt-grid">
+          <div class="panel"><h3>Events</h3><ol class="roll paper" id="eventRoll"></ol></div>
+          <div class="panel">
+            <h3>Replay</h3>
+            <figure class="replay" id="replay" hidden><img id="replayImg" alt=""><figcaption id="replayCap"></figcaption></figure>
+            <input type="range" id="scrub" min="0" max="0" value="0" aria-label="Scrub through the page snapshots" hidden>
+            <p class="muted small" id="replayNone">No page snapshots in this receipt.</p>
+            <h3>Run graph</h3>
+            <div class="graph-wrap" id="graph"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How it works (styles 1, 5, 6, 7) -->
+    <section class="sec" id="how" aria-labelledby="how-h">
+      <h2 id="how-h">How it works</h2>
+      <div class="panel"><h3>The path of every action</h3><div id="iso"></div></div>
+      <div class="how-grid">
+        <div class="panel"><h3>Why tampering fails</h3><p class="muted small">Edit any event. Drag the tree to turn it. Hashes here are plain SHA-256 of the text, to show the idea; real receipts hash canonical JSON with domain tags, so their values differ.</p><div id="merkle"></div></div>
+        <div class="panel"><h3>The maths</h3><div id="maths"></div></div>
+      </div>
+      <div class="panel"><h3>A risky step, from start to seal</h3><div id="cartoon"></div></div>
+    </section>
+  </main>
+
+  <!-- First-run onboarding (style 7) -->
+  <dialog id="onboard" aria-labelledby="onboard-h">
+    <h2 id="onboard-h">Welcome to HashCam</h2>
+    <div id="onboardCartoon"></div>
+    <form method="dialog"><button class="btn" value="ok">Got it</button></form>
+  </dialog>
+
+  <script src="/vendor/gsap.min.js"></script>
+  <script src="/graph.js"></script>
+  <script type="module" src="/console.js"></script>
+</body>
+</html>

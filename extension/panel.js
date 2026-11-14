@@ -2,6 +2,7 @@
 // decisions. It never decides validity itself: the verdict shown is the offline verifier's.
 
 import { api, approvalChallenge, b64urlDecode, b64urlEncode, hostPatterns, settings } from "./lib/api.js";
+import { dominoes, glowAtom, signFormula } from "./fx3d.js";
 
 const $ = (id) => document.getElementById(id);
 const gsap = window.gsap;
@@ -12,6 +13,14 @@ let sessionId = null;
 let view = null;
 let shownLines = 0;
 let timer = null;
+let verdictShownFor = null; // the dominoes fall once per sealed session
+
+// Glow Atom (the session core): the agent at the centre, its events orbiting by kind.
+const atom = glowAtom(document.getElementById("atom"), () => {
+  const counts = {};
+  for (const e of view?.timeline || []) counts[e.kind] = (counts[e.kind] || 0) + 1;
+  return { agent: view?.agent, trust: view?.trust, counts, waiting: view?.waiting?.length || 0 };
+});
 
 // ------------------------------------------------------------------ small helpers
 
@@ -145,7 +154,8 @@ async function refresh() {
   renderLine();
   renderApprovals();
   renderRoll();
-  if (view.verdict) renderVerdict();
+  atom.redraw();
+  if (view.verdict && verdictShownFor !== view.session_id) { verdictShownFor = view.session_id; renderVerdict(); }
   $("controls").hidden = view.state !== "recording";
   clearInterval(timer);
   if (view.state === "recording") timer = setInterval(tick, 1000);
@@ -199,12 +209,14 @@ function renderApprovals() {
         el("span", { class: "countdown", "data-deadline": String(Date.now() + w.seconds_left * 1000) }, `${w.seconds_left}s left`)),
       el("div", { class: "what" }, readable),
       el("div", { class: "digest" }, `you sign: sha256 ${w.summary_digest.slice(0, 24)}…`),
+      el("div", { class: "sign-host" }),
       el("div", { class: "row" },
         el("button", { class: "btn deny", onclick: () => decide(w, "DENIED") }, "Deny"),
         el("button", { class: "btn", onclick: () => decide(w, "GRANTED") }, "Approve with passkey"),
       ),
     );
     box.append(card);
+    signFormula(card.querySelector(".sign-host"), w.summary_digest);
     if (gsap && !calm) gsap.from(card, { y: -16, opacity: 0, duration: 0.4, ease: "back.out(1.6)" });
   }
 }
@@ -291,10 +303,8 @@ function renderVerdict() {
   box.hidden = false;
   box.textContent = "";
   const overall = String(v.overall || "UNREADABLE");
-  const dims = el("ul", { class: "dims" });
-  for (const [name, status] of Object.entries(v.dimensions || {})) {
-    dims.append(el("li", {}, el("span", {}, name), el("span", { class: `d-${status}` }, status)));
-  }
+  const dims = el("div", { class: "dims-host" });
+  dominoes(dims, v.dimensions || {});
   box.append(el("div", { class: "verdict" },
     el("div", { class: "muted small" }, "The offline verifier says"),
     el("div", { class: `big-stamp v-${overall}` }, overall),
@@ -322,6 +332,7 @@ async function download(which) {
 }
 
 async function newSession() {
+  verdictShownFor = null;
   await chrome.storage.local.remove("sessionId");
   sessionId = null; view = null;
   $("rollLines").textContent = "";
@@ -400,10 +411,8 @@ async function verifyFiles(files) {
     const report = await api("/verify", { receipt_b64: btoa(bin), keys_json: keys ? await keys.text() : "" });
     const out = $("verifyOut");
     out.textContent = "";
-    const dims = el("ul", { class: "dims" });
-    for (const [name, status] of Object.entries(report.dimensions || {})) {
-      dims.append(el("li", {}, el("span", {}, name), el("span", { class: `d-${status}` }, status)));
-    }
+    const dims = el("div", { class: "dims-host" });
+    dominoes(dims, report.dimensions || {});
     out.append(el("div", { class: "verdict" },
       el("div", { class: "muted small" }, `${receipt.name}${keys ? "" : " · no key manifest: signatures are UNKNOWN, never passed"}`),
       el("div", { class: `big-stamp v-${report.overall}` }, String(report.overall)),

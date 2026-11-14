@@ -262,7 +262,7 @@ def test_the_page_still_works_if_the_scroll_libraries_are_missing(port: int) -> 
 
 # ---- icons, logos and the other effects, on BOTH pages ------------------------------------------
 
-PAGES = [("/", "h1", "Hascham audit view"), ("/run", "#hero h1", "What should the agent do?")]
+PAGES = [("/", "h1", "Hashcam audit view"), ("/run", "#hero h1", "What should the agent do?")]
 
 
 @pytest.mark.parametrize(("path", "title", "text"), PAGES)

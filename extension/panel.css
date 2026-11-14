@@ -1,39 +1,32 @@
-/* HashCam Recorder: a flight recorder, not a dashboard.
-   Warm cockpit black, aviation orange, thermal-paper receipts, wax seals. */
-
-@font-face {
-  font-family: "Jakarta";
-  src: url("vendor/plus-jakarta-sans.woff2") format("woff2");
-  font-weight: 200 800;
-}
+/* HashCam Recorder side panel. Colours come from theme.css (Night Observatory, shared with the
+   HashCam Console); the names below only map them onto this panel. */
 
 :root {
-  --bg: #0E0B09;
-  --panel: #17120F;
-  --panel-2: #211913;
-  --line: #3A2C22;
-  --text: #FFF5EC;
-  --muted: #B9A595;
-  --orange: #FF7A2E;
-  --orange-deep: #C2501A;
+  --bg: var(--hc-bg);
+  --panel: var(--hc-surface);
+  --panel-2: var(--hc-raised);
+  --line: var(--hc-line);
+  --text: var(--hc-text);
+  --muted: var(--hc-muted);
+  --orange: var(--hc-gold);
+  --orange-deep: #B9852A;
   --rec: #FF3B30;
-  --ok: #4FD1A5;       /* used ONLY for a verifier VALID / PASS */
-  --warn: #FFC857;     /* UNKNOWN, PARTIAL, INCOMPLETE, NOT_INDEPENDENT: never green */
-  --bad: #FF5D5D;
-  --paper: #F4ECDD;
-  --paper-ink: #2A2018;
-  --paper-faint: #8C7B69;
+  --ok: var(--hc-valid);       /* a verifier VALID / PASS only */
+  --warn: var(--hc-unknown);   /* UNKNOWN, PARTIAL, INCOMPLETE, NOT_INDEPENDENT: never green */
+  --bad: var(--hc-invalid);
+  --paper: var(--hc-paper);
+  --paper-ink: var(--hc-paper-ink);
+  --paper-faint: var(--hc-paper-faint);
   --seal: #A3161A;
-  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace;
-  --sans: "Jakarta", "Segoe UI", system-ui, sans-serif;
-  color-scheme: dark;
+  --mono: var(--hc-mono);
+  --sans: var(--hc-sans);
 }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body {
   background:
-    radial-gradient(120% 60% at 50% -10%, #2A1A10 0%, transparent 60%),
+    radial-gradient(120% 60% at 50% -10%, #1A2747 0%, transparent 60%),
     var(--bg);
   color: var(--text);
   font: 14px/1.45 var(--sans);
@@ -49,9 +42,9 @@ code { font-family: var(--mono); font-size: 12px; background: var(--panel-2); pa
 /* ------------------------------------------------------------ instrument cluster */
 .cluster {
   position: sticky; top: 0; z-index: 5;
-  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px;
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px;
   margin: 0 -14px; padding: 12px 14px 8px;
-  background: linear-gradient(#0E0B09 70%, rgba(14, 11, 9, .85));
+  background: linear-gradient(var(--hc-bg) 70%, rgba(10, 15, 30, .85));
   border-bottom: 1px solid var(--line);
 }
 .rec { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px 6px 8px;
@@ -62,9 +55,9 @@ code { font-family: var(--mono); font-size: 12px; background: var(--panel-2); pa
 .rec[data-state="sealed"] .rec-dot { background: var(--orange); }
 .rec-label { font: 700 11px/1 var(--mono); letter-spacing: .14em; }
 @keyframes pulse { 70% { box-shadow: 0 0 0 9px rgba(255, 59, 48, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); } }
-.timecode { justify-self: center; font-size: 22px; letter-spacing: .06em; color: var(--orange);
+.timecode { justify-self: center; font-size: clamp(15px, 5.6vw, 22px); min-width: 0; letter-spacing: .06em; color: var(--orange);
   text-shadow: 0 0 14px rgba(255, 122, 46, .35); font-variant-numeric: tabular-nums; }
-.gauge { width: 78px; height: 48px; }
+.gauge { width: 64px; height: 40px; }
 .gauge-track { fill: none; stroke: #2D231C; stroke-width: 8; stroke-linecap: round; }
 .gauge-fill { fill: none; stroke: var(--orange); stroke-width: 8; stroke-linecap: round;
   stroke-dasharray: 126; stroke-dashoffset: 126; transition: stroke-dashoffset .6s ease, stroke .3s; }
@@ -72,7 +65,7 @@ code { font-family: var(--mono); font-size: 12px; background: var(--panel-2); pa
 .gauge-hub { fill: var(--text); }
 .gauge-num { fill: var(--muted); font: 700 11px var(--mono); text-anchor: middle; }
 
-.cluster-sub { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 10px 0 12px; }
+.cluster-sub { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin: 10px 0 12px; }
 .brand { font: 800 11px/1 var(--mono); letter-spacing: .22em; color: var(--muted); }
 .brand b { color: var(--orange); }
 .tabs { display: flex; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 2px; }
@@ -165,8 +158,8 @@ label.check .muted { grid-column: 2; font-size: 11.5px; }
 }
 
 /* ------------------------------------------------------------ controls and kill switch */
-.controls { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 24px; }
-.kill { position: relative; width: 148px; height: 44px; }
+.controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 24px; }
+.kill { position: relative; width: min(148px, 100%); height: 44px; flex: none; }
 .kill-btn {
   all: unset; box-sizing: border-box; cursor: pointer; position: absolute; inset: 0; border-radius: 10px; text-align: center;
   font: 800 12px/44px var(--mono); letter-spacing: .14em; color: #fff;
@@ -223,3 +216,15 @@ input[type="range"] { accent-color: var(--orange); padding: 0; border: 0; backgr
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* ------------------------------------------------------------ Night Observatory additions */
+html, body { max-width: 100%; }
+.view, .card, #liveArea, .roll, .verdict { min-width: 0; }
+.line .tgt, .line .why, .line .flag, .session-line span { overflow-wrap: anywhere; }
+.atom { display: block; width: 100%; height: 120px; margin: 0 0 10px; }
+.sign-f { font: 12px var(--mono); color: var(--muted); margin-top: 8px; overflow-wrap: anywhere; }
+.sign-f .fn { color: var(--orange); font-weight: 700; }
+.sign-f .txt { color: var(--text); text-decoration: underline dotted; }
+.sign-f code { color: var(--hc-cyan); }
+.verdict .dominoes { margin: 12px 0 4px; }
+.verdict .domino { width: 22px; height: 40px; font-size: 7.5px; }
