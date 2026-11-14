@@ -1704,6 +1704,69 @@ pub fn summarize(report: &Report) -> String {
     format!("{overall}\n{caveat}")
 }
 
+/// A stable JSON report, shaped like the verification response in the contracts.
+///
+/// Shared by `abb verify --json` and the WebAssembly verifier, so the two can never disagree.
+#[must_use]
+pub fn report_json(report: &Report, receipt: &Receipt) -> String {
+    let dimensions: Vec<(String, Value)> = Dimension::ALL
+        .iter()
+        .map(|dim| {
+            (
+                dim.as_str().to_owned(),
+                Value::Str(report.status(*dim).as_str().to_owned()),
+            )
+        })
+        .collect();
+    // How much each dimension counts in this report, so a viewer can show it
+    // without keeping its own copy of the table (PROTOCOL.md 16.1).
+    let requirements: Vec<(String, Value)> = Dimension::ALL
+        .iter()
+        .map(|dim| {
+            let word = match report.requirement(*dim) {
+                abb_verify::Requirement::Required => "required",
+                abb_verify::Requirement::Optional => "optional",
+                abb_verify::Requirement::Informational => "informational",
+            };
+            (dim.as_str().to_owned(), Value::Str(word.to_owned()))
+        })
+        .collect();
+    let details: Vec<Value> = report
+        .details
+        .iter()
+        .map(|detail| {
+            let mut entries = vec![
+                (
+                    "dimension".to_owned(),
+                    Value::Str(detail.dimension.as_str().to_owned()),
+                ),
+                ("message".to_owned(), Value::Str(detail.message.clone())),
+            ];
+            if let Some(locator) = &detail.locator {
+                entries.push(("locator".to_owned(), Value::Str(locator.clone())));
+            }
+            Value::Object(entries)
+        })
+        .collect();
+    let value = Value::Object(vec![
+        (
+            "overall".to_owned(),
+            Value::Str(report.overall().as_str().to_owned()),
+        ),
+        ("run_id".to_owned(), Value::Str(receipt.run_id.clone())),
+        ("profile".to_owned(), Value::Str(receipt.profile.clone())),
+        (
+            "declared_coverage".to_owned(),
+            Value::Str(receipt.declared_coverage.clone()),
+        ),
+        ("dimensions".to_owned(), Value::Object(dimensions)),
+        ("requirements".to_owned(), Value::Object(requirements)),
+        ("details".to_owned(), Value::Array(details)),
+    ]);
+    abb_jcs::to_canonical_with(&value, &abb_jcs::Limits::relaxed())
+        .unwrap_or_else(|_| "{\"overall\":\"INTERNAL\"}".to_owned())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

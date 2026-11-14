@@ -1,0 +1,27 @@
+[package]
+name = "abb-wasm"
+description = "The offline receipt verifier, built for a web browser (WebAssembly)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+abb-jcs.workspace = true
+abb-checkpoint.workspace = true
+abb-verify.workspace = true
+abb-receipt.workspace = true
+
+# Not `[lints] workspace = true`: the workspace forbids unsafe code outright, and handing bytes
+# across the WebAssembly boundary needs a few lines of it. They live in one module, `abi`, with
+# the reason written there; everything else in this crate is safe code (see lib.rs).
+[lints.rust]
+unsafe_code = "deny"
+missing_docs = "warn"
+
+[lints.clippy]
+todo = "deny"
+unimplemented = "deny"

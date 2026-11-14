@@ -24,6 +24,8 @@ from services.recorder.server import serve  # noqa: E402
 from services.recorder.session import Recorder  # noqa: E402
 
 DEFAULT_PORT = 8770
+#: The public HashCam site. It may READ sessions (never change them) with the viewer key.
+DEFAULT_SITE = "https://hashcam-ai.vercel.app"
 
 
 def write_token(path: Path) -> str:
@@ -47,12 +49,30 @@ def main() -> int:
     parser.add_argument(
         "--token-file", type=Path, default=Path.home() / ".hashcam" / "recorder-token"
     )
+    parser.add_argument(
+        "--viewer-key-file",
+        type=Path,
+        default=Path.home() / ".hashcam" / "recorder-viewer-key",
+        help="a read-only key for the HashCam website's live view (look, never change)",
+    )
+    parser.add_argument(
+        "--allow-site",
+        action="append",
+        default=None,
+        help="a website origin allowed to read sessions with the viewer key "
+        f"(default {DEFAULT_SITE}; give --allow-site none to allow no website)",
+    )
     parser.add_argument("--approval-seconds", type=int, default=120)
     args = parser.parse_args()
     for stream in (sys.stdout, sys.stderr):
         getattr(stream, "reconfigure", lambda **_: None)(encoding="utf-8", errors="replace")
 
     token = write_token(args.token_file)
+    viewer = write_token(args.viewer_key_file)
+    sites = tuple(s.rstrip("/") for s in (args.allow_site or [DEFAULT_SITE]) if s != "none")
+    for site in sites:
+        if not site.startswith("https://") and not site.startswith("http://127.0.0.1:"):
+            parser.error("--allow-site must be an https:// origin (or http://127.0.0.1:PORT)")
     work = Path(tempfile.mkdtemp(prefix="hashcam-rec-"))
     recorder = Recorder.start(
         admin_dsn=args.dsn,
@@ -61,10 +81,15 @@ def main() -> int:
         people=args.people_dir,
         approval_seconds=args.approval_seconds,
     )
-    server = serve(recorder, token, args.port)
+    server = serve(recorder, token, args.port, viewer_token=viewer, web_origins=sites)
     print(f"HashCam Recorder on http://127.0.0.1:{args.port}", flush=True)
     print(f"pairing token written to {args.token_file} (paste it into the side panel)", flush=True)
     print(f"receipts are saved in {args.receipts}", flush=True)
+    if sites:
+        print(
+            f"read-only viewer key for {', '.join(sites)} written to {args.viewer_key_file}",
+            flush=True,
+        )
     try:
         server.serve_forever()
     except KeyboardInterrupt:

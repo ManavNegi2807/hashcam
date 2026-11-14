@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HashCam: a flight recorder for AI agents</title>
+<meta name="description" content="Attach HashCam to an AI agent: it records what the agent does, holds risky steps for your passkey, and seals a signed receipt anyone can check offline.">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="console.css">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="HashCam, top">
+      <span class="brand-dot" aria-hidden="true"></span> HashCam <b>AI</b>
+    </a>
+    <nav aria-label="Sections">
+      <a href="#attach">Attach</a>
+      <a href="#live">Live</a>
+      <a href="#receipt">Receipts</a>
+      <a href="#how">How it works</a>
+      <a href="https://github.com/ManavNegi2807/hashcam">GitHub</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top">
+      <div class="hero-copy">
+        <p class="kicker">A flight recorder for AI agents</p>
+        <h1>Every agent action, <em>on the record.</em></h1>
+        <p class="lead">Attach HashCam to an AI agent. It records what the agent does, holds risky steps for your passkey, and seals a signed receipt anyone can check offline.</p>
+        <div class="cta">
+          <a class="btn" href="https://github.com/ManavNegi2807/hashcam">Get it on GitHub</a>
+          <a class="btn ghost" href="#how">See how it works</a>
+        </div>
+        <p class="honest small">This is the public showcase. HashCam itself runs on your own computer: the recorder, the extension and the HashCam Console. This site does not watch any agent and collects nothing.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="attach" aria-labelledby="attach-h">
+      <h2 id="attach-h">Attach HashCam to an agent</h2>
+      <div class="cards3">
+        <article class="card">
+          <header><span class="light on" aria-hidden="true"></span><h3>Browser agents</h3><span class="tag built">BUILT</span></header>
+          <p class="muted">Claude in Chrome, Comet, browser-use, or you, in Chrome or Edge.</p>
+          <ol>
+            <li>Start the recorder: <code>python tools/recorder.py --dsn …</code></li>
+            <li>Load the <code>extension/</code> folder (Developer mode, Load unpacked).</li>
+            <li>Open its side panel, pair, register your passkey.</li>
+            <li>Open the agent's tab, set the passport, press <b>Record this tab</b>.</li>
+          </ol>
+        </article>
+        <article class="card">
+          <header><span class="light off" aria-hidden="true"></span><h3>MCP agents</h3><span class="tag planned">PLANNED</span></header>
+          <p class="muted">Claude Code, Cursor, Claude Desktop.</p>
+          <p>An MCP proxy that sends every tool call through the same gateway and ledger. Not built yet.</p>
+        </article>
+        <article class="card">
+          <header><span class="light on" aria-hidden="true"></span><h3>Custom agents</h3><span class="tag built">BUILT</span></header>
+          <p class="muted">Your own agent reports each step to the local recorder API.</p>
+          <ol>
+            <li><code>POST /sessions</code>: task, agent name, passport.</li>
+            <li><code>POST /sessions/{id}/events</code>: <code>navigate</code>, <code>form_submit</code>, <code>download</code>, <code>secret</code>.</li>
+            <li><code>POST /sessions/{id}/stop</code>: seals the receipt.</li>
+          </ol>
+          <p class="muted small">Full examples are in the console that ships with the repo.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="sec" id="live" aria-labelledby="live-h">
+      <h2 id="live-h">Live sessions</h2>
+      <form class="connect panel" id="connect">
+        <h3>Connect to your recorder</h3>
+        <p class="muted small">Run <code>python tools/recorder.py</code> on this computer, then paste the <b>viewer key</b> from <code>~/.hashcam/recorder-viewer-key</code>. The viewer key can only look at sessions; it cannot start, approve or stop anything. Your browser may ask to let this site reach devices on your local network: allow it. The key stays in this tab only.</p>
+        <div class="connect-row">
+          <label>Viewer key <input id="viewerKey" type="password" autocomplete="off" spellcheck="false" required></label>
+          <label>Port <input id="viewerPort" type="number" min="1024" max="65535" value="8770"></label>
+          <button class="btn" type="submit">Connect</button>
+          <button class="btn ghost" type="button" id="disconnect" hidden>Disconnect</button>
+        </div>
+        <p class="state" id="liveState" role="status">Not connected: showing sample data.</p>
+      </form>
+      <p class="sample-note" role="note" id="sampleNote"><b>Sample data</b> until you connect.</p>
+      <div class="live-grid">
+        <div class="panel"><h3>Events per session</h3><div id="bars"></div></div>
+        <div class="panel">
+          <h3 id="coreTitle">Session core</h3>
+          <canvas id="atom" class="atom" role="img" aria-label="Sample session core: page loads, submits, secrets and downloads orbiting the agent; a glowing outer electron shows an approval is waiting"></canvas>
+          <p class="atom-key small muted">Nucleus: the agent. Shells: pages (cyan), submits (gold), secrets (violet), downloads (teal). Glowing outer electron: an approval is waiting. Lit shells: trust.</p>
+          <ol class="roll paper" id="liveRoll" aria-label="Session timeline"></ol>
+        </div>
+      </div>
+      <ul class="session-list" id="sessionList" aria-label="Your sessions"></ul>
+    </section>
+
+    <section class="sec" id="receipt" aria-labelledby="receipt-h">
+      <h2 id="receipt-h">Check a receipt</h2>
+      <label class="drop" id="drop">
+        <input type="file" id="files" multiple accept=".abbreceipt,.json">
+        <span class="drop-icon" aria-hidden="true">⛓</span>
+        <span><b>Drop a .abbreceipt</b> and its <code>.keys.json</code>, or click to choose.</span>
+        <span class="muted small">Checked right here by the HashCam verifier compiled to WebAssembly: the same Rust code as <code>abb verify</code>. Your file never leaves this page.</span>
+      </label>
+      <div class="sample-switch" role="group" aria-label="Try a sample receipt">
+        <span class="muted small">No receipt? Try one:</span>
+        <button class="btn small" type="button" id="sampleValid">Genuine sample</button>
+        <button class="btn small ghost" type="button" id="sampleInvalid">Same sample, one event edited</button>
+        <a class="small" href="samples/genuine.abbreceipt" download>download the samples</a>
+      </div>
+      <p class="state" id="receiptState" role="status"></p>
+      <div class="verdict-row">
+        <div><p class="muted small">The offline verifier says</p><div class="stamp" id="stamp"></div></div>
+        <p class="small muted honest-note">A valid receipt means the record has not changed since it was signed. It does not mean the agent was honest, or that a page told the truth.</p>
+      </div>
+      <div id="dominoes"></div>
+      <details class="details" id="detailsBox" hidden><summary>What the verifier wrote</summary><ul id="details"></ul></details>
+    </section>
+
+    <section class="sec" id="how" aria-labelledby="how-h">
+      <h2 id="how-h">How it works</h2>
+      <div class="panel"><h3>The path of every action</h3><div id="iso"></div></div>
+      <div class="how-grid">
+        <div class="panel"><h3>Why tampering fails</h3><p class="muted small">Edit any event. Drag the tree to turn it. Hashes here are plain SHA-256 of the text, computed in your browser, to show the idea; real receipts hash canonical JSON with domain tags, so their values differ.</p><div id="merkle"></div></div>
+        <div class="panel"><h3>The maths</h3><div id="maths"></div></div>
+      </div>
+      <div class="panel"><h3>A risky step, from start to seal</h3><div id="cartoon"></div></div>
+    </section>
+
+    <footer class="sec small muted">
+      HashCam is open source: <a href="https://github.com/ManavNegi2807/hashcam">github.com/ManavNegi2807/hashcam</a>. Built by team StarkFlow.
+    </footer>
+  </main>
+
+  <script src="vendor/gsap.min.js"></script>
+  <script type="module" src="site.js"></script>
+</body>
+</html>
