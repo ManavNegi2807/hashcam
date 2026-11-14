@@ -84,9 +84,7 @@ class Site:
                 if self.path == "/go-out":
                     # A server redirect to a host outside the passport (same server, other name).
                     self.send_response(302)
-                    self.send_header(
-                        "Location", f"http://localhost:{self.server.server_address[1]}/"
-                    )
+                    self.send_header("Location", f"http://localhost:{site.base.rsplit(':', 1)[1]}/")
                     self.send_header("Content-Length", "0")
                     self.end_headers()
                     return
