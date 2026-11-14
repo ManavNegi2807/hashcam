@@ -6,6 +6,7 @@ the `check_*_live.py` tools make a real network call with your own key and are `
 | Tool | What it does |
 |---|---|
 | `ui_server.py` | The audit dashboard on `127.0.0.1` (`--enable-runs` adds the run console, `--falkordb` the graph store). |
+| `recorder.py` | The local service the HashCam Recorder Chrome extension talks to (`extension/README.md`). |
 | `demo.py` | The main demo: replay, approval, receipt, tamper. |
 | `demo_guarded.py`, `demo_playwright.py`, `demo_realsite.py` | A risky task waiting for a signed approval; a real browser with measured coverage; a real website with an approval gate. |
 | `demo_tinyfish.py`, `check_tinyfish_live.py` | One real TinyFish run recorded in a receipt; one live Search or Research check. Spends credit. |

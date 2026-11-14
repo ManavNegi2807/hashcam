@@ -1,0 +1,29 @@
+{
+  "policy_id": "recorder",
+  "version": 1,
+  "description": "For the HashCam Recorder browser extension, which watches another AI agent's tab. Page loads and typed secrets (as commitments) are recorded; every form submission and every download waits for a person's signed approval. Which sites the agent may use at all, and until when, is set per session by the signed passport (a mandate), not here.",
+  "allowed_action_types": [
+    "navigate",
+    "form_fill",
+    "form_submit",
+    "download"
+  ],
+  "action_types_needing_target": [
+    "navigate",
+    "form_fill",
+    "form_submit",
+    "download"
+  ],
+  "allowed_hosts": [],
+  "denied_hosts": [],
+  "max_actions": 100000,
+  "max_amount_minor_units": 0,
+  "approval_required": {
+    "action_types": [
+      "form_submit",
+      "download"
+    ],
+    "hosts": [],
+    "target_contains": []
+  }
+}
