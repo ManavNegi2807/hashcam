@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HashCam Recorder</title>
+<link rel="stylesheet" href="panel.css">
+</head>
+<body>
+  <!-- Instrument cluster -->
+  <header class="cluster" aria-label="Recorder status">
+    <div class="rec" id="rec" data-state="idle">
+      <span class="rec-dot" aria-hidden="true"></span>
+      <span class="rec-label" id="recLabel">STANDBY</span>
+    </div>
+    <div class="timecode mono" id="timecode" aria-label="Time recording">00:00:00</div>
+    <svg class="gauge" id="gauge" viewBox="0 0 100 60" role="img" aria-label="Trust gauge">
+      <path class="gauge-track" d="M10 52 A40 40 0 0 1 90 52"/>
+      <path class="gauge-fill" id="gaugeFill" d="M10 52 A40 40 0 0 1 90 52"/>
+      <line class="gauge-needle" id="gaugeNeedle" x1="50" y1="52" x2="50" y2="18"/>
+      <circle cx="50" cy="52" r="3.5" class="gauge-hub"/>
+      <text x="50" y="44" class="gauge-num" id="gaugeNum">--</text>
+    </svg>
+  </header>
+  <div class="cluster-sub">
+    <span class="brand">HASHCAM<b>·</b>RECORDER</span>
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-view="record" aria-selected="true">Record</button>
+      <button role="tab" data-view="replay" aria-selected="false">Replay</button>
+      <button role="tab" data-view="verify" aria-selected="false">Verify</button>
+    </nav>
+  </div>
+
+  <p class="error" id="error" role="alert" hidden></p>
+
+  <!-- RECORD -->
+  <section class="view" id="view-record">
+    <!-- 1. pair -->
+    <div class="card" id="pairCard" hidden>
+      <h2><span class="step">01</span> Pair with the recorder</h2>
+      <p class="muted">Start <code>python tools/recorder.py</code>, then paste the token from the file it names.</p>
+      <label>Pairing token <input id="token" type="password" autocomplete="off" spellcheck="false"></label>
+      <label>Port <input id="port" type="number" min="1024" max="65535" value="8770"></label>
+      <button class="btn" id="pairBtn">Pair</button>
+    </div>
+    <!-- 2. passkey -->
+    <div class="card" id="passkeyCard" hidden>
+      <h2><span class="step">02</span> Register your passkey</h2>
+      <p class="muted">Risky steps wait for your fingerprint, face or PIN. Only then is your approver key used.</p>
+      <button class="btn" id="passkeyBtn">Register passkey</button>
+    </div>
+    <!-- 3. arm -->
+    <div class="card" id="armCard" hidden>
+      <h2><span class="step">03</span> Attach to an agent</h2>
+      <p class="muted">Open the tab your AI agent drives, then start recording it.</p>
+      <label>Agent <input id="agent" value="Browser agent" maxlength="60"></label>
+      <label>Its task <textarea id="task" rows="2" maxlength="500" placeholder="Buy one notebook on shop.test"></textarea></label>
+      <fieldset class="passport">
+        <legend>Passport <span class="muted">signed limits for this session</span></legend>
+        <label>Allowed sites <input id="hosts" placeholder="shop.test, *.shop.test"></label>
+        <label>Expires after (minutes) <input id="minutes" type="number" min="1" max="1440" value="30"></label>
+      </fieldset>
+      <button class="btn big" id="armBtn"><span class="rec-dot small"></span> Record this tab</button>
+    </div>
+
+    <!-- 4. recording -->
+    <div id="liveArea" hidden>
+      <div class="session-line mono" id="sessionLine"></div>
+      <div id="approvals"></div>
+      <div class="roll" id="roll" aria-live="polite">
+        <div class="roll-head mono">
+          <span>HASHCAM FLIGHT RECORD</span><span id="rollRun"></span>
+        </div>
+        <ol class="roll-lines" id="rollLines"></ol>
+        <div class="roll-tear" aria-hidden="true"></div>
+      </div>
+      <div class="controls" id="controls">
+        <button class="btn ghost" id="stopBtn">Stop &amp; seal</button>
+        <div class="kill">
+          <button class="kill-cover" id="killCover" aria-label="Lift the cover of the kill switch">LIFT</button>
+          <button class="kill-btn" id="killBtn" disabled>KILL AGENT</button>
+        </div>
+      </div>
+      <div id="verdict" hidden></div>
+    </div>
+  </section>
+
+  <!-- REPLAY -->
+  <section class="view" id="view-replay" hidden>
+    <p class="muted" id="replayEmpty">Snapshots appear here as the agent loads pages.</p>
+    <figure class="replay-frame" id="replayFrame" hidden>
+      <img id="replayImg" alt="Snapshot of the agent's page at this step">
+      <figcaption class="mono" id="replayCaption"></figcaption>
+    </figure>
+    <input type="range" id="scrub" min="0" max="0" value="0" aria-label="Scrub through the session" hidden>
+    <div class="scrub-ticks" id="ticks"></div>
+  </section>
+
+  <!-- VERIFY -->
+  <section class="view" id="view-verify" hidden>
+    <div class="drop" id="drop" tabindex="0">
+      <div class="drop-icon" aria-hidden="true">⛓</div>
+      <p><b>Drop a .abbreceipt here</b><br><span class="muted">and its .keys.json, if you have it</span></p>
+      <input type="file" id="files" multiple accept=".abbreceipt,.json">
+    </div>
+    <p class="muted small">Checked by the local <code>abb verify</code> (the offline Rust verifier). A WebAssembly build that runs inside the browser is not built yet.</p>
+    <div id="verifyOut"></div>
+  </section>
+
+  <footer class="honest">A valid receipt means the record has not changed since it was signed. It does not mean the agent was honest, or that what a page said was true.</footer>
+
+  <script src="vendor/gsap.min.js"></script>
+  <script type="module" src="panel.js"></script>
+</body>
+</html>
