@@ -47,9 +47,26 @@ def base() -> Iterator[dict[str, Any]]:
     session = recorder.start_session(
         task="Read docs on shop.test", agent="Agent", passport={"hosts": ["shop.test"]}
     )
+    quiet = recorder.start_session(
+        task="Check the statement on bank.test",
+        agent="Bank agent",
+        passport={"hosts": ["bank.test"]},
+        sensitive=True,
+    )
+    # A page address that carries a token in its query string.
+    recorder.report(
+        session, {"kind": "navigate", "url": "https://shop.test/orders/7?token=SECRET123"}
+    )
+    recorder.report(
+        quiet, {"kind": "navigate", "url": "https://bank.test/accounts/42?token=SECRET123"}
+    )
     server = serve(recorder, TOKEN, 0, viewer_token=VIEWER, web_origins=(SITE,))
     threading.Thread(target=server.serve_forever, daemon=True).start()
-    yield {"url": f"http://127.0.0.1:{server.server_address[1]}", "sid": session.session_id}
+    yield {
+        "url": f"http://127.0.0.1:{server.server_address[1]}",
+        "sid": session.session_id,
+        "quiet": quiet.session_id,
+    }
     server.shutdown()
     recorder.close()
 
@@ -138,3 +155,35 @@ def test_preflight_allows_reads_from_the_site_only(base: dict[str, Any]) -> None
     )
     post = {**ask, "Access-Control-Request-Method": "POST"}
     assert call(base, f"/sessions/{base['sid']}/stop", method="OPTIONS", extra=post)[0] == 403
+
+
+def test_the_site_never_sees_a_query_string(base: dict[str, Any]) -> None:
+    status, _, view = call(base, f"/sessions/{base['sid']}")
+    assert status == 200
+    targets = [e["target"] for e in view["timeline"] if e["kind"] == "navigate"]
+    assert targets == ["https://shop.test/orders/7"]
+    assert "SECRET123" not in json.dumps(view)
+
+
+def test_a_sensitive_agent_shows_the_site_only_what_it_needs(base: dict[str, Any]) -> None:
+    status, _, view = call(base, f"/sessions/{base['quiet']}")
+    assert status == 200 and view["sensitive"] is True
+    assert view["task"] == "Withheld: this agent is marked sensitive."
+    assert view["passport"]["hosts"] == ["(hidden)"]
+    targets = [e["target"] for e in view["timeline"] if e["kind"] == "navigate"]
+    assert targets == ["https://bank.test"]
+    text = json.dumps(view)
+    assert "SECRET123" not in text and "accounts" not in text and "statement" not in text
+    _, _, listing = call(base, "/sessions")
+    row = next(r for r in listing["sessions"] if r["session_id"] == base["quiet"])
+    assert row["sensitive"] is True and "statement" not in json.dumps(row)
+    # No screenshots of a sensitive agent's pages for the site, even if one is asked for by number.
+    assert call(base, f"/sessions/{base['quiet']}/snapshot/0")[0] == 403
+
+
+def test_the_local_extension_still_sees_the_whole_session(base: dict[str, Any]) -> None:
+    # The person's own tools are not cut down: only the website's viewer is.
+    status, _, view = call(base, f"/sessions/{base['quiet']}", origin=None, key=TOKEN)
+    assert status == 200
+    assert view["task"] == "Check the statement on bank.test" and view["sensitive"] is True
+    assert any("accounts/42?token=SECRET123" in e["target"] for e in view["timeline"])

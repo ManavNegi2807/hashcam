@@ -62,6 +62,7 @@ STATIC = {
     "/console.css": ("console.css", "text/css; charset=utf-8"),
     "/console.js": ("console.js", "text/javascript; charset=utf-8"),
     "/fx3d.js": ("fx3d.js", "text/javascript; charset=utf-8"),
+    "/readable.js": ("readable.js", "text/javascript; charset=utf-8"),
     "/theme.css": ("theme.css", "text/css; charset=utf-8"),
 }
 SECURITY_HEADERS = {

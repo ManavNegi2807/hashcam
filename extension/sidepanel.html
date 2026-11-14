@@ -61,6 +61,8 @@
         <label>Allowed sites <input id="hosts" placeholder="shop.test, *.shop.test"></label>
         <label>Expires after (minutes) <input id="minutes" type="number" min="1" max="1440" value="30"></label>
       </fieldset>
+      <label class="check"><input type="checkbox" id="sensitive"> This agent handles sensitive data
+        <span class="muted small">Its task, sites and raw records are kept off the website's viewer, no screen here shows its raw records, and screenshots start off. Typed passwords and card numbers are never recorded either way.</span></label>
       <label class="check"><input type="checkbox" id="shots" checked> Screenshots for Replay
         <span class="muted small">The browser only lets an extension capture a tab with access to all sites. HashCam asks for it now and gives it back when the session is sealed.</span></label>
       <button class="btn big" id="armBtn"><span class="rec-dot small"></span> Record this tab</button>

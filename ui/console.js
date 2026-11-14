@@ -1,6 +1,7 @@
 // The HashCam Console. It shows what the verifier and the local recorder say; it decides nothing.
 
 import { bars3d, calm, cartoon, dominoes, glowAtom, isometric, merkle, printStrip, synthwave } from "/fx3d.js";
+import { describe, stripNode, technical, verdictText } from "/readable.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, attrs = {}, ...kids) => {
@@ -11,7 +12,6 @@ const el = (tag, attrs = {}, ...kids) => {
   for (const kid of kids) if (kid != null) node.append(kid instanceof Node ? kid : String(kid));
   return node;
 };
-const host = (u) => { try { return new URL(u).host + new URL(u).pathname; } catch { return u || ""; } };
 const hhmmss = (s) => new Date(s * 1000).toLocaleTimeString([], { hourCycle: "h23" });
 
 // ------------------------------------------------------------------ hero and explainers
@@ -87,7 +87,8 @@ function renderSessions() {
   list.textContent = "";
   for (const s of sessions) {
     const b = el("button", { class: "session-btn", type: "button", "aria-pressed": String(s.session_id === chosen) },
-      el("b", {}, s.agent), " · ", s.state, s.waiting ? ` · ${s.waiting} waiting` : "", el("span", { class: "muted small" }, ` · ${s.task.slice(0, 60)}`));
+      el("b", {}, s.agent), " · ", s.state, s.waiting ? ` · ${s.waiting} waiting` : "",
+      el("span", { class: "muted small" }, s.sensitive ? " · sensitive agent: task hidden" : ` · ${s.task.slice(0, 60)}`));
     b.addEventListener("click", () => choose(s.session_id));
     list.append(el("li", {}, b));
   }
@@ -110,8 +111,10 @@ async function loadSession() {
   $("sessionTitle").textContent = `${chosenView.agent} · ${chosenView.state}`;
   const facts = $("sessionFacts");
   facts.textContent = "";
+  const hide = chosenView.sensitive === true; // a sensitive agent: its task and sites stay off the page
   for (const [k, v] of [
-    ["Task", chosenView.task], ["Passport", chosenView.passport.hosts.join(", ")],
+    ["Task", hide ? "Hidden: this agent is marked sensitive" : chosenView.task],
+    ["Passport", hide ? "Hidden" : chosenView.passport.hosts.join(", ")],
     ["Trust", `${chosenView.trust} / 100`], ["Waiting", String(chosenView.waiting.length)],
     ["Receipt", chosenView.receipt || "not sealed yet"],
   ]) facts.append(el("dt", {}, k), el("dd", {}, v));
@@ -120,14 +123,11 @@ async function loadSession() {
   atom.redraw();
 }
 
+// One sentence per step. The raw record is behind a closed "Technical details" opener and is
+// replaced by a note when the agent or the step is sensitive (a typed password, a token, ...).
 function lineFor(e) {
-  return el("li", {},
-    el("span", { class: "t" }, hhmmss(e.at)),
-    el("span", { class: "k" }, e.kind),
-    el("span", { class: `s s-${e.status}` }, e.status.replace("_", " ")),
-    e.target ? el("span", { class: "tgt" }, host(e.target)) : null,
-    e.reasons?.length ? el("span", { class: "why" }, e.reasons.join(" · ").toLowerCase()) : null,
-    e.tripwire ? el("span", { class: "flag" }, `⚠ tripwire: ${e.tripwire.verdict}`) : null);
+  const ctx = { agent: chosenView?.agent, sensitive: chosenView?.sensitive === true };
+  return stripNode(document, describe(e, ctx), technical(e, ctx), hhmmss(e.at));
 }
 
 pollLive();
@@ -168,19 +168,14 @@ function showReceipt({ verdict, summary, graph, snapshots }) {
   const stamp = $("stamp");
   stamp.className = `stamp v-${overall}`;
   stamp.textContent = overall;
+  $("verdictPlain").textContent = verdictText(overall);
   if (!calm() && window.gsap) window.gsap.fromTo(stamp, { scale: 2, rotate: -14, opacity: 0 }, { scale: 1, rotate: -4, opacity: 1, duration: 0.35, ease: "power4.in" });
   dominoes($("dominoes"), verdict.dimensions || {});
 
   const roll = $("eventRoll");
   roll.textContent = "";
   for (const e of (summary?.events || []).slice(0, 200)) {
-    const p = e.payload || {};
-    printStrip(roll, el("li", {},
-      el("span", { class: "t" }, `#${e.sequence}`),
-      el("span", { class: "k" }, e.event_type),
-      p.action_type ? el("span", { class: "s" }, p.action_type) : null,
-      p.target ? el("span", { class: "tgt" }, host(p.target)) : null,
-      p.reason_codes ? el("span", { class: "why" }, p.reason_codes.join(" · ").toLowerCase()) : null));
+    printStrip(roll, stripNode(document, describe(e, {}), technical(e, {}), `#${e.sequence}`));
   }
 
   const shots = snapshots || [];

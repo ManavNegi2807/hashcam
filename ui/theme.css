@@ -2,8 +2,11 @@
    ONE source of truth: ui/theme.css. extension/theme.css is a byte-identical copy (a test checks
    this), because a Manifest V3 extension may only load its own files.
 
-   Verdict colours are reserved: they mean what the offline verifier said and nothing else.
-   UNKNOWN, PARTIAL and NOT_INDEPENDENT are violet, never green. */
+   Meaning of the colours: amber is HashCam (recording, the primary action, a step held for a person);
+   emerald is VERIFIED, VALID or ALLOWED; crimson is BLOCKED, INVALID or a tampered path; cyan is data
+   (links, the horizon grid, the telemetry bus). The words always say which: "Allowed" is a policy
+   outcome, "VALID" is the offline verifier's verdict. UNKNOWN, PARTIAL, INCOMPLETE and
+   NOT_INDEPENDENT are violet, never green. */
 
 @font-face {
   font-family: "HC Sans";
@@ -13,19 +16,21 @@
 }
 
 :root {
-  --hc-bg: #0A0F1E;
-  --hc-surface: #111A2E;
-  --hc-raised: #18233B;
-  --hc-line: #22304D;
-  --hc-text: #EAF0FA;
-  --hc-muted: #8A9BB8;
+  --hc-bg: #080B12;
+  --hc-surface: #101624;
+  --hc-raised: #172033;
+  --hc-line: rgba(255, 255, 255, .09);
+  --hc-text: #F1F5F9;
+  --hc-muted: #94A3B8;
 
-  --hc-gold: #F5B841;        /* recording, focus, primary buttons */
+  --hc-gold: #F59E0B;        /* recording, focus, primary buttons */
+  --hc-gold-2: #FBBF24;      /* the bright end of amber: emphasis */
+  --hc-amber-deep: #B45309;  /* the deep end of amber: the REC emblem's lower half */
   --hc-gold-ink: #1A1204;    /* text on gold */
-  --hc-cyan: #5CC8FF;        /* links, data */
+  --hc-cyan: #38BDF8;        /* links, data */
 
-  --hc-valid: #3DDC97;       /* VALID, PASS: nothing else */
-  --hc-invalid: #FF5C6C;     /* INVALID, FAIL: nothing else */
+  --hc-valid: #10B981;       /* VALID, PASS, VERIFIED, ALLOWED */
+  --hc-invalid: #EF4444;     /* INVALID, FAIL, BLOCKED, a tampered path */
   --hc-unknown: #B9A7FF;     /* UNKNOWN, PARTIAL, NOT_INDEPENDENT, INCOMPLETE */
 
   --hc-paper: #F3EEE3;       /* the receipt */
@@ -36,7 +41,7 @@
   --hc-sans: "HC Sans", "Segoe UI", system-ui, sans-serif;
   --hc-mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace;
   --hc-radius: 14px;
-  --hc-glow: 0 0 24px rgba(245, 184, 65, .35);
+  --hc-glow: 0 0 26px rgba(245, 158, 11, .42);
   color-scheme: dark;
 }
 
@@ -88,3 +93,22 @@
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* Plain-language lines (ui/readable.js). The sentence comes first; the raw record is only ever
+   behind a closed "Technical details" opener, and is replaced by a note when it is sensitive.
+   Allowed is emerald, held is amber, blocked is crimson. */
+.says { --tone: var(--hc-muted); border-left: 3px solid var(--tone); padding: 6px 0 6px 12px; margin: 0; min-width: 0; }
+.says.tone-ok { --tone: var(--hc-valid); }
+.says.tone-hold { --tone: var(--hc-gold); }
+.says.tone-stop { --tone: #FF8A5C; }
+.says.tone-note { --tone: var(--hc-unknown); }
+.says-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+.says-badge { font: 700 11px var(--hc-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--tone); }
+.says-title { font-weight: 700; overflow-wrap: anywhere; }
+.says-why, .says-note { margin: 2px 0 0; font-size: 13px; color: var(--hc-muted); overflow-wrap: anywhere; }
+.says-note { color: var(--hc-gold); }
+.tech { margin-top: 4px; font-size: 12px; }
+.tech > summary { cursor: pointer; color: var(--hc-muted); }
+.tech-text { margin: 6px 0 0; padding: 8px 10px; max-height: 220px; overflow: auto; background: #060910; border: 1px solid var(--hc-line);
+  border-radius: 8px; font: 11px/1.5 var(--hc-mono); white-space: pre-wrap; overflow-wrap: anywhere; color: #CBD5E1; }
+.tech-withheld { margin: 6px 0 0; color: var(--hc-unknown); }

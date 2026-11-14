@@ -293,5 +293,28 @@ def test_agent_submit_is_held_until_the_passkey_approves(stack: dict[str, Any]) 
             assert panel.inner_text(".big-stamp") == "VALID"
             assert session.verdict is not None and session.verdict["overall"] == "VALID"
             panel.screenshot(path=str(stack["work"] / "panel.png"), full_page=True)
+
+            # What the person reads is plain sentences, not machine codes or JSON.
+            roll = panel.inner_text("#rollLines")
+            for sentence in ("Stopped from opening", "Sent a form to", "Typed a password"):
+                assert sentence in roll, (sentence, roll)
+            for code in (
+                "form_submit",
+                "MANDATE_VIOLATION",
+                "HOST_NOT_IN_TASK",
+                '"status"',
+                "leaf",
+            ):
+                assert code not in roll, (code, roll)
+            assert "has not been changed since it was signed" in panel.inner_text("#verdict")
+            # The raw record is only behind a closed opener, and for a typed password it is hidden.
+            assert panel.evaluate(
+                "[...document.querySelectorAll('#rollLines details.tech')].every((d) => !d.open)"
+            )
+            secret = panel.locator("#rollLines .line", has_text="Typed a password")
+            assert secret.count() >= 1
+            assert secret.locator(".tech-withheld").count() == secret.count()  # every such line
+            assert secret.locator(".tech-text").count() == 0
+            assert "hunter2-correct-horse" not in panel.content()
         finally:
             context.close()

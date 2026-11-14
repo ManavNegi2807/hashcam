@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HashCam Gatekeeper Sandbox</title>
+<meta name="description" content="Try HashCam's gate in your browser: hash-chained events, a deterministic policy, a fake-money budget and a signed human approval. Then try to tamper with the record.">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="console.css">
+<link rel="stylesheet" href="sandbox.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="topbar">
+    <a class="brand" href="index.html" aria-label="HashCam AI, home">
+      <span class="brand-dot" aria-hidden="true"></span> HashCam <b>AI</b>
+    </a>
+    <nav aria-label="Pages">
+      <a href="index.html">Home</a>
+      <a href="index.html#how">How it works</a>
+      <a href="sandbox.html" aria-current="page">Sandbox</a>
+    </nav>
+  </header>
+
+  <main id="main" class="sb">
+    <section class="sb-head" id="top">
+      <p class="kicker">Gatekeeper Sandbox</p>
+      <h1>Try the gate. Then try to break the record.</h1>
+      <p class="lead">Send an AI agent on four test flights. A fixed policy decides each one, a budget caps the money, a person signs the risky one, and every step lands in a hash chain you can edit to see it fracture.</p>
+      <p class="sim-chip" role="note"><b>SIMULATION</b> · fake money · runs in this tab · nothing leaves it</p>
+      <p class="muted small sim-note">Everything here is made in your browser with its own Web Crypto: SHA-256 for the chain and an ephemeral ECDSA P-256 key for the signature. It uses a simplified format so each step is visible. It is not the real receipt format: <code>abb verify</code> cannot read a sandbox receipt, and the numbers are smaller than the real spend tiers so you can reach every branch.</p>
+    </section>
+
+    <p class="banner" id="cryptoBanner" role="alert" hidden>This browser cannot run Web Crypto here (it needs a secure context), so the sandbox cannot start. Open it over https or from a local file.</p>
+
+    <div class="sb-grid">
+      <div class="sb-col">
+        <section class="panel" aria-labelledby="flights-h">
+          <h2 id="flights-h">Test flights</h2>
+          <p class="muted small">The agent tries one action at a time. Pick one.</p>
+          <div class="flights">
+            <button class="flight" type="button" data-action="docs" aria-describedby="d-docs" disabled>Read Repo Docs ($0.00)</button>
+            <small id="d-docs">Free, on an allow-listed host.</small>
+            <button class="flight" type="button" data-action="webhook" aria-describedby="d-webhook" disabled>Sync External Webhook</button>
+            <small id="d-webhook">Sends data to a host nobody approved.</small>
+            <button class="flight" type="button" data-action="gpu" aria-describedby="d-gpu" disabled>Provision Sandbox GPU ($35.00)</button>
+            <small id="d-gpu">More than the agent may spend alone: needs a signature.</small>
+            <button class="flight" type="button" data-action="bulk" aria-describedby="d-bulk" disabled>Bulk Token Purchase ($250.00)</button>
+            <small id="d-bulk">More than the whole budget.</small>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="escrow-h">
+          <h2 id="escrow-h">Escrow budget</h2>
+          <div class="meter" id="meter" role="img" aria-label="Escrow budget: $100.00 left of $100.00">
+            <div class="meter-glass">
+              <div class="meter-liquid" id="liquid">
+                <svg class="meter-wave" viewBox="0 0 240 12" preserveAspectRatio="none" aria-hidden="true"><path d="M0 6 Q15 0 30 6 T60 6 T90 6 T120 6 T150 6 T180 6 T210 6 T240 6 V12 H0 Z"/></svg>
+              </div>
+              <div class="meter-hold" id="meterHold"></div>
+              <ul class="meter-ticks" aria-hidden="true"><li>$100</li><li>$75</li><li>$50</li><li>$25</li><li>$0</li></ul>
+            </div>
+            <dl class="meter-facts">
+              <div><dt>Cap</dt><dd id="mCap">$100.00</dd></div>
+              <div><dt>Spent</dt><dd id="mSpent">$0.00</dd></div>
+              <div><dt>Held for sign-off</dt><dd id="mHeld">$0.00</dd></div>
+              <div><dt>Left</dt><dd id="mLeft">$100.00</dd></div>
+            </dl>
+          </div>
+        </section>
+
+        <section class="panel gate" id="gate" data-state="idle" aria-labelledby="gate-h">
+          <h2 id="gate-h">The gate</h2>
+          <div class="latch" aria-hidden="true"><span class="jaw jaw-l"></span><span class="lane"></span><span class="jaw jaw-r"></span></div>
+          <div class="hazard" id="hazard" aria-hidden="true"><span>POLICY_HOLD</span></div>
+          <p class="gate-state" id="gateState" role="status">Starting a session…</p>
+          <p class="gate-what" id="gateWhat" hidden></p>
+          <div class="gate-buttons">
+            <button class="btn" id="signBtn" type="button" disabled>Sign &amp; Authorize Gate</button>
+            <button class="btn danger" id="rejectBtn" type="button" disabled>Reject &amp; Halt</button>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="key-h">
+          <h2 id="key-h">Session key</h2>
+          <p class="muted small">An ECDSA P-256 key pair made when this page opened. The private key is non-extractable and lives only in this tab's memory; closing the tab destroys it.</p>
+          <p class="mono small" id="keyLine">Making a key…</p>
+        </section>
+      </div>
+
+      <div class="sb-col">
+        <section class="panel" aria-labelledby="radar-h">
+          <h2 id="radar-h">Endpoint alert radar</h2>
+          <svg class="radar" id="radar" viewBox="0 0 240 240" role="img" aria-label="Radar of policy decisions. Each blip is one decision; its details are listed below.">
+            <defs>
+              <linearGradient id="sweepGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#10b981" stop-opacity="0"/>
+                <stop offset="1" stop-color="#10b981" stop-opacity=".55"/>
+              </linearGradient>
+            </defs>
+            <circle class="ring" cx="120" cy="120" r="112"/>
+            <circle class="ring" cx="120" cy="120" r="84"/>
+            <circle class="ring" cx="120" cy="120" r="56"/>
+            <circle class="ring" cx="120" cy="120" r="28"/>
+            <line class="cross" x1="8" y1="120" x2="232" y2="120"/>
+            <line class="cross" x1="120" y1="8" x2="120" y2="232"/>
+            <g class="sweep"><path d="M120 120 L120 8 A112 112 0 0 1 232 120 Z" fill="url(#sweepGrad)"/></g>
+            <g id="blips"></g>
+          </svg>
+          <p class="muted small" id="radarEmpty">No decisions yet. Send a test flight.</p>
+          <div class="why" id="why" aria-live="polite"></div>
+        </section>
+
+        <section class="panel" aria-labelledby="ledger-h">
+          <div class="ledger-head">
+            <h2 id="ledger-h">Hash-chained ledger</h2>
+            <div class="tools">
+              <button class="btn small ghost" id="tamperBtn" type="button" aria-pressed="false">Simulate Tamper</button>
+              <button class="btn small ghost" id="restoreBtn" type="button" disabled>Restore Original</button>
+              <button class="btn small" id="exportBtn" type="button" disabled>Export Verified Receipt (.html)</button>
+              <button class="btn small ghost" id="resetBtn" type="button">Reset session</button>
+            </div>
+          </div>
+          <p class="chain-status" id="chainStatus" role="status">Waiting for the first event…</p>
+          <p class="muted small" id="tamperHint" hidden>Tamper mode shows each event in its raw form so you can edit it. This is made-up data only: real sessions never show raw records like this, and sensitive ones never do. Change anything (try <code>amount_cents</code> in the first request) and watch every link after it break. Flights are paused while you tamper.</p>
+          <ol class="ledger" id="ledger" aria-label="Events, oldest first"></ol>
+        </section>
+      </div>
+    </div>
+
+    <section class="panel sb-rules" aria-labelledby="rules-h">
+      <h2 id="rules-h">The policy, in full</h2>
+      <p class="muted small"><code>sandbox-policy/1</code>: the first matching rule wins, and the same input always gets the same answer. A deny cannot be unblocked by an approval.</p>
+      <table class="rules">
+        <thead><tr><th>Rule</th><th>When</th><th>Outcome</th></tr></thead>
+        <tbody>
+          <tr><td><code>R1 DOMAIN_NOT_ALLOWED</code></td><td>the host is not on the allow-list (<code>docs.github.com</code>, <code>api.gpu-cloud.example</code>, <code>tokens.example-bank.test</code>)</td><td>DENY</td></tr>
+          <tr><td><code>R2 OVER_BUDGET</code></td><td>the amount is more than what is left of the $100.00 cap</td><td>DENY</td></tr>
+          <tr><td><code>R3 FREE_ACTION</code></td><td>no money moves</td><td>ALLOW</td></tr>
+          <tr><td><code>R4 AUTO_SMALL_SPEND</code></td><td>the amount is $10.00 or less</td><td>ALLOW</td></tr>
+          <tr><td><code>R5 HUMAN_SIGNOFF_REQUIRED</code></td><td>anything else</td><td>HOLD until a person signs</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="chain.js"></script>
+  <script src="sandbox.js"></script>
+</body>
+</html>

@@ -121,7 +121,7 @@ if step["decision"] != "ALLOW":
       <div id="receiptOut" hidden>
         <div class="verdict-row">
           <div><p class="muted small">The offline verifier says</p><div class="stamp" id="stamp"></div></div>
-          <p class="small muted honest-note">A valid receipt means this record has not changed since it was signed. It does not mean the agent was honest, or that a page told the truth.</p>
+          <p class="small muted honest-note" id="verdictPlain" role="status">A valid receipt means this record has not changed since it was signed. It does not mean the agent was honest, or that a page told the truth.</p>
         </div>
         <div id="dominoes"></div>
         <div class="receipt-grid">

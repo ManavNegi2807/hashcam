@@ -9,7 +9,7 @@
   --text: var(--hc-text);
   --muted: var(--hc-muted);
   --orange: var(--hc-gold);
-  --orange-deep: #B9852A;
+  --orange-deep: var(--hc-amber-deep);
   --rec: #FF3B30;
   --ok: var(--hc-valid);       /* a verifier VALID / PASS only */
   --warn: var(--hc-unknown);   /* UNKNOWN, PARTIAL, INCOMPLETE, NOT_INDEPENDENT: never green */
@@ -44,7 +44,7 @@ code { font-family: var(--mono); font-size: 12px; background: var(--panel-2); pa
   position: sticky; top: 0; z-index: 5;
   display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px;
   margin: 0 -14px; padding: 12px 14px 8px;
-  background: linear-gradient(var(--hc-bg) 70%, rgba(10, 15, 30, .85));
+  background: linear-gradient(var(--hc-bg) 70%, rgba(8, 11, 18, .85));
   border-bottom: 1px solid var(--line);
 }
 .rec { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px 6px 8px;
@@ -228,3 +228,16 @@ html, body { max-width: 100%; }
 .sign-f code { color: var(--hc-cyan); }
 .verdict .dominoes { margin: 12px 0 4px; }
 .verdict .domino { width: 22px; height: 40px; font-size: 7.5px; }
+
+/* Plain-language lines (readable.js): the raw record only ever sits behind the closed opener. */
+.stamp-s.tone-ok { color: #2F6B4F; }
+.stamp-s.tone-hold { color: #6A4BC4; }
+.stamp-s.tone-stop { color: #B3261E; }
+.stamp-s.tone-note { color: #9A5B00; }
+.stamp-s.tone-info { color: var(--paper-faint); }
+.line .k { font-size: 12px; letter-spacing: 0; overflow-wrap: anywhere; }
+.line .tech { grid-column: 2 / 4; margin-top: 2px; }
+.line .tech > summary { cursor: pointer; color: var(--paper-faint); font-size: 10.5px; }
+.tech-text { margin: 4px 0 0; padding: 6px 8px; max-height: 160px; overflow: auto; font: 10px/1.45 ui-monospace, Consolas, monospace;
+  background: rgba(30, 36, 51, .07); border: 1px solid rgba(30, 36, 51, .2); border-radius: 4px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.tech-withheld { margin: 4px 0 0; color: #6A4BC4; font-size: 10.5px; }

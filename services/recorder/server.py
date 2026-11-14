@@ -6,7 +6,9 @@ Served on 127.0.0.1. Every request needs a loopback `Host` and a token in `X-Has
   token and may do everything.
 * A web page may call only if its origin is on the `web_origins` list given at start (the public
   HashCam site), only the read-only routes (status, sessions, one session, a snapshot), and only
-  with the separate **viewer token**. It can look; it cannot start, report, approve or stop.
+  with the separate **viewer token**. It can look; it cannot start, report, approve or stop. What
+  it sees is cut down by `public.py`: no query strings, and nothing sensitive for a session marked
+  sensitive.
 * Any other origin is refused: a page the agent opens cannot drive this API.
 """
 
@@ -21,6 +23,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
+from services.recorder.public import public_row, public_view
 from services.recorder.session import Recorder, RecorderError
 
 MAX_BODY = 8_000_000
@@ -152,21 +155,28 @@ def make_handler(
                     },
                 )
             if method == "GET" and path == "/sessions":
+                finish = public_row if self.cors_origin else (lambda row: row)
                 return (
                     {
                         "sessions": [
-                            {
-                                k: view[k]
-                                for k in (
-                                    "session_id",
-                                    "agent",
-                                    "task",
-                                    "state",
-                                    "started",
-                                    "trust",
-                                )
-                            }
-                            | {"counts": _counts(view["timeline"]), "waiting": len(view["waiting"])}
+                            finish(
+                                {
+                                    k: view[k]
+                                    for k in (
+                                        "session_id",
+                                        "agent",
+                                        "task",
+                                        "sensitive",
+                                        "state",
+                                        "started",
+                                        "trust",
+                                    )
+                                }
+                                | {
+                                    "counts": _counts(view["timeline"]),
+                                    "waiting": len(view["waiting"]),
+                                }
+                            )
                             for view in (recorder.view(s) for s in list(recorder.sessions.values()))
                         ]
                     },
@@ -194,6 +204,7 @@ def make_handler(
                     task=body.get("task", ""),
                     agent=body.get("agent", ""),
                     passport=body.get("passport") or {},
+                    sensitive=bool(body.get("sensitive")),
                 )
                 return (recorder.view(session),)
             if method == "POST" and path == "/verify":
@@ -202,8 +213,11 @@ def make_handler(
                 session = recorder.get(parts[1])
                 tail = "/".join(parts[2:])
                 if method == "GET" and tail == "":
-                    return (recorder.view(session),)
+                    view = recorder.view(session)
+                    return (public_view(view) if self.cors_origin else view,)
                 if method == "GET" and tail.startswith("snapshot/") and tail[9:].isdigit():
+                    if self.cors_origin and session.sensitive:
+                        raise RecorderError("screenshots are hidden for a sensitive agent", 403)
                     data = session.snapshots.get(int(tail[9:]))
                     if data is None:
                         raise RecorderError("no such snapshot", 404)

@@ -1,9 +1,13 @@
-// The public HashCam site. Everything runs in the browser:
+// The public HashCam site. A classic script, so it works from a file:// page as well as from the web.
+// Everything runs in the browser:
 // * Live: reads YOUR recorder on 127.0.0.1 with its read-only viewer key (sample data until then).
 // * Receipts: checked by the HashCam verifier compiled to WebAssembly; files never leave the page.
-// Nothing is sent to this site's server.
+// Nothing is sent to this site's server, and no other site is contacted.
+(function () {
+"use strict";
 
-import { bars3d, cartoon, dominoes, glowAtom, isometric, merkle, printStrip, synthwave } from "./fx3d.js";
+const { bars3d, cartoon, dominoes, glowAtom, isometric, merkle, printStrip, synthwave } = window.HCFX;
+const R = window.HCReadable;
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, ...kids) => {
@@ -12,8 +16,8 @@ const el = (tag, cls, ...kids) => {
   for (const kid of kids) if (kid != null) node.append(kid);
   return node;
 };
-const hostOf = (u) => { try { const x = new URL(u); return x.host + x.pathname; } catch { return u || ""; } };
 const hhmmss = (s) => new Date(s * 1000).toLocaleTimeString([], { hourCycle: "h23" });
+const fromDisk = location.protocol === "file:";
 
 synthwave(document.querySelector(".hero"));
 isometric($("iso"));
@@ -34,7 +38,7 @@ const SAMPLE = {
   view: {
     agent: "Claude", trust: 75, waiting: [{}], timeline: [
       { at: 1700000462, kind: "navigate", status: "ALLOWED", target: "https://shop.example/checkout" },
-      { at: 1700000469, kind: "secret", status: "COMMITTED", target: "https://shop.example/login" },
+      { at: 1700000469, kind: "secret", status: "COMMITTED", target: "https://shop.example/login", field_kind: "password" },
       { at: 1700000475, kind: "form_submit", status: "APPROVED", target: "https://shop.example/order" },
       { at: 1700000491, kind: "navigate", status: "BLOCKED", target: "https://bank.example/transfer" },
       { at: 1700000500, kind: "download", status: "WAITING", target: "https://shop.example/invoice.pdf" },
@@ -54,15 +58,14 @@ const atom = glowAtom($("atom"), () => {
   return { agent: current?.agent, trust: current?.trust, counts, waiting: current?.waiting?.length || 0 };
 });
 
+// Each line is a plain sentence. The raw record is behind a closed "Technical details" opener, and
+// is replaced by a note when the agent (or the step) is sensitive.
 function drawTimeline(view, reset) {
   const roll = $("liveRoll");
   if (reset) { roll.textContent = ""; shown = 0; }
+  const ctx = { agent: view.agent, sensitive: view.sensitive === true };
   for (const e of view.timeline.slice(shown)) {
-    printStrip(roll, el("li", null,
-      el("span", "t", hhmmss(e.at)), el("span", "k", e.kind),
-      el("span", `s s-${e.status}`, e.status.replace("_", " ")),
-      e.target ? el("span", "tgt", hostOf(e.target)) : null,
-      e.tripwire ? el("span", "flag", `⚠ tripwire: ${e.tripwire.verdict}`) : null), { prepend: true });
+    printStrip(roll, R.stripNode(document, R.describe(e, ctx), R.technical(e, ctx), hhmmss(e.at)), { prepend: true });
   }
   shown = view.timeline.length;
   atom.redraw();
@@ -147,18 +150,67 @@ $("disconnect").addEventListener("click", () => {
 });
 
 showSample();
-try {
-  const saved = JSON.parse(sessionStorage.getItem("hc-viewer") || "null");
-  if (saved?.key) connect(saved.port, saved.key);
-} catch { /* fine */ }
+if (fromDisk) {
+  // A page opened from a file has no origin your recorder could trust, so it stays on sample data.
+  $("liveState").textContent = "Opened from a file: the live view needs the hosted site (your recorder only answers that address). Showing sample data.";
+  $("connect").querySelector("button[type=submit]").disabled = true;
+} else {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem("hc-viewer") || "null");
+    if (saved?.key) connect(saved.port, saved.key);
+  } catch { /* fine */ }
+}
 
 // ================================================================== receipts (WebAssembly verifier)
 
 let wasm = null;
+let wasmFailure = null; // why WebAssembly is unavailable here, once known: one attempt, one console line
+
+function bytesOfB64(text) {
+  const bin = atob(text);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = () => reject(new Error(`could not load ${src}`));
+    document.head.append(s);
+  });
+}
+
+// From a file:// page the browser forbids fetch() of a neighbouring file, so the verifier and the
+// samples travel in offline-data.js (base64), loaded only then.
+async function offlineData() {
+  if (!window.HC_OFFLINE) await loadScript("offline-data.js");
+  return window.HC_OFFLINE;
+}
+
 async function verifier() {
-  if (!wasm) {
-    const { instance } = await WebAssembly.instantiateStreaming(fetch("verifier.wasm"), {});
+  if (wasm) return wasm;
+  if (wasmFailure) throw wasmFailure;
+  try {
+    let bytes;
+    if (fromDisk) {
+      bytes = bytesOfB64((await offlineData()).wasm);
+    } else {
+      // Relative to this page, so it works at the site root and under any folder it is served from.
+      const response = await fetch("verifier.wasm");
+      if (!response.ok) throw new Error(`verifier.wasm answered HTTP ${response.status}`);
+      bytes = new Uint8Array(await response.arrayBuffer());
+    }
+    if (bytes.length < 8 || bytes[0] !== 0 || bytes[1] !== 0x61 || bytes[2] !== 0x73 || bytes[3] !== 0x6d) {
+      throw new Error("verifier.wasm is not a WebAssembly file");
+    }
+    const { instance } = await WebAssembly.instantiate(bytes, {});
     wasm = instance.exports;
+  } catch (error) {
+    wasmFailure = error;
+    throw error;
   }
   return wasm;
 }
@@ -171,7 +223,7 @@ function put(exports, bytes) {
 }
 
 // The same function as `abb verify --json`: returns the verifier's report, word for word.
-async function verify(receiptBytes, keysBytes) {
+async function verifyWasm(receiptBytes, keysBytes) {
   const x = await verifier();
   const rp = put(x, receiptBytes);
   const kp = put(x, keysBytes);
@@ -185,15 +237,42 @@ async function verify(receiptBytes, keysBytes) {
   return JSON.parse(json);
 }
 
+// WebAssembly first. If it cannot load or run (file missing, blocked, old browser), the JavaScript
+// fallback checks the cryptographic core instead and the page says so: it can prove a receipt
+// INVALID but never calls one VALID (see fallback.js).
+async function verify(receiptBytes, keysBytes) {
+  try {
+    const report = await verifyWasm(receiptBytes, keysBytes);
+    report.engine = "wasm";
+    return report;
+  } catch (error) {
+    const report = await window.HCFallback.verifyReceipt(receiptBytes, keysBytes);
+    report.engine = "javascript";
+    report.fallback_reason = String((error && error.message) || error);
+    return report;
+  }
+}
+
 function showVerdict(report, label) {
   const overall = String(report.overall || "UNREADABLE");
   const stamp = $("stamp");
   stamp.className = `stamp v-${overall}`;
   stamp.textContent = overall;
+  const fallback = report.engine === "javascript";
+  const clean = fallback && overall === "INCOMPLETE";
+  $("verdictPlain").textContent = clean
+    ? "No problem was found in what the JavaScript fallback checks, but it cannot give a full verdict. Open this page where WebAssembly runs, or use abb verify."
+    : R.verdictText(overall);
+  $("engineNote").textContent = fallback
+    ? `The WebAssembly verifier could not run here (${report.fallback_reason}), so the JavaScript fallback checked this receipt: the event hashes, the signed tree, the signatures and the global log. It does not check coverage, policy or the mandate, so it can say INVALID but never VALID.`
+    : "Checked by the HashCam verifier compiled to WebAssembly: the same Rust code as abb verify.";
   dominoes($("dominoes"), report.dimensions || {});
   const details = $("details");
   details.textContent = "";
-  for (const d of report.details || []) details.append(el("li", null, `${d.dimension}: ${d.message}`));
+  for (const d of report.details || []) {
+    const status = report.dimensions && report.dimensions[d.dimension];
+    details.append(el("li", null, el("b", null, `${R.dimensionText(d.dimension)}${status ? ` (${R.statusText(status)})` : ""}: `), d.message));
+  }
   if (report.message) details.append(el("li", null, report.message));
   $("detailsBox").hidden = !details.children.length;
   $("receiptState").textContent = label;
@@ -226,11 +305,26 @@ drop.addEventListener("drop", (e) => { e.preventDefault(); drop.classList.remove
 $("files").addEventListener("change", (e) => fromFiles([...e.target.files]));
 
 async function sample(name, label) {
-  const [r, k] = await Promise.all([
-    fetch(`samples/${name}.abbreceipt`).then((x) => x.arrayBuffer()),
-    fetch("samples/sample.keys.json").then((x) => x.arrayBuffer()),
-  ]);
-  await check(new Uint8Array(r), new Uint8Array(k), label);
+  try {
+    let receipt;
+    let keys;
+    if (fromDisk) {
+      const data = await offlineData();
+      receipt = bytesOfB64(data[name]);
+      keys = bytesOfB64(data.keys);
+    } else {
+      const [r, k] = await Promise.all([
+        fetch(`samples/${name}.abbreceipt`).then((x) => x.arrayBuffer()),
+        fetch("samples/sample.keys.json").then((x) => x.arrayBuffer()),
+      ]);
+      receipt = new Uint8Array(r);
+      keys = new Uint8Array(k);
+    }
+    await check(receipt, keys, label);
+  } catch (error) {
+    $("receiptState").textContent = `Could not load the sample: ${error.message}`;
+  }
 }
 $("sampleValid").addEventListener("click", () => sample("genuine", "Sample receipt from a real recorder run, checked in this page."));
 $("sampleInvalid").addEventListener("click", () => sample("edited", "The same sample with one event's address changed, checked in this page."));
+})();

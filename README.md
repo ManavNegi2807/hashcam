@@ -66,6 +66,24 @@ python tools/ui_server.py --receipts <dir> --enable-runs                # the tw
 python tools/ui_server.py --receipts <dir> --falkordb redis://127.0.0.1:6390   # also keep the run graph in FalkorDB (deploy/README.md)
 ```
 
+### Start the extension, console and website without a terminal (Windows)
+
+Double-click, nothing to type:
+
+| File | What it does |
+|---|---|
+| `HashCam.bat` | Starts the test database (if it is not running), the recorder, the console and the website, all hidden and on this computer only. Copies the extension's pairing token to your clipboard (never to the screen) and opens the website (`http://127.0.0.1:8000/`) and the console (`http://127.0.0.1:8765/console`). Run it again any time: it reuses what is running. |
+| `HashCam-Extension-Setup.bat` | Once: opens Chrome's Extensions page and the `extension` folder, and lists the few clicks (Developer mode, Load unpacked). Chrome does not let a script install an extension, so this one step is yours. |
+| `HashCam-Stop.bat` | Stops the recorder, console and website, including any left over from an earlier run. The test database is left running. |
+
+If the recorder on its port is one HashCam cannot use (typically left over from an earlier version),
+the message says so and the fix is `HashCam-Stop.bat`, then `HashCam.bat`. Logs are in
+`%LOCALAPPDATA%\HashCam\logs`. The launcher (`tools/launcher.ps1`) looks for Python, the `abb`
+binaries and the test PostgreSQL where `start_hascham.ps1` does; if one is missing it says which.
+`TESTED`: `tests/ui/test_launcher.py` (isolated ports and folders, never your real recorder).
+**Not covered:** adding the extension itself, a physical passkey, and macOS or Linux (use the
+commands above).
+
 ### Use a separate test PostgreSQL, not a database you care about
 
 This matters. The tests and the demos need a PostgreSQL server, named by `ABB_TEST_DSN` (an admin
