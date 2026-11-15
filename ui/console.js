@@ -1,9 +1,10 @@
 // The HashCam Console. It shows what the verifier and the local recorder say; it decides nothing.
 
-import { bars3d, calm, cartoon, dominoes, glowAtom, isometric, merkle, printStrip, synthwave } from "/fx3d.js";
+import { calm, dominoes, eventBars, glowAtom, merkle, pipeline, printStrip, synthwave } from "/fx3d.js";
 import { describe, stripNode, technical, verdictText } from "/readable.js";
 
 const $ = (id) => document.getElementById(id);
+const M = window.HCMotion; // motion.js, loaded before this module
 const el = (tag, attrs = {}, ...kids) => {
   const node = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
@@ -17,23 +18,26 @@ const hhmmss = (s) => new Date(s * 1000).toLocaleTimeString([], { hourCycle: "h2
 // ------------------------------------------------------------------ hero and explainers
 
 synthwave(document.querySelector(".hero"));
-isometric($("iso"));
+M.hero(document.querySelector(".hero")); // the telemetry core replaces the old REC circle
+pipeline($("iso"));
 merkle($("merkle"), $("maths"));
-const story = cartoon($("cartoon"));
+const story = M.riskyStep($("cartoon"));
+M.init();
 
 // First visit: the short story of a held step, once. Skippable; never again after "Got it".
 try {
   if (!localStorage.getItem("hc-onboarded")) {
     const d = $("onboard");
-    const shown = cartoon($("onboardCartoon"));
+    const shown = M.riskyStep($("onboardCartoon"));
     d.showModal();
     shown.play();
     d.addEventListener("close", () => { try { localStorage.setItem("hc-onboarded", "1"); } catch { /* ignore */ } });
   }
 } catch { /* storage blocked: no onboarding, nothing breaks */ }
-new IntersectionObserver((entries) => {
-  if (entries.some((e) => e.isIntersecting)) story.play();
-}, { threshold: 0.5 }).observe($("cartoon"));
+const storyWatch = new IntersectionObserver((entries) => {
+  if (entries.some((e) => e.isIntersecting)) { story.play(); storyWatch.disconnect(); } // once; Replay does it again
+}, { threshold: 0.5 });
+storyWatch.observe($("cartoon"));
 
 // ------------------------------------------------------------------ live sessions
 
@@ -82,7 +86,7 @@ async function pollLive() {
 }
 
 function renderSessions() {
-  bars3d($("bars"), sessions);
+  eventBars($("bars"), sessions);
   const list = $("sessionList");
   list.textContent = "";
   for (const s of sessions) {
@@ -169,7 +173,9 @@ function showReceipt({ verdict, summary, graph, snapshots }) {
   stamp.className = `stamp v-${overall}`;
   stamp.textContent = overall;
   $("verdictPlain").textContent = verdictText(overall);
-  if (!calm() && window.gsap) window.gsap.fromTo(stamp, { scale: 2, rotate: -14, opacity: 0 }, { scale: 1, rotate: -4, opacity: 1, duration: 0.35, ease: "power4.in" });
+  // The verdict stamp lands: it drops in from a larger size and settles at its slight tilt.
+  if (!calm()) stamp.animate([{ opacity: 0, transform: "scale(2) rotate(-14deg)" }, { opacity: 1, transform: "scale(1) rotate(-4deg)" }],
+    { duration: 420, easing: M.EASE, fill: "backwards" });
   dominoes($("dominoes"), verdict.dimensions || {});
 
   const roll = $("eventRoll");
@@ -189,7 +195,7 @@ function showReceipt({ verdict, summary, graph, snapshots }) {
       const s = shots[Number(scrub.value)];
       $("replayImg").src = s.src;
       $("replayImg").alt = `Page snapshot sealed at event ${s.sequence}`;
-      $("replayCap").textContent = `Event #${s.sequence} · sha256 ${s.digest.slice(0, 16)}…`;
+      M.hexify($("replayCap"), `Event #${s.sequence} · sha256 ${s.digest.slice(0, 16)}…`, "replay");
     };
     scrub.oninput = show;
     show();

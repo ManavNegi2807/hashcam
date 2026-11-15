@@ -2,9 +2,9 @@
 
     python tools/build_site.py [--samples --dsn postgresql://...]
 
-1. Copies the shared files from ui/ (theme, styles, GSAP, the font), so ui/ stays the one source.
-   The nine animation styles (`ui/fx3d.js`, an ES module the extension imports) are turned into a
-   classic script `site/fx3d.js` that sets `window.HCFX`: a module script cannot load from a
+1. Copies the shared files from ui/ (theme, styles, the motion layer, the font), so ui/ stays the
+   one source. The animation styles (`ui/fx3d.js`, an ES module the extension imports) are turned
+   into a classic script `site/fx3d.js` that sets `window.HCFX`: a module script cannot load from a
    `file://` page, and the site must work when opened straight from disk.
 2. Builds the receipt verifier for the browser (`core/abb-wasm`, target wasm32-unknown-unknown,
    size-optimized) and copies it to site/verifier.wasm. Needs
@@ -32,7 +32,8 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 SITE = REPO / "site"
-SHARED = ["theme.css", "console.css"]
+# Copied unchanged: the shared styles, and the motion layer the console and the site both use.
+SHARED = ["theme.css", "console.css", "motion.css", "motion.js"]
 # The site animates with the browser's own Web Animations API: no animation library is shipped.
 VENDOR = ["plus-jakarta-sans.woff2", "OFL-plus-jakarta-sans.txt"]
 _EXPORT = re.compile(r"^export (function|const) (\w+)", re.MULTILINE)

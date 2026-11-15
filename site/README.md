@@ -1,7 +1,7 @@
 # site: the public HashCam website
 
 **Status:** `TESTED`: `tests/ui/test_site.py` (needs the full stack), `tests/ui/test_site_pages.py` (33),
-`tests/ui/test_motion.py` (21), `tests/ui/test_fallback.py` (39) and `tests/ui/test_readable.py` (53). The deployed copy is only as fresh as the
+`tests/ui/test_motion.py` (25), `tests/ui/test_fallback.py` (39) and `tests/ui/test_readable.py` (53). The deployed copy is only as fresh as the
 last merge to `main`.
 
 Plain HTML, vanilla CSS and zero-dependency JavaScript (no animation library, no CDN), no build step
@@ -10,7 +10,8 @@ for the pages themselves, and no network use except the optional read of your ow
 
 ## Motion
 
-`motion.css` and `motion.js` (plus the shared animations in `fx3d.js`) use the browser's own Web
+`motion.css` and `motion.js` (unchanged copies of `ui/motion.css` and `ui/motion.js`, which the console
+uses too; plus the shared animations in `fx3d.js`) use the browser's own Web
 Animations API and CSS. One easing everywhere, an expo-out `cubic-bezier(0.16, 1, 0.3, 1)`; only
 `transform`, `opacity` and `stroke-dashoffset` animate, so no frame repaints or reflows the layout.
 Entrances stagger 60ms apart; digests scramble through hex for ~320ms and lock left to right into the
@@ -19,8 +20,9 @@ telemetry core, not a circle. Everything has a still version under `prefers-redu
 loops (the rings, the grid, the stripes) are constant-speed on purpose, so they stay linear. They
 pause while scrolled out of view.
 
-`tests/ui/test_motion.py` checks the above in a real Chromium: no console error, `layout-shift` of 0
-over http (under 0.001 from `file://`, where there is no header to preload the font), nothing but
+`tests/ui/test_motion.py` checks the above in a real Chromium: no console error, a `layout-shift` of
+0 on a normal load over http (the test allows 0.001; and 0.01 from `file://`, where there is no header
+to preload the font and the late font swap moves the header text by about 0.003), nothing but
 compositor properties animating, the scramble landing on the real SHA-256, and a still page under
 reduced motion. The telemetry core is dark translucent glass without a live backdrop blur (a blur is
 recomputed every frame the grid rolls behind it), and `vercel.json` preloads the font with a `Link`

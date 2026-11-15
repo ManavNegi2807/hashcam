@@ -164,9 +164,6 @@
 /* Glows are a wider, fainter copy of the stroke, not a filter on something that moves. */
 .packet { filter: none; }
 .packet.halo { stroke-width: 13; stroke-opacity: .22; }
-.iso-packet, .iso-packet.bad { filter: none; stroke-width: 9; stroke-opacity: .3; }
-.iso-packet { stroke: var(--hc-gold); }
-.iso-packet.bad { stroke: var(--hc-invalid); }
 
 /* The status line under the Merkle tree keeps room for its longest message, so editing an event
    never pushes the page down. */

@@ -6,6 +6,7 @@
 <title>HashCam Console</title>
 <link rel="stylesheet" href="/theme.css">
 <link rel="stylesheet" href="/console.css">
+<link rel="stylesheet" href="/motion.css">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -40,7 +41,7 @@
     <section class="sec" id="attach" aria-labelledby="attach-h">
       <h2 id="attach-h">Attach HashCam to an agent</h2>
       <div class="cards3">
-        <article class="card">
+        <article data-reveal class="card">
           <header><span class="light" data-light="recorder" aria-hidden="true"></span><h3>Browser agents</h3></header>
           <p class="muted">Claude in Chrome, Comet, browser-use, or you, in Chrome or Edge.</p>
           <ol>
@@ -51,12 +52,12 @@
           </ol>
           <p class="state" data-state="recorder">Checking the recorder…</p>
         </article>
-        <article class="card">
+        <article data-reveal class="card">
           <header><span class="light off" aria-hidden="true"></span><h3>MCP agents</h3><span class="tag planned">PLANNED</span></header>
           <p class="muted">Claude Code, Cursor, Claude Desktop.</p>
           <p>An MCP proxy that sends every tool call through the same gateway and ledger. It is not built yet.</p>
         </article>
-        <article class="card">
+        <article data-reveal class="card">
           <header><span class="light" data-light="recorder" aria-hidden="true"></span><h3>Custom agents</h3></header>
           <p class="muted">Your own agent reports each step to the local recorder.</p>
           <ol>
@@ -96,8 +97,8 @@ if step["decision"] != "ALLOW":
       <p class="muted">From your recorder on this computer. Approvals and the kill switch stay in the extension, where your passkey is.</p>
       <p class="state" id="liveState" role="status">Checking the recorder…</p>
       <div class="live-grid">
-        <div class="panel"><h3>Events per session</h3><div id="bars"></div></div>
-        <div class="panel" id="sessionPanel" hidden>
+        <div data-reveal class="panel"><h3>Events per session</h3><div id="bars"></div></div>
+        <div data-reveal class="panel" id="sessionPanel" hidden>
           <h3 id="sessionTitle">Session</h3>
           <canvas id="atom" class="atom" role="img" aria-label="Session core"></canvas>
           <p class="atom-key small muted">Nucleus: the agent. Shells: pages (cyan), submits (gold), secrets (violet), downloads (teal). The glowing outer electron: an approval is waiting. Lit shells: trust.</p>
@@ -125,8 +126,8 @@ if step["decision"] != "ALLOW":
         </div>
         <div id="dominoes"></div>
         <div class="receipt-grid">
-          <div class="panel"><h3>Events</h3><ol class="roll paper" id="eventRoll"></ol></div>
-          <div class="panel">
+          <div data-reveal class="panel"><h3>Events</h3><ol class="roll paper" id="eventRoll"></ol></div>
+          <div data-reveal class="panel">
             <h3>Replay</h3>
             <figure class="replay" id="replay" hidden><img id="replayImg" alt=""><figcaption id="replayCap"></figcaption></figure>
             <input type="range" id="scrub" min="0" max="0" value="0" aria-label="Scrub through the page snapshots" hidden>
@@ -141,12 +142,12 @@ if step["decision"] != "ALLOW":
     <!-- How it works (styles 1, 5, 6, 7) -->
     <section class="sec" id="how" aria-labelledby="how-h">
       <h2 id="how-h">How it works</h2>
-      <div class="panel"><h3>The path of every action</h3><div id="iso"></div></div>
+      <div data-reveal class="panel"><h3>The path of every action</h3><div id="iso"></div></div>
       <div class="how-grid">
-        <div class="panel"><h3>Why tampering fails</h3><p class="muted small">Edit any event. Drag the tree to turn it. Hashes here are plain SHA-256 of the text, to show the idea; real receipts hash canonical JSON with domain tags, so their values differ.</p><div id="merkle"></div></div>
-        <div class="panel"><h3>The maths</h3><div id="maths"></div></div>
+        <div data-reveal class="panel"><h3>Why tampering fails</h3><p class="muted small">Edit any event. Drag the tree to turn it. Hashes here are plain SHA-256 of the text, to show the idea; real receipts hash canonical JSON with domain tags, so their values differ.</p><div id="merkle"></div></div>
+        <div data-reveal class="panel"><h3>The maths</h3><div id="maths"></div></div>
       </div>
-      <div class="panel"><h3>A risky step, from start to seal</h3><div id="cartoon"></div></div>
+      <div data-reveal class="panel"><h3>A risky step, from start to seal</h3><div id="cartoon"></div></div>
     </section>
   </main>
 
@@ -158,6 +159,7 @@ if step["decision"] != "ALLOW":
   </dialog>
 
   <script src="/vendor/gsap.min.js"></script>
+  <script src="/motion.js"></script>
   <script src="/graph.js"></script>
   <script type="module" src="/console.js"></script>
 </body>
