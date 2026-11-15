@@ -19,6 +19,7 @@
       <a href="#live">Live</a>
       <a href="#receipt">Check a receipt</a>
       <a href="#how">How it works</a>
+      <a href="#about">About</a>
     </nav>
   </header>
 
@@ -148,6 +149,34 @@ if step["decision"] != "ALLOW":
         <div data-reveal class="panel"><h3>The maths</h3><div id="maths"></div></div>
       </div>
       <div data-reveal class="panel"><h3>A risky step, from start to seal</h3><div id="cartoon"></div></div>
+    </section>
+
+    <!-- About -->
+    <section class="sec" id="about" aria-labelledby="about-h">
+      <h2 id="about-h">About this console</h2>
+      <div class="cards3">
+        <article data-reveal class="card">
+          <h3>What it is</h3>
+          <p class="muted">The console for your own HashCam recorder: it shows live sessions, checks receipts and explains how a record is kept. It runs on your computer and sees only your recorder.</p>
+        </article>
+        <article data-reveal class="card">
+          <h3>What it does with your data</h3>
+          <ul>
+            <li>Nothing you drop here is uploaded.</li>
+            <li>It reads your recorder on this computer with a read-only key.</li>
+            <li>It talks to no other site.</li>
+          </ul>
+        </article>
+        <article data-reveal class="card">
+          <h3>What is not built</h3>
+          <ul>
+            <li>The MCP proxy for Claude Code and Cursor is <span class="tag planned">PLANNED</span>.</li>
+            <li>It cannot watch an agent on someone else's machine.</li>
+            <li>A valid receipt proves what happened in that run, not that an agent is safe.</li>
+          </ul>
+        </article>
+      </div>
+      <p class="muted small">The hosted site has a longer About page: what each page does and what is finished.</p>
     </section>
   </main>
 

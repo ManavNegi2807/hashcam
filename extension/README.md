@@ -44,6 +44,8 @@ happened into a signed receipt anyone can verify offline.
 
 The panel uses the **Night Observatory** theme shared with the HashCam Console (`theme.css`, `fx3d.js`, `readable.js`, byte-identical copies of the files in `ui/`). It shows four of the console's animation styles: the **Glow Atom** session core (events orbit by kind, a glowing outer electron means an approval is waiting), the **paper-cut** receipt roll, the **domino** verdict (a FAIL stops the row) and a small **maths** line in the approval card (what you sign). Every one has a still version for reduced motion. `TESTED`: no sideways overflow at 320, 400 and 480 px with an approval card showing.
 
+A sealed session can be saved as a **locked report** (PDF): what the agent did well, what went wrong, what to do next, in the panel's plain words, with the H logo and a faint watermark. It is written and encrypted in the panel (`session-report.js`, `lockedpdf.js`: AES-256, a new random password shown once and stored nowhere) and never uploaded. A sensitive agent's task and paths are left out. The panel also has the faint logo watermark (`brand.css`), glass cards and a thin underline that draws in under the open tab. `TESTED`: `tests/ui/test_extension_report.py` (the report modules run as shipped and the PDF is opened with an independent library). `NOT TESTED` here: the Locked report button inside a real Chrome (the end-to-end test in `tests/recorder/` needs the recorder binaries and a database).
+
 ## Run it
 
 **On Windows, with no terminal:** double-click `HashCam.bat` (it starts the recorder and copies the

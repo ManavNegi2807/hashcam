@@ -1,317 +1,14 @@
 // The Range report: what a run did well, what went wrong and what to do next, as a PDF that only opens with
-// a password. Everything happens in this tab:
-//
-// * the PDF is written here, by hand (the two standard Helvetica fonts, the logo from report-art.js, no library);
-// * it is locked with AES-256 (PDF standard security handler, revision 6: the strongest the format has);
-// * the password comes from the browser's secure random source, is shown once and is never stored or sent;
-// * a second, random "owner" password that nobody ever sees keeps editing locked.
-//
-// What the lock is worth: as much as the password. 25 characters from 31 is about 124 bits, which cannot be
-// guessed. Anyone who has both the file and the password can read it, so they should travel separately.
+// a password. The PDF itself (the layout, the AES-256 lock, the random password) is lockedpdf.js, the one
+// source the extension shares; this file only says what the Range's report says. Everything happens in this
+// tab: nothing is uploaded, and the password is shown once and stored nowhere.
 (() => {
 "use strict";
 
-const enc = new TextEncoder();
+const { buildLockedPdf, newPassword, hash2B } = window.HCLockedPdf; // lockedpdf.js
 
-// ------------------------------------------------------------------ small byte helpers
-
-function concat(...parts) {
-  const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
-  let at = 0;
-  for (const p of parts) { out.set(p, at); at += p.length; }
-  return out;
-}
-const random = (n) => crypto.getRandomValues(new Uint8Array(n));
-const hex = (bytes) => Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-const ascii = (text) => Uint8Array.from(text, (c) => c.charCodeAt(0) & 0xff);
-const digest = async (name, bytes) => new Uint8Array(await crypto.subtle.digest(name, bytes));
-
-// AES-CBC without padding, for whole blocks. WebCrypto always adds a padding block at the end; the blocks
-// before it do not depend on it, so it is cut off.
-async function cbcNoPad(keyBytes, iv, data) {
-  const key = await crypto.subtle.importKey("raw", keyBytes, "AES-CBC", false, ["encrypt"]);
-  const out = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-CBC", iv }, key, data));
-  return out.slice(0, data.length);
-}
-// AES-CBC with a fresh random IV in front and standard padding: how PDF stores an encrypted stream.
-async function cbcStream(keyBytes, data) {
-  const iv = random(16);
-  const key = await crypto.subtle.importKey("raw", keyBytes, "AES-CBC", false, ["encrypt"]);
-  return concat(iv, new Uint8Array(await crypto.subtle.encrypt({ name: "AES-CBC", iv }, key, data)));
-}
-
-// ------------------------------------------------------------------ the password
-
-const ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"; // 31 characters, none that look alike (no 0/O, 1/I/L)
-
-function newPassword() {
-  const limit = 256 - (256 % ALPHABET.length); // throw away the top few bytes so every character is equally likely
-  let out = "";
-  while (out.length < 25) {
-    for (const b of random(32)) {
-      if (b < limit && out.length < 25) out += ALPHABET[b % ALPHABET.length];
-    }
-  }
-  return out.match(/.{5}/g).join("-");
-}
-
-// ------------------------------------------------------------------ PDF encryption, revision 6 (ISO 32000-2, 7.6.4)
-
-// "Algorithm 2.B": the slow hash that turns a password into a key.
-async function hash2B(password, salt, udata) {
-  let k = await digest("SHA-256", concat(password, salt, udata));
-  for (let count = 1; ; count++) {
-    const one = concat(password, k, udata);
-    const k1 = new Uint8Array(one.length * 64);
-    for (let i = 0; i < 64; i++) k1.set(one, i * one.length);
-    const e = await cbcNoPad(k.slice(0, 16), k.slice(16, 32), k1);
-    let sum = 0;
-    for (let i = 0; i < 16; i++) sum += e[i];
-    k = await digest(["SHA-256", "SHA-384", "SHA-512"][sum % 3], e);
-    if (count >= 64 && e[e.length - 1] <= count - 32) break;
-  }
-  return k.slice(0, 32);
-}
-
-const PERMISSIONS = -3900; // printing allowed; changing, copying out and form filling are not
-
-async function encryption(userPassword, ownerPassword) {
-  const user = enc.encode(userPassword);
-  const owner = enc.encode(ownerPassword);
-  const fileKey = random(32);
-  const zero = new Uint8Array(16);
-
-  const uv = random(8), uk = random(8);
-  const U = concat(await hash2B(user, uv, new Uint8Array(0)), uv, uk);
-  const UE = await cbcNoPad(await hash2B(user, uk, new Uint8Array(0)), zero, fileKey);
-
-  const ov = random(8), ok = random(8);
-  const O = concat(await hash2B(owner, ov, U), ov, ok);
-  const OE = await cbcNoPad(await hash2B(owner, ok, U), zero, fileKey);
-
-  const p = PERMISSIONS >>> 0;
-  const perms = concat(
-    Uint8Array.of(p & 255, (p >>> 8) & 255, (p >>> 16) & 255, (p >>> 24) & 255, 255, 255, 255, 255),
-    ascii("Tadb"), random(4));
-  const Perms = await cbcNoPad(fileKey, zero, perms); // one block with a zero IV is plain AES (ECB)
-
-  const dict = `<< /Filter /Standard /V 5 /R 6 /Length 256 /P ${PERMISSIONS}`
-    + " /CF << /StdCF << /AuthEvent /DocOpen /CFM /AESV3 /Length 32 >> >> /StmF /StdCF /StrF /StdCF"
-    + ` /U <${hex(U)}> /UE <${hex(UE)}> /O <${hex(O)}> /OE <${hex(OE)}> /Perms <${hex(Perms)}> >>`;
-  return { fileKey, dict };
-}
-
-// ------------------------------------------------------------------ measuring and wrapping text
-
-// Helvetica's character widths (thousandths of the font size), for the printable ASCII characters 32..126.
-const WIDTHS = [278, 278, 355, 556, 556, 889, 667, 191, 333, 333, 389, 584, 278, 333, 278, 278, 556, 556, 556, 556, 556,
-  556, 556, 556, 556, 556, 278, 278, 584, 584, 584, 556, 1015, 667, 667, 722, 722, 667, 611, 778, 722, 278, 500, 667,
-  556, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 278, 278, 278, 469, 556, 333, 556, 556,
-  500, 556, 556, 278, 556, 556, 222, 222, 500, 222, 833, 556, 556, 556, 556, 333, 500, 278, 556, 500, 722, 500, 500,
-  500, 334, 260, 334, 584];
-
-// The standard fonts know Latin-1 only: say the same thing in characters they have.
-function latin(text) {
-  return String(text)
-    .replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/[–—]/g, "-")
-    .replace(/…/g, "...").replace(/→/g, "->").replace(/\s+/g, " ")
-    .replace(/[^\x20-\x7e\xa0-\xff]/g, "?").trim();
-}
-function widthOf(text, size, bold) {
-  let w = 0;
-  for (const c of text) {
-    const code = c.charCodeAt(0);
-    w += code >= 32 && code <= 126 ? WIDTHS[code - 32] : 556;
-  }
-  return (w * size * (bold ? 1.07 : 1)) / 1000; // the bold face is a little wider: leave room for it
-}
-function wrap(text, size, bold, room) {
-  const lines = [];
-  let line = "";
-  for (let word of text.split(" ")) {
-    while (widthOf(word, size, bold) > room) { // one unbroken run longer than a whole line: cut it
-      if (line) { lines.push(line); line = ""; }
-      let cut = word.length - 1;
-      while (cut > 1 && widthOf(word.slice(0, cut), size, bold) > room) cut--;
-      lines.push(word.slice(0, cut));
-      word = word.slice(cut);
-    }
-    const next = line ? `${line} ${word}` : word;
-    if (widthOf(next, size, bold) > room && line) { lines.push(line); line = word; } else line = next;
-  }
-  if (line) lines.push(line);
-  return lines;
-}
-
-// ------------------------------------------------------------------ drawing the pages
-
-const PAGE = { w: 595, h: 842, left: 54, right: 54, bottom: 70 };
-const WIDE = PAGE.w - PAGE.left - PAGE.right;
-const INK = {
-  text: "0.10 0.12 0.16", soft: "0.40 0.44 0.50", line: "0.87 0.88 0.90", paper: "0.962 0.966 0.974",
-  band: "0.031 0.043 0.071", onBand: "0.74 0.77 0.82", white: "1 1 1", gold: "0.96 0.62 0.04",
-  PASS: "0.07 0.58 0.35", FAIL: "0.84 0.20 0.17", UNKNOWN: "0.80 0.50 0.02",
-};
-const toneOf = (overall) => ({ PASSED: INK.PASS, FAILED: INK.FAIL, INCOMPLETE: INK.UNKNOWN })[overall] || INK.soft;
-
-const esc = (s) => s.replace(/[\\()]/g, (c) => "\\" + c);
-const n1 = (v) => v.toFixed(1);
-const say = (font, size, color, x, y, s) => `BT ${color} rg /${font} ${size} Tf ${n1(x)} ${n1(y)} Td (${esc(s)}) Tj ET`;
-const sayRight = (font, size, color, right, y, s) => say(font, size, color, right - widthOf(s, size, font === "F2"), y, s);
-const box = (color, x, y, w, h) => `${color} rg ${n1(x)} ${n1(y)} ${n1(w)} ${n1(h)} re f`;
-
-// blocks -> one string of PDF drawing commands per page
-function draw(run, blocks) {
-  const pages = [];
-  let ops = [], y = 0;
-  const level = `Level ${run.level.n}: ${latin(run.level.title)}`;
-
-  const open = () => {
-    ops = [`q 330 0 0 330 ${n1((PAGE.w - 330) / 2)} ${n1((PAGE.h - 330) / 2 - 30)} cm /Im2 Do Q`]; // the watermark, under everything
-    if (!pages.length) { // the first page: a tall dark band with the logo, like the site's top bar
-      ops.push(box(INK.band, 0, PAGE.h - 100, PAGE.w, 100), box(INK.gold, 0, PAGE.h - 102.5, PAGE.w, 2.5));
-      ops.push(`q 50 0 0 50 ${PAGE.left} ${PAGE.h - 75} cm /Im1 Do Q`);
-      const x = PAGE.left + 62;
-      ops.push(say("F2", 19, INK.white, x, PAGE.h - 48, "HashCam"));
-      ops.push(say("F2", 19, INK.gold, x + widthOf("HashCam ", 19, true), PAGE.h - 48, "Range"));
-      ops.push(say("F1", 9.5, INK.onBand, x, PAGE.h - 65, "Agent test report"));
-      ops.push(sayRight("F2", 7.5, INK.gold, PAGE.w - PAGE.right, PAGE.h - 44, "LOCKED WITH AES-256"));
-      ops.push(sayRight("F1", 9, INK.onBand, PAGE.w - PAGE.right, PAGE.h - 59, run.at));
-      y = PAGE.h - 100 - 28;
-    } else {
-      ops.push(box(INK.band, 0, PAGE.h - 32, PAGE.w, 32), box(INK.gold, 0, PAGE.h - 33.5, PAGE.w, 1.5));
-      ops.push(say("F2", 9.5, INK.white, PAGE.left, PAGE.h - 20.5, "HashCam"));
-      ops.push(say("F2", 9.5, INK.gold, PAGE.left + widthOf("HashCam ", 9.5, true), PAGE.h - 20.5, "Range"));
-      ops.push(sayRight("F1", 8.5, INK.onBand, PAGE.w - PAGE.right, PAGE.h - 20.5, level));
-      y = PAGE.h - 32 - 34;
-    }
-  };
-  const close = () => pages.push(ops);
-  const need = (height) => { if (y - height < PAGE.bottom) { close(); open(); } };
-
-  // Lines of text from x, with an optional bold opening ("lead") on the first line.
-  const lines = (list, lead, size, x, color, first) => {
-    const leading = size * 1.45;
-    list.forEach((line, i) => {
-      need(leading);
-      y -= leading;
-      if (i === 0 && first) first();
-      if (i === 0 && lead && line.startsWith(lead)) {
-        ops.push(`BT ${INK.text} rg /F2 ${size} Tf ${n1(x)} ${n1(y)} Td (${esc(lead)}) Tj ${color} rg /F1 ${size} Tf (${esc(line.slice(lead.length))}) Tj ET`);
-      } else ops.push(say("F1", size, color, x, y, line));
-    });
-  };
-
-  open();
-  let step = 0;
-  for (const b of blocks) {
-    const text = latin(b.text || "");
-    const lead = b.lead ? latin(b.lead) : "";
-    const whole = lead ? `${lead} ${text}` : text;
-    if (b.style === "verdict") {
-      const goal = wrap(text, 9.5, false, WIDE - 150);
-      const height = 84 + goal.length * 13;
-      const top = y;
-      ops.push(box(INK.paper, PAGE.left, top - height, WIDE, height), box(b.tone, PAGE.left, top - height, 5, height));
-      ops.push(say("F2", 7.5, INK.soft, PAGE.left + 20, top - 20, "RESULT"));
-      ops.push(say("F2", 25, b.tone, PAGE.left + 20, top - 46, b.overall));
-      ops.push(say("F2", 10.5, INK.text, PAGE.left + 20, top - 66, level));
-      goal.forEach((line, i) => ops.push(say("F1", 9.5, INK.soft, PAGE.left + 20, top - 81 - i * 13, line)));
-      if (b.score) {
-        ops.push(sayRight("F2", 27, INK.text, PAGE.w - PAGE.right - 18, top - 46, b.score));
-        ops.push(sayRight("F1", 8.5, INK.soft, PAGE.w - PAGE.right - 18, top - 60, "checks passed"));
-      }
-      y = top - height - 6;
-    } else if (b.style === "h") {
-      need(64);
-      y -= 24;
-      ops.push(say("F2", 12.5, INK.text, PAGE.left, y, text), box(INK.gold, PAGE.left, y - 7, 30, 2));
-      y -= 12;
-      step = 0;
-    } else if (b.style === "row") { // a coloured chip with the verdict on one check, then what the record showed
-      const list = wrap(whole, 10, true, WIDE - 62);
-      need(10 * 1.45 * Math.min(list.length, 2) + 12);
-      y -= 3;
-      lines(list, lead, 10, PAGE.left + 62, INK.soft, () => {
-        ops.push(box(INK[b.status], PAGE.left, y - 3.5, 50, 13.5));
-        ops.push(say("F2", 7, INK.white, PAGE.left + (50 - widthOf(b.status, 7, true)) / 2, y + 1, b.status));
-      });
-      y -= 8;
-      ops.push(box(INK.line, PAGE.left, y, WIDE, 0.6));
-      y -= 2;
-    } else if (b.style === "step") {
-      step += 1;
-      const number = String(step);
-      lines(wrap(whole, 10, Boolean(lead), WIDE - 20), lead, 10, PAGE.left + 20, INK.text,
-        () => ops.push(say("F2", 10, INK.gold, PAGE.left + 2, y, number)));
-      y -= 4;
-    } else if (b.style === "b") {
-      lines(wrap(whole, 10, Boolean(lead), WIDE - 16), lead, 10, PAGE.left + 16, INK.text,
-        () => ops.push(box(INK.gold, PAGE.left + 3, y + 2.4, 3.4, 3.4)));
-      y -= 3;
-    } else if (b.style === "small") {
-      lines(wrap(whole, 8.5, false, WIDE), "", 8.5, PAGE.left, INK.soft);
-      y -= 3;
-    } else {
-      lines(wrap(whole, 10, Boolean(lead), WIDE), lead, 10, PAGE.left, INK.text);
-      y -= 5;
-    }
-  }
-  close();
-  return pages.map((list, i) => [...list,
-    box(INK.line, PAGE.left, 50, WIDE, 0.6),
-    say("F1", 8, INK.soft, PAGE.left, 36, "HashCam Range - a report is a summary, not a proof. Ask for the record."),
-    sayRight("F1", 8, INK.soft, PAGE.w - PAGE.right, 36, `Page ${i + 1} of ${pages.length}`)].join("\n"));
-}
-
-// ------------------------------------------------------------------ the PDF file
-
-const fromB64 = (b64) => Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-
-async function pdf(run, blocks, userPassword) {
-  const { fileKey, dict } = await encryption(userPassword, hex(random(32)));
-  const pages = draw(run, blocks);
-  const objects = []; // index + 1 is the object number
-  const add = (body) => objects.push(body) && objects.length;
-  const stream = async (head, data) => {
-    const locked = await cbcStream(fileKey, data);
-    return add(concat(ascii(`<< ${head} /Length ${locked.length} >>\nstream\n`), locked, ascii("\nendstream")));
-  };
-  add("<< /Type /Catalog /Pages 2 0 R >>");
-  add(""); // the page tree, filled in below
-  add("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>");
-  add("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>");
-  const encryptRef = add(dict);
-  const art = window.HCReportArt;
-  const picture = (p) => stream(
-    `/Type /XObject /Subtype /Image /Width ${p.w} /Height ${p.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode`,
-    fromB64(p.b64));
-  const logo = await picture(art.logo), mark = await picture(art.mark);
-  const resources = `<< /Font << /F1 3 0 R /F2 4 0 R >> /XObject << /Im1 ${logo} 0 R /Im2 ${mark} 0 R >> >>`;
-  const kids = [];
-  for (const body of pages) {
-    const content = await stream("", ascii(body));
-    kids.push(add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE.w} ${PAGE.h}] /Resources ${resources} /Contents ${content} 0 R >>`));
-  }
-  objects[1] = `<< /Type /Pages /Count ${kids.length} /Kids [${kids.map((k) => `${k} 0 R`).join(" ")}] >>`;
-
-  const parts = [ascii("%PDF-1.7\n%\xe2\xe3\xcf\xd3\n")];
-  const offsets = [];
-  let at = parts[0].length;
-  objects.forEach((body, i) => {
-    const bytes = concat(ascii(`${i + 1} 0 obj\n`), typeof body === "string" ? ascii(body) : body, ascii("\nendobj\n"));
-    offsets.push(at);
-    parts.push(bytes);
-    at += bytes.length;
-  });
-  const id = hex(random(16));
-  const xref = [`xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`,
-    ...offsets.map((o) => `${String(o).padStart(10, "0")} 00000 n \n`),
-    `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R /Encrypt ${encryptRef} 0 R /ID [<${id}> <${id}>] >>\n`,
-    `startxref\n${at}\n%%EOF\n`].join("");
-  parts.push(ascii(xref));
-  return concat(...parts);
-}
+const toneOf = (overall) => ({ PASSED: "good", FAILED: "bad", INCOMPLETE: "warn" })[overall] || "soft";
+const chipTone = { PASS: "good", FAIL: "bad", UNKNOWN: "warn" };
 
 // ------------------------------------------------------------------ what the report says
 
@@ -325,7 +22,8 @@ function blocksFor(run) {
   const { level, result } = run;
   const out = [{
     style: "verdict", overall: result.overall, tone: toneOf(result.overall), text: `The goal: ${level.goal}`,
-    score: result.scored ? `${result.tally.pass} / ${result.tally.total}` : "",
+    title: `Level ${level.n}: ${level.title}`,
+    score: result.scored ? `${result.tally.pass} / ${result.tally.total}` : "", scoreNote: result.scored ? "checks passed" : "",
   }];
   if (!result.scored) {
     out.push({ style: "h", text: "What went wrong" });
@@ -337,7 +35,7 @@ function blocksFor(run) {
   } else {
     const by = (status) => result.criteria.filter((c) => c.status === status);
     const good = by("PASS"), bad = by("FAIL"), open = by("UNKNOWN");
-    const row = (c) => ({ style: "row", status: c.status, lead: `${c.label}.`, text: c.evidence });
+    const row = (c) => ({ style: "row", chip: c.status, tone: chipTone[c.status], lead: `${c.label}.`, text: c.evidence });
 
     out.push({ style: "h", text: "What your agent did well" });
     if (!good.length) out.push({ style: "p", text: "Nothing passed in this run." });
@@ -377,9 +75,15 @@ function blocksFor(run) {
 }
 
 async function build(run) {
-  const password = newPassword();
-  const bytes = await pdf(run, blocksFor(run), password);
-  return { bytes, password };
+  const doc = {
+    brand: ["HashCam", "Range"],
+    kicker: "Agent test report",
+    date: run.at,
+    running: `Level ${run.level.n}: ${run.level.title}`,
+    footer: "HashCam Range - a report is a summary, not a proof. Ask for the record.",
+    blocks: blocksFor(run),
+  };
+  return buildLockedPdf(doc, window.HCReportArt);
 }
 
 window.HCReport = { build, blocksFor, newPassword, hash2B };

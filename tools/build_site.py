@@ -36,7 +36,7 @@ SITE = REPO / "site"
 SHARED = ["theme.css", "console.css", "motion.css", "motion.js"]
 # The site animates with the browser's own Web Animations API: no animation library is shipped.
 VENDOR = ["plus-jakarta-sans.woff2", "OFL-plus-jakarta-sans.txt"]
-_EXPORT = re.compile(r"^export (function|const) (\w+)", re.MULTILINE)
+_EXPORT = re.compile(r"^export (async function|function|const) (\w+)", re.MULTILINE)
 
 
 def to_classic(module_source: str, name: str = "fx3d", global_name: str = "HCFX") -> str:
@@ -57,9 +57,9 @@ def to_classic(module_source: str, name: str = "fx3d", global_name: str = "HCFX"
 
 
 # ES modules in ui/ that the site needs as classic scripts: (file, global name).
-CLASSIC = [("fx3d", "HCFX"), ("readable", "HCReadable")]
+CLASSIC = [("fx3d", "HCFX"), ("readable", "HCReadable"), ("lockedpdf", "HCLockedPdf")]
 # Files the extension keeps its own byte-identical copy of (a test checks they match).
-EXTENSION_COPIES = ["theme.css", "fx3d.js", "readable.js"]
+EXTENSION_COPIES = ["theme.css", "fx3d.js", "readable.js", "lockedpdf.js"]
 
 
 def copy_shared() -> None:

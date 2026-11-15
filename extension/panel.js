@@ -4,6 +4,7 @@
 import { api, approvalChallenge, b64urlDecode, b64urlEncode, hostPatterns, settings } from "./lib/api.js";
 import { dominoes, glowAtom, signFormula } from "./fx3d.js";
 import { describe, technical, verdictText } from "./readable.js";
+import { makeSessionReport } from "./session-report.js";
 
 const $ = (id) => document.getElementById(id);
 const gsap = window.gsap;
@@ -323,7 +324,14 @@ function renderVerdict() {
     el("div", { class: "row" },
       el("button", { class: "btn", onclick: () => download("receipt") }, "Save receipt"),
       el("button", { class: "btn ghost", onclick: () => download("receipt-keys") }, "Save key manifest"),
+      el("button", { class: "btn ghost", id: "reportBtn", onclick: saveReport }, "Locked report (.pdf)"),
       el("button", { class: "btn ghost", onclick: newSession }, "New session"),
+    ),
+    el("div", { class: "report-key", id: "reportKey", hidden: "" },
+      el("div", { class: "muted small" }, "Password for this report (shown once, saved nowhere)"),
+      el("code", { class: "report-pass", id: "reportPass" }),
+      el("button", { class: "btn ghost", onclick: copyPassword }, "Copy"),
+      el("p", { class: "small muted" }, "Write it down now: if you lose it, nobody can open the file. Never send it with the file."),
     ),
     dims,
   ));
@@ -340,6 +348,33 @@ async function download(which) {
     await chrome.downloads.download({ url, filename: view.receipt + (which === "receipt-keys" ? ".keys.json" : "") });
     setTimeout(() => URL.revokeObjectURL(url), 30000);
   });
+}
+
+// The locked report: written and encrypted here with a new random password, shown once, never stored or sent.
+async function saveReport() {
+  await guarded(async () => {
+    const button = $("reportBtn");
+    button.disabled = true;
+    try {
+      let sha = "";
+      try { // name the receipt by its fingerprint, so the report is tied to one record
+        const response = await api(`/sessions/${sessionId}/receipt`, undefined, { raw: true });
+        const hash = new Uint8Array(await crypto.subtle.digest("SHA-256", await response.arrayBuffer()));
+        sha = Array.from(hash, (b) => b.toString(16).padStart(2, "0")).join("");
+      } catch (_) { /* a report without the fingerprint is still useful */ }
+      const { bytes, password } = await makeSessionReport(view, sha);
+      const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+      await chrome.downloads.download({ url, filename: `${view.receipt || "hashcam-session"}-report.pdf` });
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+      $("reportPass").textContent = password;
+      $("reportKey").hidden = false;
+    } finally {
+      button.disabled = false;
+    }
+  });
+}
+async function copyPassword() {
+  await guarded(async () => { await navigator.clipboard.writeText($("reportPass").textContent); });
 }
 
 async function newSession() {
