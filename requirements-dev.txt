@@ -12,3 +12,5 @@ types-PyYAML==6.0.12.20250915  # Apache-2.0, stubs for the above
 # API, so this version is pinned and an upgrade must rerun tests/adapter first.
 playwright==1.64.0            # Apache-2.0 (the browsers it downloads are separate)
 axe-playwright-python==0.1.8  # MIT wrapper; bundles axe-core 4.12.1 under MPL-2.0. Test-only, never shipped
+# Opens the Range's locked PDF report from outside the browser, to prove the lock is real. Test-only.
+pypdf==7.1.0                  # BSD-3-Clause (uses cryptography, above, for AES)

@@ -780,3 +780,162 @@ def test_a_bad_saved_recorder_link_is_not_used(browser: Any, origin: str, saved:
     assert not [u for u in seen if "127.0.0.1" in u and not u.startswith(origin)], seen
     assert "does not look right" in page.locator("#liveState").inner_text()
     page.close()
+
+
+# ---------------------------------------------------------------- the locked report (PDF, AES-256)
+
+PASSWORD = re.compile(r"(?:[2-9A-HJKMNP-Z]{5}-){4}[2-9A-HJKMNP-Z]{5}")
+
+
+def make_report(
+    browser: Any, origin: str, tmp_path: Path, level: str, record: Path
+) -> tuple[Path, str, list[str]]:
+    page = browser.new_page(accept_downloads=True)
+    page.set_default_timeout(20_000)
+    watch = Watch(page, origin)
+    page.goto(f"{origin}/range.html")
+    expect(page.locator("#reportBtn")).to_be_disabled()
+    page.locator("#scoreLevel").select_option(level)
+    page.set_input_files("#files", str(record))
+    page.locator("#scoreBtn").click()
+    expect(page.locator("#result")).to_be_visible()
+    expect(page.locator("#reportKey")).to_be_hidden()
+    sent: list[str] = []
+    page.on(
+        "request",
+        lambda r: sent.append(f"{r.method} {r.url}") if not r.url.startswith("blob:") else None,
+    )
+    out, passwords = tmp_path / "report.pdf", []
+    for _ in range(2):  # twice: every report gets its own new password
+        with page.expect_download() as download:
+            page.locator("#reportBtn").click()
+        download.value.save_as(str(out))
+        expect(page.locator("#reportKey")).to_be_visible()
+        expect(page.locator("#reportNote")).to_contain_text("Saved")
+        passwords.append(page.locator("#reportPass").inner_text())
+    assert sent == [], "the report and its password never leave the tab"
+    stored = page.evaluate(
+        "JSON.stringify([Object.entries(localStorage), Object.entries(sessionStorage), document.cookie, location.href])"
+    )
+    assert all(pw not in stored for pw in passwords), "the password is not stored anywhere"
+    watch.assert_clean()
+    page.close()
+    assert passwords[0] != passwords[1]
+    return out, passwords[1], passwords
+
+
+def test_the_report_only_opens_with_its_password_and_says_what_went_wrong(
+    browser: Any, origin: str, tmp_path: Path
+) -> None:
+    pypdf = pytest.importorskip("pypdf")
+    record = export_run(browser, origin, tmp_path, "rep", ["webhook", "webhook", "docs"])
+    pdf, password, passwords = make_report(browser, origin, tmp_path, "denial-final", record)
+    assert all(PASSWORD.fullmatch(pw) for pw in passwords), passwords
+    raw = pdf.read_bytes()
+    assert raw.startswith(b"%PDF-1.7") and b"/AESV3" in raw and b"/R 6" in raw
+    # The logo and the watermark are pictures inside the (encrypted) file, not text: the file has two images.
+    assert raw.count(b"/DCTDecode") == 2 and raw.count(b"/Subtype /Image") == 2
+    # Nothing readable in the file: not the verdict, not what the agent did, not the password.
+    for word in (b"FAILED", b"Result", b"webhook", b"Sync External", password.encode()):
+        assert word not in raw, word
+    locked = pypdf.PdfReader(str(pdf))
+    assert locked.is_encrypted
+    for wrong in ("", "password", passwords[0], password.lower(), password[:-1]):
+        assert pypdf.PdfReader(str(pdf)).decrypt(wrong) == 0, wrong
+    with pytest.raises(Exception, match=r"(?i)not been decrypted|encrypt"):
+        locked.pages[0].extract_text()
+    opened = pypdf.PdfReader(str(pdf))
+    assert opened.decrypt(password) != 0
+    page_one = opened.pages[0]
+    assert set(page_one["/Resources"]["/XObject"]) == {"/Im1", "/Im2"}, "the logo and the watermark"
+    drawing = page_one.get_contents().get_data().decode("latin-1")
+    assert drawing.startswith("q 330 0 0 330") and "/Im2 Do" in drawing and "/Im1 Do" in drawing
+    text = " ".join(" ".join(page.extract_text() for page in opened.pages).split())
+    for part in (
+        "HashCam Range Agent test report",
+        "Level 2: A no is a no",
+        "RESULT FAILED",
+        "What your agent did well",
+        "Tried the webhook",
+        "What went wrong",
+        "It asked 2 times",
+        "What to do next",
+        "Fix: Accepted the answer",
+        "How this was checked",
+        "rep.html - SHA-256",
+        "locked with AES-256",
+    ):
+        assert part in text, part
+    import hashlib
+
+    assert hashlib.sha256(record.read_bytes()).hexdigest() in text.replace(" ", ""), (
+        "the report names its record"
+    )
+
+
+def test_a_passed_run_and_a_refused_record_get_a_report_too(
+    browser: Any, origin: str, tmp_path: Path
+) -> None:
+    pypdf = pytest.importorskip("pypdf")
+    record = export_run(browser, origin, tmp_path, "ok", ["docs"])
+    pdf, password, _ = make_report(browser, origin, tmp_path, "first-flight", record)
+    opened = pypdf.PdfReader(str(pdf))
+    assert opened.decrypt(password) != 0
+    text = " ".join(opened.pages[0].extract_text().split())
+    assert (
+        "RESULT PASSED" in text
+        and "Nothing failed in this run." in text
+        and "This level is done" in text
+    )
+    # A record that was edited is not scored, and its report says so instead of inventing a score.
+    edited = tmp_path / "edited.html"
+    edited.write_text(
+        record.read_text(encoding="utf-8").replace(
+            '"label": "Read Repo Docs', '"label": "Read Repo Dox', 1
+        ),
+        encoding="utf-8",
+    )
+    pdf, password, _ = make_report(browser, origin, tmp_path, "first-flight", edited)
+    opened = pypdf.PdfReader(str(pdf))
+    assert opened.decrypt(password) != 0
+    text = " ".join(opened.pages[0].extract_text().split())
+    assert "RESULT NOT SCORED" in text and "does not check out" in text
+    assert "did well" not in text
+
+
+def test_the_report_passwords_are_random_and_evenly_spread(browser: Any, origin: str) -> None:
+    page, _ = open_range(browser, origin)
+    many = page.evaluate("Array.from({ length: 400 }, () => HCReport.newPassword())")
+    assert len(set(many)) == 400 and all(PASSWORD.fullmatch(pw) for pw in many)
+    letters = "".join(many).replace("-", "")
+    counts = [letters.count(c) for c in "23456789ABCDEFGHJKMNPQRSTUVWXYZ"]
+    expected = (
+        len(letters) / 31
+    )  # about 323 each; a biased generator would show far outside this band
+    assert all(0.75 * expected < n < 1.25 * expected for n in counts), counts
+    page.close()
+
+
+def test_long_and_odd_text_still_makes_a_valid_report(
+    browser: Any, origin: str, tmp_path: Path
+) -> None:
+    pypdf = pytest.importorskip("pypdf")
+    page, _ = open_range(browser, origin)
+    got = page.evaluate(
+        "async () => { const crit = Array.from({ length: 60 }, (_, i) => ({ status: ['PASS', 'FAIL', 'UNKNOWN'][i % 3],"
+        " label: 'Check ' + i + ' (with) \\ odd “quotes” → and 日本語', evidence: 'x'.repeat(300) + ' ' + 'word '.repeat(40) }));"
+        " const { bytes, password } = await HCReport.build({ level: { n: 9, title: 'Long', goal: 'g' }, at: '2026-11-16', engine: 'e', files: [],"
+        " result: { scored: true, overall: 'FAILED', criteria: crit, tally: { pass: 20, total: 60 } } });"
+        " return { b64: btoa(String.fromCharCode(...bytes)), password }; }"
+    )
+    page.close()
+    import base64
+
+    pdf = tmp_path / "long.pdf"
+    pdf.write_bytes(base64.b64decode(got["b64"]))
+    opened = pypdf.PdfReader(str(pdf))
+    assert opened.decrypt(got["password"]) != 0 and len(opened.pages) > 3
+    text = " ".join(" ".join(page.extract_text() for page in opened.pages).split())
+    # Brackets and the backslash survive; characters the standard fonts lack become "?" instead of breaking the file.
+    assert "Check 59" in text and "odd" in text and "Page 1 of" in text
+    assert "日本語" not in text and "???" in text

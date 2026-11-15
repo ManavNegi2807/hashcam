@@ -97,6 +97,19 @@
         <button class="btn small ghost" type="button" id="saveBadge">Download the badge (.svg)</button>
         <span class="muted small" id="shareNote" role="status"></span>
       </p>
+      <div class="rg-report">
+        <h3>Your report</h3>
+        <p class="muted small">What your agent did well, what went wrong and what to do next, in plain words, as a PDF. It is written and locked here in this tab with AES-256, and it only opens with a password this page makes for it. Nothing is uploaded.</p>
+        <p class="rg-actions">
+          <button class="btn small" type="button" id="reportBtn" disabled>Download the locked report (.pdf)</button>
+          <span class="muted small" id="reportNote" role="status"></span>
+        </p>
+        <div class="rg-key" id="reportKey" hidden>
+          <p class="rg-label">Password for this report <span class="muted small">(shown once, saved nowhere)</span></p>
+          <p><code id="reportPass" class="rg-pass"></code> <button class="btn small ghost" type="button" id="copyPass">Copy</button></p>
+          <p class="muted small">Write it down or put it in a password manager now: if you lose it, nobody can open the file, not even HashCam. Never send it in the same message as the file.</p>
+        </div>
+      </div>
       <p class="muted small">A shared link holds only the level, the result and the date. It is a summary, not a proof: anyone who wants proof runs the level and checks the record themselves.</p>
     </section>
 
@@ -122,6 +135,8 @@
   <script src="range/scenarios.js"></script>
   <script src="range/limits.js"></script>
   <script src="range/score.js"></script>
+  <script src="range/report-art.js"></script>
+  <script src="range/report.js"></script>
   <script src="range/range.js"></script>
 </body>
 </html>

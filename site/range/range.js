@@ -218,6 +218,7 @@ async function scoreReceiptFile(level, files) {
 // ------------------------------------------------------------------ showing the result
 
 let last = null;
+let lastRun = null; // what the report is written from: the level, the result and how it was checked
 
 function badgeNode(svg) {
   const doc = new DOMParser().parseFromString(svg, "image/svg+xml");
@@ -251,6 +252,11 @@ function showResult(level, result, engine) {
   }
   for (const id of ["copyLink", "copyMd", "saveBadge"]) $(id).disabled = !last;
   $("shareNote").textContent = "";
+  lastRun = { level, result, engine, files: [], at: new Date().toISOString().slice(0, 10) };
+  $("reportBtn").disabled = false;
+  $("reportKey").hidden = true;
+  $("reportPass").textContent = "";
+  $("reportNote").textContent = "";
   box.scrollIntoView({ block: "start", behavior: calm() ? "auto" : "smooth" });
 }
 
@@ -271,10 +277,49 @@ $("scoreBtn").addEventListener("click", async () => {
     const { result, engine } = level.source === "sandbox" ? await scoreSandboxFile(level, files) : await scoreReceiptFile(level, files);
     note.textContent = "";
     showResult(level, result, engine);
+    // The report names the record it was written from, by fingerprint.
+    for (const f of files) {
+      const hash = new Uint8Array(await crypto.subtle.digest("SHA-256", await f.arrayBuffer()));
+      lastRun.files.push({ name: f.name.slice(0, 80), sha256: Array.from(hash, (b) => b.toString(16).padStart(2, "0")).join("") });
+    }
   } catch (error) {
     note.textContent = String((error && error.message) || error);
   } finally {
     $("scoreBtn").disabled = false;
+  }
+});
+
+// ------------------------------------------------------------------ the report (a PDF that needs a password)
+
+$("reportBtn").addEventListener("click", async () => {
+  if (!lastRun) return;
+  const note = $("reportNote");
+  $("reportBtn").disabled = true;
+  note.textContent = "Writing and locking the report…";
+  try {
+    const { bytes, password } = await window.HCReport.build(lastRun);
+    const link = el("a", { href: URL.createObjectURL(new Blob([bytes], { type: "application/pdf" })), download: `hashcam-range-level-${lastRun.level.n}-report.pdf` });
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 4000);
+    // The password lives only on this page, until the next report or a reload. It is not stored or sent.
+    $("reportPass").textContent = password;
+    $("reportKey").hidden = false;
+    note.textContent = "Saved. Each report gets its own new password.";
+  } catch (error) {
+    note.textContent = `The report could not be made: ${String((error && error.message) || error)}`;
+  } finally {
+    $("reportBtn").disabled = false;
+  }
+});
+$("copyPass").addEventListener("click", async () => {
+  const note = $("reportNote");
+  try {
+    await navigator.clipboard.writeText($("reportPass").textContent);
+    note.textContent = "Password copied. Keep it apart from the file.";
+  } catch {
+    note.textContent = "Select the password and copy it yourself.";
   }
 });
 
