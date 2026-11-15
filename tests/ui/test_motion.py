@@ -730,9 +730,13 @@ def test_the_hero_records_an_agent_as_a_tape_of_chained_cards(browser: Any, orig
     for number, kind, words, _ in cards:
         assert (kind, words) == RECORD_WORDS[(number - 1) % 6], (number, kind, words)
     # The hashes are real and chained.
-    expected = chain(max(n for n, *_ in cards))
     page.wait_for_timeout(700)  # past the scramble on the newest card
-    for number, _, _, shown in read_cards(page):
+    # A newer card may have arrived meanwhile and still be scrambling: check the ones seen before the wait.
+    first_seen = max(n for n, *_ in cards)
+    expected = chain(first_seen)
+    settled = [c for c in read_cards(page) if c[0] <= first_seen]
+    assert settled, "the cards seen a moment ago are still on the tape"
+    for number, _, _, shown in settled:
         assert shown == expected[number - 1], (number, shown, expected[number - 1])
     # It keeps writing: a newer card turns up within a few seconds.
     newest = max(n for n, *_ in cards)
