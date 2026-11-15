@@ -15,6 +15,10 @@ nothing from the internet: these files are served from this computer.
 | lenis.min.js | `lenis` npm release (source: darkroomengineering/lenis), `dist/` | 1.3.27 | MIT (LICENSE-lenis.txt) | 80f53e77f1c13e379fc246d2b5e299188e20bcb2b2fe7ebb13e8e8c7563a6da7 |
 | lenis.css | same package, `dist/` | 1.3.27 | MIT | 2f668ae84a668327f246faf8a770383a2bf69196d214290fbc4d5548910606c5 |
 
+The public website (`site/`) no longer ships GSAP, ScrollTrigger or Lenis: it animates with the browser's
+Web Animations API (`site/motion.js`), and `site/vendor/` holds only the font and its licence. The
+console and the extension still load GSAP for a few animations.
+
 Both versions were at least two weeks old when chosen. To update, download the new package into an
 empty folder, verify its checksum, read it, and replace the file and the hashes above.
 

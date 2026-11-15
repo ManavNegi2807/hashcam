@@ -1,11 +1,33 @@
 # site: the public HashCam website
 
-**Status:** `TESTED`: `tests/ui/test_site.py` (needs the full stack), `tests/ui/test_site_pages.py` (22)
-and `tests/ui/test_readable.py` (53). The deployed copy is only as fresh as the last merge to `main`.
+**Status:** `TESTED`: `tests/ui/test_site.py` (needs the full stack), `tests/ui/test_site_pages.py` (33),
+`tests/ui/test_motion.py` (21), `tests/ui/test_fallback.py` (39) and `tests/ui/test_readable.py` (53). The deployed copy is only as fresh as the
+last merge to `main`.
 
-Plain HTML, vanilla CSS and JavaScript with no libraries beyond the vendored GSAP, no build step for
-the pages themselves, and no network use except the optional read of your own recorder on
+Plain HTML, vanilla CSS and zero-dependency JavaScript (no animation library, no CDN), no build step
+for the pages themselves, and no network use except the optional read of your own recorder on
 `127.0.0.1`. It works from `file://` (double-click `index.html`) and from the web.
+
+## Motion
+
+`motion.css` and `motion.js` (plus the shared animations in `fx3d.js`) use the browser's own Web
+Animations API and CSS. One easing everywhere, an expo-out `cubic-bezier(0.16, 1, 0.3, 1)`; only
+`transform`, `opacity` and `stroke-dashoffset` animate, so no frame repaints or reflows the layout.
+Entrances stagger 60ms apart; digests scramble through hex for ~320ms and lock left to right into the
+real value; cards light their border where the pointer is (`--mouse-x`, `--mouse-y`); the hero is a
+telemetry core, not a circle. Everything has a still version under `prefers-reduced-motion`. Endless
+loops (the rings, the grid, the stripes) are constant-speed on purpose, so they stay linear. They
+pause while scrolled out of view.
+
+`tests/ui/test_motion.py` checks the above in a real Chromium: no console error, `layout-shift` of 0
+over http (under 0.001 from `file://`, where there is no header to preload the font), nothing but
+compositor properties animating, the scramble landing on the real SHA-256, and a still page under
+reduced motion. The telemetry core is dark translucent glass without a live backdrop blur (a blur is
+recomputed every frame the grid rolls behind it), and `vercel.json` preloads the font with a `Link`
+header so the font swap does not shift the page.
+
+**Not measured:** frame rate on a GPU. In a headless software renderer the sandbox holds 60 fps and
+the top of the home page about 30 fps while the hero's rings turn.
 
 | Page | What it is |
 |---|---|

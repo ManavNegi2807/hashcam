@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="console.css">
 <link rel="stylesheet" href="sandbox.css">
+<link rel="stylesheet" href="motion.css">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -35,7 +36,7 @@
 
     <div class="sb-grid">
       <div class="sb-col">
-        <section class="panel" aria-labelledby="flights-h">
+        <section data-reveal class="panel" aria-labelledby="flights-h">
           <h2 id="flights-h">Test flights</h2>
           <p class="muted small">The agent tries one action at a time. Pick one.</p>
           <div class="flights">
@@ -50,7 +51,7 @@
           </div>
         </section>
 
-        <section class="panel" aria-labelledby="escrow-h">
+        <section data-reveal class="panel" aria-labelledby="escrow-h">
           <h2 id="escrow-h">Escrow budget</h2>
           <div class="meter" id="meter" role="img" aria-label="Escrow budget: $100.00 left of $100.00">
             <div class="meter-glass">
@@ -69,7 +70,7 @@
           </div>
         </section>
 
-        <section class="panel gate" id="gate" data-state="idle" aria-labelledby="gate-h">
+        <section data-reveal class="panel gate" id="gate" data-state="idle" aria-labelledby="gate-h">
           <h2 id="gate-h">The gate</h2>
           <div class="latch" aria-hidden="true"><span class="jaw jaw-l"></span><span class="lane"></span><span class="jaw jaw-r"></span></div>
           <div class="hazard" id="hazard" aria-hidden="true"><span>POLICY_HOLD</span></div>
@@ -81,7 +82,7 @@
           </div>
         </section>
 
-        <section class="panel" aria-labelledby="key-h">
+        <section data-reveal class="panel" aria-labelledby="key-h">
           <h2 id="key-h">Session key</h2>
           <p class="muted small">An ECDSA P-256 key pair made when this page opened. The private key is non-extractable and lives only in this tab's memory; closing the tab destroys it.</p>
           <p class="mono small" id="keyLine">Making a key…</p>
@@ -89,7 +90,7 @@
       </div>
 
       <div class="sb-col">
-        <section class="panel" aria-labelledby="radar-h">
+        <section data-reveal class="panel" aria-labelledby="radar-h">
           <h2 id="radar-h">Endpoint alert radar</h2>
           <svg class="radar" id="radar" viewBox="0 0 240 240" role="img" aria-label="Radar of policy decisions. Each blip is one decision; its details are listed below.">
             <defs>
@@ -111,7 +112,7 @@
           <div class="why" id="why" aria-live="polite"></div>
         </section>
 
-        <section class="panel" aria-labelledby="ledger-h">
+        <section data-reveal class="panel" aria-labelledby="ledger-h">
           <div class="ledger-head">
             <h2 id="ledger-h">Hash-chained ledger</h2>
             <div class="tools">
@@ -128,7 +129,7 @@
       </div>
     </div>
 
-    <section class="panel sb-rules" aria-labelledby="rules-h">
+    <section data-reveal class="panel sb-rules" aria-labelledby="rules-h">
       <h2 id="rules-h">The policy, in full</h2>
       <p class="muted small"><code>sandbox-policy/1</code>: the first matching rule wins, and the same input always gets the same answer. A deny cannot be unblocked by an approval.</p>
       <table class="rules">
@@ -145,6 +146,7 @@
   </main>
 
   <script src="chain.js"></script>
+  <script src="motion.js"></script>
   <script src="sandbox.js"></script>
 </body>
 </html>

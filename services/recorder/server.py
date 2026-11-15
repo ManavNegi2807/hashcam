@@ -86,6 +86,26 @@ def make_handler(
                 self.send_header("Content-Length", "0")
                 self.end_headers()
                 return
+            if (
+                origin is not None
+                and origin.startswith("chrome-extension://")
+                and _LOOPBACK.match(self.headers.get("Host", ""))
+            ):
+                # The browser extension. Browsers normally let an extension call a host it has
+                # permission for without a CORS check, but some browsers and settings do check, and
+                # then a flat 403 here shows up as a CORS error and cuts the extension off. A
+                # preflight carries no token and reveals nothing; every real request still needs
+                # the pairing token. A web page cannot send an extension origin.
+                self.send_response(204)
+                self.send_header("Access-Control-Allow-Origin", origin)
+                self.send_header("Access-Control-Allow-Methods", "GET, POST")
+                self.send_header("Access-Control-Allow-Headers", "X-HashCam-Token, Content-Type")
+                self.send_header("Access-Control-Allow-Private-Network", "true")
+                self.send_header("Access-Control-Max-Age", "600")
+                self.send_header("Vary", "Origin")
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return
             self.send_response(403)
             self.send_header("Content-Length", "0")
             self.end_headers()
@@ -106,6 +126,9 @@ def make_handler(
                 return None
             if origin is not None and not origin.startswith("chrome-extension://"):
                 return "this API answers the HashCam extension only"
+            if origin is not None:
+                # The extension may read the answer, a refusal included.
+                self.cors_origin = origin
             if not secrets.compare_digest(given, token.encode()):
                 return "pair the extension first"
             return None

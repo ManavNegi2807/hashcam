@@ -581,3 +581,22 @@ def test_every_sandbox_button_works(browser: Any, origin: str, device: str, tmp_
     assert page.evaluate("document.documentElement.scrollWidth - window.innerWidth") <= 1
     watch.assert_clean()
     context.close()
+
+
+def test_the_atom_survives_a_collapsed_panel(browser: Any, origin: str) -> None:
+    """A hidden or collapsed side panel has a tiny canvas; a negative radius used to throw."""
+    page, watch = open_page(browser, origin, "index.html", "http")
+    result = page.evaluate(
+        """() => {
+            const canvas = document.createElement("canvas");
+            canvas.style.width = "10px";
+            canvas.style.height = "10px";
+            document.body.append(canvas);
+            const state = () => ({ agent: "Agent", trust: 100, counts: {}, waiting: 1 });
+            const atom = HCFX.glowAtom(canvas, state);
+            try { atom.redraw(); return "drew"; } catch (e) { return e.name + ": " + e.message; }
+        }"""
+    )
+    assert result == "drew", result
+    watch.assert_clean()
+    page.close()

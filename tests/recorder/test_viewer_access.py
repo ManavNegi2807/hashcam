@@ -187,3 +187,41 @@ def test_the_local_extension_still_sees_the_whole_session(base: dict[str, Any]) 
     assert status == 200
     assert view["task"] == "Check the statement on bank.test" and view["sensitive"] is True
     assert any("accounts/42?token=SECRET123" in e["target"] for e in view["timeline"])
+
+
+EXTENSION = "chrome-extension://abcdefghijklmnopabcdefghijklmnop"
+PREFLIGHT = {
+    "Access-Control-Request-Method": "POST",
+    "Access-Control-Request-Headers": "x-hashcam-token,content-type",
+    "Access-Control-Request-Private-Network": "true",
+}
+
+
+def test_the_extension_gets_a_proper_cors_answer(base: dict[str, Any]) -> None:
+    """Some browsers check CORS for an extension too; a flat 403 cuts it off from the recorder."""
+    status, headers, _ = call(
+        base, "/sessions", method="OPTIONS", origin=EXTENSION, extra=PREFLIGHT
+    )
+    assert status == 204
+    assert headers["Access-Control-Allow-Origin"] == EXTENSION
+    assert "X-HashCam-Token" in headers["Access-Control-Allow-Headers"]
+    assert "POST" in headers["Access-Control-Allow-Methods"]
+    assert headers["Access-Control-Allow-Private-Network"] == "true"
+    # With the pairing token it can read the answer; without, it can read the refusal.
+    status, headers, body = call(base, "/status", origin=EXTENSION, key=TOKEN)
+    assert status == 200 and headers["Access-Control-Allow-Origin"] == EXTENSION
+    status, headers, body = call(base, "/status", origin=EXTENSION, key="wrong")
+    assert status == 403 and headers["Access-Control-Allow-Origin"] == EXTENSION
+    assert "pair the extension" in body["error"]
+
+
+def test_no_other_web_page_gets_that_answer(base: dict[str, Any]) -> None:
+    for origin in ("https://evil.example", "http://127.0.0.1:9999"):
+        status, headers, _ = call(base, "/status", origin=origin, key=TOKEN)
+        assert status == 403 and "Access-Control-Allow-Origin" not in headers, origin
+        status, headers, _ = call(
+            base, "/sessions", method="OPTIONS", origin=origin, extra=PREFLIGHT
+        )
+        assert status == 403 and "Access-Control-Allow-Origin" not in headers, origin
+    # The token is still required from the extension's own origin, on every route.
+    assert call(base, "/sessions", origin=EXTENSION, key="wrong")[0] == 403

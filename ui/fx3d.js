@@ -8,6 +8,18 @@ const NS = "http://www.w3.org/2000/svg";
 const gsap = () => window.gsap;
 export const calm = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+// Motion without a library: the Web Animations API with ONE easing everywhere, an expo-out
+// deceleration (fast start, long soft landing). Only transform, opacity and stroke-dashoffset are
+// animated, so it all runs on the compositor. The cartoon and signFormula below still use GSAP where
+// the console and the extension load it; the site does not.
+export const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
+const go = (node, keyframes, options) => node.animate(keyframes, { easing: EASE, fill: "both", ...options });
+// A digest that changed: the site's HCMotion scrambles it into place; elsewhere it is just set.
+const settle = (node, text) => {
+  if (window.HCMotion && window.HCMotion.settle) window.HCMotion.settle(node, text);
+  else node.textContent = text;
+};
+
 function el(tag, attrs = {}, ...kids) {
   const node = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
@@ -86,26 +98,35 @@ export function isometric(host) {
     root.append(g);
   }
   host.append(root);
-  if (calm() || !gsap()) return;
+  if (calm()) return;
 
   const legs = [[path[0], path[1]], [path[1], path[2]], [path[2], path[3]], [path[3], path[4]]];
   let n = 0;
   let timer = null;
-  const send = () => {
+  const send = async () => {
     n += 1;
     const refused = n % 3 === 0;
     const packet = svg("circle", { r: 5, class: refused ? "iso-packet bad" : "iso-packet", cx: path[0][0], cy: path[0][1] });
+    packet.style.transformBox = "fill-box";
+    packet.style.transformOrigin = "center";
     root.append(packet);
-    const tl = gsap().timeline({ onComplete: () => packet.remove() });
-    if (refused) {
-      const [a, b] = legs[0];
-      const stop = [a[0] + (b[0] - a[0]) * 0.86, a[1] + (b[1] - a[1]) * 0.86];
-      tl.to(packet, { attr: { cx: stop[0], cy: stop[1] }, duration: 0.9, ease: "none" })
-        .to(packet, { attr: { cx: a[0], cy: a[1] }, duration: 0.6, ease: "bounce.out" })
-        .to(packet, { opacity: 0, duration: 0.2 });
-    } else {
-      for (const [, b] of legs) tl.to(packet, { attr: { cx: b[0], cy: b[1] }, duration: 0.8, ease: "none" });
-      tl.to(packet, { attr: { r: 9 }, opacity: 0, duration: 0.3 });
+    const at = (p) => `translate(${p[0] - path[0][0]}px, ${p[1] - path[0][1]}px)`;
+    try {
+      if (refused) {
+        const [a, b] = legs[0];
+        const stop = [a[0] + (b[0] - a[0]) * 0.86, a[1] + (b[1] - a[1]) * 0.86];
+        await go(packet, [{ transform: at(a) }, { transform: at(stop) }], { duration: 700 }).finished;
+        await go(packet, [{ transform: at(stop), opacity: 1 }, { transform: at(a), opacity: 0 }], { duration: 520 }).finished;
+      } else {
+        let from = path[0];
+        for (const [, b] of legs) {
+          await go(packet, [{ transform: at(from) }, { transform: at(b) }], { duration: 640 }).finished;
+          from = b;
+        }
+        await go(packet, [{ transform: `${at(from)} scale(1)`, opacity: 1 }, { transform: `${at(from)} scale(1.9)`, opacity: 0 }], { duration: 320 }).finished;
+      }
+    } catch { /* cancelled with the page */ } finally {
+      packet.remove();
     }
   };
   whileVisible(host, () => { send(); timer = setInterval(send, 1100); }, () => clearInterval(timer));
@@ -116,10 +137,8 @@ export function isometric(host) {
 export function printStrip(list, strip, { prepend = false } = {}) {
   strip.classList.add("strip");
   if (prepend) list.prepend(strip); else list.append(strip);
-  if (calm() || !gsap()) return strip;
-  gsap().fromTo(strip,
-    { clipPath: "inset(0 0 100% 0)", y: -14, rotate: -1.2 },
-    { clipPath: "inset(0 0 0% 0)", y: 0, rotate: 0, duration: 0.5, ease: "steps(7)", clearProps: "clipPath,transform" });
+  if (calm()) return strip;
+  go(strip, [{ opacity: 0, transform: "translateY(-10px) scale(0.985)" }, { opacity: 1, transform: "none" }], { duration: 560, fill: "none" });
   return strip;
 }
 
@@ -153,8 +172,9 @@ export function bars3d(host, sessions) {
   for (let i = 0; i < 6; i++) plane.append(el("div", { class: "b3-gridline", style: `top:${20 + i * 22}px` }));
   host.append(scene, el("ul", { class: "b3-legend" },
     ...SEGMENTS.map(([k, n]) => el("li", {}, el("i", { class: `seg-${k}` }), n))));
-  if (!calm() && gsap()) {
-    gsap().from(plane.querySelectorAll(".cube"), { scaleZ: 0.01, duration: 0.7, stagger: 0.05, ease: "back.out(1.4)" });
+  if (!calm()) {
+    plane.querySelectorAll(".cube").forEach((cube, i) =>
+      go(cube, [{ scale: "1 1 0.01" }, { scale: "1 1 1" }], { duration: 720, delay: i * 50, fill: "backwards" }));
   }
 }
 function cuboid(x, y, w, d, z, h, key) {
@@ -215,7 +235,7 @@ export function merkle(host, mathsHost) {
       if (level > 0) {
         for (const c of [2 * i, 2 * i + 1]) {
           const a = posOf(level - 1, c);
-          edges.append(svg("line", { x1: x, y1: y + 18, x2: a.x, y2: a.y - 18, "data-to": `${level - 1}-${c}` }));
+          edges.append(svg("line", { x1: x, y1: y + 18, x2: a.x, y2: a.y - 18, pathLength: 1, "data-to": `${level - 1}-${c}` }));
         }
       }
     }
@@ -247,7 +267,9 @@ export function merkle(host, mathsHost) {
   const paint = () => {
     for (let level = 0; level < 4; level++) {
       nodes[level].forEach((node, i) => {
-        node.querySelector("code").textContent = current[level][i].slice(0, 8);
+        const code = node.querySelector("code");
+        const digest = current[level][i].slice(0, 8);
+        if (code.textContent !== digest) settle(code, digest);
         node.classList.toggle("changed", current[level][i] !== original[level][i]);
       });
     }
@@ -270,17 +292,21 @@ export function merkle(host, mathsHost) {
     status.textContent = broken
       ? `Event ${changedLeaf + 1} changed: its hash, every hash above it and the root changed. The signature was made over the old root, so a verifier says INVALID.`
       : "All hashes match what was signed.";
-    if (calm() || !gsap() || changedLeaf == null) { lightSteps(broken ? 4 : 3); return; }
-    // Climb the tree level by level, lighting the matching maths step.
+    if (calm() || changedLeaf == null) { lightSteps(broken ? 4 : 3); return; }
+    // Climb the tree level by level: each node pulses, the edge above it draws up to its parent.
     let i = changedLeaf;
-    const tl = gsap().timeline();
     for (let level = 0; level < 4; level++) {
       const node = nodes[level][i];
-      tl.call(() => lightSteps(Math.min(level, 2)))
-        .fromTo(node, { scale: 1 }, { scale: 1.18, duration: 0.18, yoyo: true, repeat: 1 });
+      const at = level * 150;
+      setTimeout(() => lightSteps(Math.min(level, 2)), at);
+      go(node, [{ scale: 1 }, { scale: 1.12 }, { scale: 1 }], { delay: at, duration: 460, fill: "none" });
       i = Math.floor(i / 2);
     }
-    tl.call(() => lightSteps(broken ? 4 : 3));
+    for (const line of edges.querySelectorAll("line.changed")) {
+      const lv = Number(line.dataset.to.split("-")[0]);
+      go(line, [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { delay: lv * 150 + 60, duration: 420, fill: "backwards" });
+    }
+    setTimeout(() => lightSteps(broken ? 4 : 3), 4 * 150 + 120);
   }
   refresh(null);
 
@@ -395,11 +421,13 @@ export function dominoes(host, dimensions) {
   const tiles = [...row.children];
   const failAt = entries.findIndex(([, s]) => s === "FAIL");
   const falling = failAt === -1 ? tiles : tiles.slice(0, failAt);
-  if (calm() || !gsap()) { falling.forEach((t) => t.classList.add("fallen")); return; }
-  const tl = gsap().timeline();
-  falling.forEach((t, i) => tl.to(t, { rotateX: 78, duration: 0.22, ease: "power2.in" }, i * 0.09));
+  if (calm()) { falling.forEach((t) => t.classList.add("fallen")); return; }
+  falling.forEach((t, i) =>
+    go(t, [{ transform: "rotateX(0deg)" }, { transform: "rotateX(78deg)" }], { delay: i * 70, duration: 460 }));
   if (failAt !== -1) {
-    tl.to(tiles[failAt], { x: -4, duration: 0.06, repeat: 5, yoyo: true }, ">");
+    // The failed tile does not fall: it shudders once the row has reached it.
+    go(tiles[failAt], [{ transform: "translateX(0)" }, { transform: "translateX(-4px)" }, { transform: "translateX(4px)" },
+      { transform: "translateX(-3px)" }, { transform: "translateX(0)" }], { delay: falling.length * 70 + 260, duration: 420, fill: "none" });
   }
 }
 function short(status) {
@@ -430,9 +458,11 @@ export function glowAtom(canvas, getState) {
     const lit = Math.ceil((state.trust ?? 100) / 25);
     SHELLS.forEach(([kind, colour], s) => {
       // The outermost, most tilted orbit must stay inside the canvas: |sin(tilt)| <= 0.6.
-      const outer = Math.min(w / 2 - 8, (h / 2 - 8) / 0.62);
+      // A hidden or collapsed panel has a tiny canvas; a negative radius would throw (IndexSizeError).
+      const outer = Math.max(0, Math.min(w / 2 - 8, (h / 2 - 8) / 0.62));
       const rx = outer * (0.4 + s * 0.2);
       const ry = rx * 0.34;
+      if (rx < 1) return;
       const tilt = (s - 1.5) * 0.42;
       ctx.save();
       ctx.translate(cx, cy);
