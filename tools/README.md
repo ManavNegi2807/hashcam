@@ -7,6 +7,7 @@ the `check_*_live.py` tools make a real network call with your own key and are `
 |---|---|
 | `ui_server.py` | The audit dashboard on `127.0.0.1` (`--enable-runs` adds the run console, `--falkordb` the graph store). |
 | `build_site.py` | Builds the public site in `site/`: copies the shared theme and styles from `ui/`, turns `ui/fx3d.js` and `ui/readable.js` into classic scripts (so the pages work from `file://`), copies the extension's byte-identical files, builds the verifier as WebAssembly and writes the offline sample data. No animation library is copied. |
+| `make_brand_assets.py` | Makes the logo assets for `site/` from the master image `docs/brand/hashcam-logo.png`: `brand.css` (the mark and a faint watermark as `data:` URIs) and the favicon in each page. Needs Pillow; a one-off design tool, not a build step. `TESTED`: `tests/ui/test_branding.py`. |
 | `launcher.ps1` | The one-click start behind `HashCam.bat`, `HashCam-Extension-Setup.bat` and `HashCam-Stop.bat` (Windows; root `README.md`). `TESTED`: `tests/ui/test_launcher.py`. |
 | `recorder.py` | The local service the HashCam Recorder Chrome extension talks to (`extension/README.md`). |
 | `demo.py` | The main demo: replay, approval, receipt, tamper. |

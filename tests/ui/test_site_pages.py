@@ -117,6 +117,8 @@ def test_every_relative_link_and_anchor_resolves(name: str) -> None:
     page = refs_of(name)
     assert page.refs, name
     for tag, attr, value in page.refs:
+        if tag == "link" and value.startswith("data:image/"):
+            continue  # an inline image (the favicon), not a link to anywhere
         if value.startswith(("http://", "https://")):
             assert (tag, attr) == ("a", "href"), f"{name}: only a link may leave the site: {value}"
             continue
