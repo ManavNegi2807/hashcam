@@ -386,12 +386,14 @@ def test_the_hero_shows_a_telemetry_core_not_the_old_circle(browser: Any, origin
     core = page.locator("#core.hero-core")
     expect(core).to_be_visible()
     assert page.evaluate("getComputedStyle(document.querySelector('#core')).position") == "absolute"
-    assert page.evaluate("document.querySelector('.hero').getBoundingClientRect().height") < 700
+    assert (
+        page.evaluate("document.querySelector('.hero').getBoundingClientRect().height") < 800
+    )  # the core is out of flow (when it was in flow the hero grew to about 970)
     # Hairline rings turning in opposite directions, data-bus arcs, a breathing REC glow.
     names = page.evaluate(
         "[...document.querySelectorAll('#core *')].flatMap(n => n.getAnimations().map(a => a.animationName))"
     )
-    assert {"coreCW", "coreCCW", "coreBus", "recBreath"} <= set(names), names
+    assert {"coreCW", "coreCCW", "coreBus"} <= set(names), names
     assert page.locator("#core .core-turn").count() == 2
     assert page.locator("#core .core-arc").count() == 3
     expect(page.locator("#core .core-rec-text")).to_have_text("REC")
@@ -679,3 +681,176 @@ def test_events_per_session_are_flat_stacked_bars_whose_numbers_add_up(
 def test_the_site_carries_the_same_motion_files_as_the_console() -> None:
     for name in ("motion.css", "motion.js"):
         assert (SITE / name).read_bytes() == (SITE.parent / "ui" / name).read_bytes(), name
+
+
+# ---------------------------------------------------------------- the flight record in the hero
+
+RECORD_WORDS = [
+    ("ALLOWED", "Opened shop.example/checkout"),
+    ("SECRET", "Typed a password \u00b7 value withheld"),
+    ("HELD", "Wants to send a form \u00b7 waiting for you"),
+    ("SIGNED", "Approved with a passkey"),
+    ("BLOCKED", "Stopped from opening bank.example"),
+    ("SEALED", "Receipt sealed, signed, checkable offline"),
+]
+
+
+def chain(count: int) -> list[str]:
+    """The hash on card #1, #2, ...: each is SHA-256 of the one before plus the card's words."""
+    previous, out = "0" * 64, []
+    for n in range(count):
+        previous = hashlib.sha256((previous + RECORD_WORDS[n % 6][1]).encode()).hexdigest()
+        out.append(previous[:8])
+    return out
+
+
+def read_cards(page: Any) -> list[tuple[int, str, str, str]]:
+    return [
+        (int(n), kind, words, h)
+        for n, kind, words, h in page.evaluate(
+            "[...document.querySelectorAll('.rc-chip')].map(c => [c.querySelector('.rc-hash').textContent.match(/#(\\d+)/)[1],"
+            " c.querySelector('.rc-kind').textContent, c.querySelector('.rc-words').textContent,"
+            " c.querySelector('.rc-hash .hex').textContent])"
+        )
+    ]
+
+
+def test_the_hero_records_an_agent_as_a_tape_of_chained_cards(browser: Any, origin: str) -> None:
+    page, watch = open_page(browser, origin, "index.html")
+    page.wait_for_timeout(1800)
+    # A fine still grid, not the retro floor and no streaks of light.
+    assert (
+        page.evaluate("getComputedStyle(document.querySelector('.synth-grid')).display") == "none"
+    )
+    expect(page.locator(".hero-field .hf-grid")).to_have_count(1)
+    assert page.locator(".hf-trace, .hf-node, .hf-pk").count() == 0
+    # The recorder writes what the agent did, in plain words, as cards on a tape.
+    cards = read_cards(page)
+    assert len(cards) >= 4, cards
+    for number, kind, words, _ in cards:
+        assert (kind, words) == RECORD_WORDS[(number - 1) % 6], (number, kind, words)
+    # The hashes are real and chained.
+    page.wait_for_timeout(700)  # past the scramble on the newest card
+    # A newer card may have arrived meanwhile and still be scrambling: check the ones seen before the wait.
+    first_seen = max(n for n, *_ in cards)
+    expected = chain(first_seen)
+    settled = [c for c in read_cards(page) if c[0] <= first_seen]
+    assert settled, "the cards seen a moment ago are still on the tape"
+    for number, _, _, shown in settled:
+        assert shown == expected[number - 1], (number, shown, expected[number - 1])
+    # It keeps writing: a newer card turns up within a few seconds.
+    newest = max(n for n, *_ in cards)
+    for _ in range(60):
+        if max(n for n, *_ in read_cards(page)) > newest:
+            break
+        page.wait_for_timeout(100)
+    else:
+        raise AssertionError("no new card was written")
+    # Only transform and opacity move, and nothing covers the headline's text.
+    moved = page.evaluate(
+        "[...new Set([...document.querySelectorAll('.rc-chip, .rc-link i')].flatMap(n => n.getAnimations()"
+        ".flatMap(a => a.effect.getKeyframes().flatMap(k => Object.keys(k)))))]"
+    )
+    assert set(moved) - {"offset", "computedOffset", "easing", "composite"} <= {
+        "transform",
+        "opacity",
+    }
+    copy_bottom = page.evaluate(
+        "document.querySelector('.hero .honest').getBoundingClientRect().bottom"
+    )
+    tops = page.locator(".rc-card").evaluate_all(
+        "els => els.map(e => e.getBoundingClientRect().top)"
+    )
+    assert min(tops) > copy_bottom + 8, (tops, copy_bottom)
+    # It stops writing while the hero is out of view.
+    page.evaluate("window.scrollTo(0, document.documentElement.scrollHeight)")
+    page.wait_for_timeout(900)
+    assert page.evaluate(
+        "[...document.querySelectorAll('.rc-chip')].flatMap(c => c.getAnimations()).every(a => a.playState === 'paused')"
+    )
+    watch.assert_clean()
+    page.close()
+
+
+def test_the_flight_record_is_hidden_on_a_phone(browser: Any, origin: str) -> None:
+    page, watch = open_page(browser, origin, "index.html", viewport={"width": 375, "height": 800})
+    page.wait_for_timeout(800)
+    assert (
+        page.evaluate("getComputedStyle(document.querySelector('.hero-record')).display") == "none"
+    )
+    assert page.evaluate("getComputedStyle(document.querySelector('.agent')).display") == "none"
+    assert (
+        page.evaluate("getComputedStyle(document.querySelector('.core-rec-text')).display")
+        != "none"
+    )
+    assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+    watch.assert_clean()
+    page.close()
+
+
+def test_the_flight_record_is_laid_out_still_under_reduced_motion(
+    browser: Any, origin: str
+) -> None:
+    page, watch = open_page(browser, origin, "index.html", reduced_motion="reduce")
+    page.wait_for_timeout(1200)
+    cards = read_cards(page)
+    assert [n for n, *_ in cards] == [3, 4, 5, 6]  # the tail of the story, laid out
+    assert [h for *_, h in cards] == chain(6)[2:]
+    assert page.evaluate("document.getAnimations().length") == 0
+    assert page.evaluate(
+        "[...document.querySelectorAll('.rc-chip')].every(c => getComputedStyle(c).opacity === '1')"
+    )
+    # The agent is one still frame: recorded, its last step approved.
+    assert page.locator(".agent .ag-url").inner_text() == "shop.example/checkout"
+    assert page.locator(".agent .ag-time").inner_text() == "00:07"
+    expect(page.locator(".agent .ag-over.ok")).to_contain_text("Approved with your passkey")
+    watch.assert_clean()
+    page.close()
+
+
+# ---------------------------------------------------------------- the agent being recorded
+
+
+def test_the_hero_shows_an_agent_being_recorded_and_its_steps_write_the_tape(
+    browser: Any, origin: str
+) -> None:
+    page, watch = open_page(browser, origin, "index.html")
+    expect(page.locator(".agent .ag-rec")).to_contain_text("REC")
+    expect(page.locator(".agent .ag-tag")).to_have_text("AGENT \u00b7 BROWSER")
+    assert page.locator(".agent .ag-br").count() == 4, "a viewfinder"
+    # The timecode runs.
+    first = page.locator(".agent .ag-time").inner_text()
+    assert re.fullmatch(r"\d\d:\d\d", first)
+    page.wait_for_timeout(2300)
+    assert page.locator(".agent .ag-time").inner_text() > first
+    # The agent opens the shop, then fills the form (the cursor moves); the password never appears.
+    expect(page.locator(".agent .ag-url")).to_have_text("shop.example/checkout", timeout=6000)
+    seen = set()
+    for _ in range(40):
+        seen.add(page.locator(".agent .ag-val").nth(1).inner_text())
+        page.wait_for_timeout(100)
+    assert all(re.fullmatch("\u2022*", s) for s in seen), seen
+    # Each step writes its card at that moment: held -> HELD, approved -> SIGNED.
+    expect(page.locator(".agent .ag-over.held")).to_be_visible(timeout=12_000)
+    page.wait_for_timeout(1200)
+    assert "HELD" in [k for _, k, *_ in read_cards(page)]
+    expect(page.locator(".agent .ag-over.ok")).to_be_visible(timeout=6000)
+    page.wait_for_timeout(1200)
+    assert "SIGNED" in [k for _, k, *_ in read_cards(page)]
+    # Only transform, opacity and stroke-dashoffset move.
+    moved = page.evaluate(
+        "[...new Set([...document.querySelectorAll('.agent, .agent *')].flatMap(n => n.getAnimations()"
+        ".flatMap(a => a.effect.getKeyframes().flatMap(k => Object.keys(k)))))]"
+    )
+    allowed = {
+        "transform",
+        "opacity",
+        "strokeDashoffset",
+        "offset",
+        "computedOffset",
+        "easing",
+        "composite",
+    }
+    assert set(moved) <= allowed, moved
+    watch.assert_clean()
+    page.close()

@@ -109,6 +109,11 @@ def test_the_console_loads_clean_shifts_nothing_and_animates_only_the_compositor
     page.wait_for_timeout(1500)
     assert page.locator(".synth-sun").count() == 0, "the retro REC circle is gone"
     expect(page.locator("#core.hero-core")).to_be_visible()
+    page.wait_for_timeout(600)
+    assert page.locator(".hero-record .rc-chip").count() >= 4, (
+        "the recorder writes cards onto its tape"
+    )
+    expect(page.locator(".hero .agent .ag-rec")).to_contain_text("REC")
     scroll_through(page)
     page.evaluate("window.scrollTo(0, 0)")
     for selector in (".panel", ".card", ".btn"):
