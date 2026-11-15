@@ -579,6 +579,10 @@ $("restoreBtn").addEventListener("click", () => {
 $("exportBtn").addEventListener("click", exportReceipt);
 $("resetBtn").addEventListener("click", () => { if (!busy) startSession(); });
 
+// Bring the panels in as they scroll into view. Without this every panel (data-reveal) stays at opacity 0
+// and the page looks empty: the buttons still work, so the tests that only clicked them did not notice.
+if (window.HCMotion) window.HCMotion.init();
+
 if (!window.crypto || !crypto.subtle) {
   $("cryptoBanner").hidden = false;
   $("gateState").textContent = "Web Crypto is not available here.";
