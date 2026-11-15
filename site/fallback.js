@@ -708,8 +708,16 @@ async function verifyReceipt(receiptBytes, keysBytes) {
   };
 }
 
+// The events of a receipt as plain objects ({event_type, payload, ...}), for a page that wants to read what
+// happened. It reads; it decides nothing: the verdict comes from verifyReceipt or the WebAssembly verifier.
+async function readEvents(receiptBytes) {
+  const receipt = await parseReceipt(await readContainer(receiptBytes));
+  return receipt.events.map((e) => JSON.parse(new TextDecoder().decode(e.canonical)));
+}
+
 window.HCFallback = {
   verifyReceipt,
+  readEvents,
   checked: CHECKED.slice(),
   internals: { PROTOCOL_LIMITS, parseStrict, canon, parseCanonical, leafHash, nodeHash, mth, verifyInclusion, verifyConsistency, sha256, hex, fromHex, tagged },
 };

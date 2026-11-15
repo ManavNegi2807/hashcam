@@ -285,7 +285,9 @@ def test_the_four_test_flights(browser: Any, origin: str, how: str) -> None:
     expect(page.locator("#mSpent")).to_have_text("$0.00")
     expect(page.locator("#mLeft")).to_have_text("$65.00")  # spent + held + left = the cap
     expect(page.get_by_role("button", name="Bulk Token Purchase ($250.00)")).to_be_disabled()
-    expect(page.locator("#exportBtn")).to_be_disabled()
+    expect(
+        page.locator("#exportBtn")
+    ).to_be_enabled()  # a held step can be exported: the record shows the hold
     expect(page.locator("#why .badge[data-k='RULE_ID'] .v")).to_have_text(
         "R5 · HUMAN_SIGNOFF_REQUIRED"
     )

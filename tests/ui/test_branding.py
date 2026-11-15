@@ -62,7 +62,7 @@ def open_page(browser: Any, origin: str, name: str, how: str, **kw: Any) -> tupl
 
 
 def test_there_are_pages_to_check() -> None:
-    assert PAGES == ["index.html", "sandbox.html"]
+    assert PAGES == ["about.html", "index.html", "range.html", "sandbox.html"]
 
 
 @pytest.mark.parametrize("name", PAGES)
@@ -182,9 +182,13 @@ def test_the_watermark_sits_behind_the_page_and_gets_in_no_one_s_way(
         and mark[4].startswith('url("data:image/webp')
     ), mark
     # Nothing is covered: the button under the watermark is the thing a click lands on.
-    target = "#launchSandbox" if name == "index.html" else "#exportBtn, .flight"
+    target = {
+        "index.html": "#launchSandbox",
+        "range.html": "#scoreBtn",
+        "about.html": "#aboutCta",
+    }.get(name, "#exportBtn, .flight")
     hit = page.evaluate(
-        "(sel) => { const n = document.querySelector(sel); const r = n.getBoundingClientRect(); const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return n.contains(top); }",
+        "(sel) => { const n = document.querySelector(sel); n.scrollIntoView({ block: 'center', behavior: 'instant' }); const r = n.getBoundingClientRect(); const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return n.contains(top); }",
         target,
     )
     assert hit is True

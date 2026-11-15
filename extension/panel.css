@@ -69,12 +69,26 @@ code { font-family: var(--mono); font-size: 12px; background: var(--panel-2); pa
 .brand { font: 800 11px/1 var(--mono); letter-spacing: .22em; color: var(--muted); }
 .brand b { color: var(--orange); }
 .tabs { display: flex; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 2px; }
-.tabs button { all: unset; cursor: pointer; font: 600 12px var(--sans); padding: 5px 10px; border-radius: 7px; color: var(--muted); }
+.tabs button { all: unset; position: relative; cursor: pointer; font: 600 12px var(--sans); padding: 5px 10px; border-radius: 7px; color: var(--muted); }
+/* A thin gold line draws out from the middle under the tab you point at, and stays under the open one
+   (transform and opacity only). */
+.tabs button::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: 1px; height: 1px; border-radius: 1px;
+  background: var(--orange); opacity: 0; transform: scaleX(.2);
+  transition: transform .32s cubic-bezier(0.16, 1, 0.3, 1), opacity .32s cubic-bezier(0.16, 1, 0.3, 1); }
+.tabs button:hover::after, .tabs button:focus-visible::after { opacity: .9; transform: scaleX(1); }
+.tabs button[aria-selected="true"]::after { opacity: 1; transform: scaleX(1); }
+@media (prefers-reduced-motion: reduce) { .tabs button::after { transition: none; } }
 .tabs button[aria-selected="true"] { background: var(--panel-2); color: var(--text); box-shadow: inset 0 0 0 1px var(--line); }
 .tabs button:focus-visible { outline: 2px solid var(--orange); }
 
 /* ------------------------------------------------------------ cards and forms */
-.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+/* Glass: the faint logo behind the panel shows through the cards, softly blurred. */
+.card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .015) 45%, rgba(16, 22, 36, .3));
+  -webkit-backdrop-filter: blur(2px) saturate(1.3); backdrop-filter: blur(2px) saturate(1.3);
+  border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12);
+}
 .card h2 { margin: 0 0 6px; font-size: 15px; display: flex; align-items: center; gap: 8px; }
 .step { font: 700 10px var(--mono); color: var(--bg); background: var(--orange); border-radius: 5px; padding: 3px 5px; }
 .card p { margin: 0 0 10px; }
@@ -241,3 +255,8 @@ html, body { max-width: 100%; }
 .tech-text { margin: 4px 0 0; padding: 6px 8px; max-height: 160px; overflow: auto; font: 10px/1.45 ui-monospace, Consolas, monospace;
   background: rgba(30, 36, 51, .07); border: 1px solid rgba(30, 36, 51, .2); border-radius: 4px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .tech-withheld { margin: 4px 0 0; color: #6A4BC4; font-size: 10.5px; }
+
+/* the locked report's password, shown once under the verdict */
+.report-key { margin: 12px 0 4px; padding: 12px; border: 1px solid var(--orange); border-radius: 12px; display: grid; gap: 8px; }
+.report-key[hidden] { display: none; }
+.report-pass { display: block; font: 600 15px var(--mono); letter-spacing: .06em; user-select: all; overflow-wrap: anywhere; background: transparent; padding: 0; }

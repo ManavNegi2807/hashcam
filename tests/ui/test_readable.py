@@ -383,5 +383,5 @@ def test_the_site_copy_is_generated_from_the_ui_source() -> None:
 
 
 def test_the_extension_copy_is_identical_to_the_ui_source() -> None:
-    for name in ("readable.js", "theme.css", "fx3d.js"):
+    for name in ("readable.js", "theme.css", "fx3d.js", "lockedpdf.js"):
         assert (REPO / "ui" / name).read_bytes() == (REPO / "extension" / name).read_bytes(), name
