@@ -177,7 +177,7 @@ label.check .muted { grid-column: 2; font-size: 11.5px; }
 .kill-cover:focus-visible, .kill-btn:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
 
 /* ------------------------------------------------------------ verdict */
-.verdict { margin-top: 26px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+.verdict { margin: 12px 0 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
 .verdict .row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 4px; }
 .big-stamp { display: inline-block; font: 900 26px/1 var(--mono); letter-spacing: .12em; padding: 8px 14px; border: 3px solid currentColor; border-radius: 6px; transform: rotate(-4deg); }
 .v-VALID { color: var(--ok); }

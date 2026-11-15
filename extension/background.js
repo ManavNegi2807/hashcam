@@ -217,7 +217,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         await arm(message);
         return { ok: true };
       case "stop":
-        return finish(Boolean(message.killed));
+        return finish(Boolean(message.killed), message.sessionId);
       default:
         return { error: "unknown message" };
     }
@@ -247,15 +247,25 @@ async function arm({ sessionId, tabId, hosts }) {
   }
 }
 
-async function finish(killed) {
-  const rec = await state();
+// The recorder is the source of truth for a recording. If this worker has lost its own memory of one
+// (the browser can clear session storage, for example when it restarts the extension), the side
+// panel still knows the session id, and passing it back lets the person stop and seal anyway
+// instead of being told "not recording" while the recorder keeps recording.
+const SESSION_ID = /^[0-9a-f]{12}$/;
+
+async function finish(killed, panelSessionId) {
+  const rec = (await state())
+    || (typeof panelSessionId === "string" && SESSION_ID.test(panelSessionId)
+      ? { sessionId: panelSessionId, tabId: null, hosts: [] } : null);
   if (!rec) return { error: "not recording" };
   for (const id of [...held.keys()]) resolveHeld(id, "NOT_SENT");
-  if (killed) await chrome.tabs.remove(rec.tabId).catch(() => {});
+  if (killed && rec.tabId !== null) await chrome.tabs.remove(rec.tabId).catch(() => {});
   await chrome.scripting.unregisterContentScripts({ ids: [SCRIPT_ID, SCRIPT_ID + "-main"] }).catch(() => {});
   await chrome.storage.session.remove("rec");
-  // All-sites access was only for screenshots during this session: give it back now.
-  await chrome.permissions.remove({ origins: ["<all_urls>"] }).catch(() => {});
+  // The all-sites access that screenshots need is NOT handed back here. "<all_urls>" also covers
+  // 127.0.0.1, and a browser that dropped that overlapping access left the extension unable to reach
+  // the recorder at all (every call blocked as a CORS error). The person can remove it at any time in
+  // the browser's extension settings.
   const sealed = await api(`/sessions/${rec.sessionId}/stop`, { killed });
   broadcast({ type: "sealed", sessionId: rec.sessionId });
   return sealed;

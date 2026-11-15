@@ -6,7 +6,8 @@
 (function () {
 "use strict";
 
-const { bars3d, cartoon, dominoes, glowAtom, isometric, merkle, printStrip, synthwave } = window.HCFX;
+const { bars3d, dominoes, glowAtom, isometric, merkle, printStrip, synthwave } = window.HCFX;
+const M = window.HCMotion;
 const R = window.HCReadable;
 
 const $ = (id) => document.getElementById(id);
@@ -20,12 +21,14 @@ const hhmmss = (s) => new Date(s * 1000).toLocaleTimeString([], { hourCycle: "h2
 const fromDisk = location.protocol === "file:";
 
 synthwave(document.querySelector(".hero"));
+M.hero(document.querySelector(".hero")); // the telemetry core replaces the old REC circle
 isometric($("iso"));
 merkle($("merkle"), $("maths"));
-const story = cartoon($("cartoon"));
-new IntersectionObserver((entries) => {
-  if (entries.some((e) => e.isIntersecting)) story.play();
-}, { threshold: 0.5 }).observe($("cartoon"));
+const story = M.riskyStep($("cartoon"));
+const storyWatch = new IntersectionObserver((entries) => {
+  if (entries.some((e) => e.isIntersecting)) { story.play(); storyWatch.disconnect(); } // once; Replay does it again
+}, { threshold: 0.5 });
+storyWatch.observe($("cartoon"));
 
 // ================================================================== live sessions
 
@@ -260,6 +263,9 @@ function showVerdict(report, label) {
   stamp.textContent = overall;
   const fallback = report.engine === "javascript";
   const clean = fallback && overall === "INCOMPLETE";
+  // The run's id, as a digest that scrambles into place whenever a receipt is checked.
+  if (report.run_id) M.hexify($("runDigest"), "run " + String(report.run_id).replace(/-/g, ""), "run");
+  else $("runDigest").textContent = "";
   $("verdictPlain").textContent = clean
     ? "No problem was found in what the JavaScript fallback checks, but it cannot give a full verdict. Open this page where WebAssembly runs, or use abb verify."
     : R.verdictText(overall);
@@ -327,4 +333,6 @@ async function sample(name, label) {
 }
 $("sampleValid").addEventListener("click", () => sample("genuine", "Sample receipt from a real recorder run, checked in this page."));
 $("sampleInvalid").addEventListener("click", () => sample("edited", "The same sample with one event's address changed, checked in this page."));
+M.init();
+M.tabs(".qs-tabs");
 })();

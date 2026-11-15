@@ -33,7 +33,8 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 SITE = REPO / "site"
 SHARED = ["theme.css", "console.css"]
-VENDOR = ["gsap.min.js", "LICENSE-gsap.txt", "plus-jakarta-sans.woff2", "OFL-plus-jakarta-sans.txt"]
+# The site animates with the browser's own Web Animations API: no animation library is shipped.
+VENDOR = ["plus-jakarta-sans.woff2", "OFL-plus-jakarta-sans.txt"]
 _EXPORT = re.compile(r"^export (function|const) (\w+)", re.MULTILINE)
 
 

@@ -6,7 +6,7 @@
 Plain HTML, CSS and JavaScript, served by a small local server (`tools/ui_server.py`, `services/dashboard/`). It shows what
 `abb verify --json` says and never computes validity itself (tested). `UNKNOWN` and `NOT_INDEPENDENT` are never green and no status
 relies on color alone. Receipt content is inserted as text. The approval *screen* displays approvals; signing happens on the approver's
-own device with `abb approve`. **Not built:** the SSE live view (R-UI-03), the WASM verifier.
+own device with `abb approve`. **Not built here:** the SSE live view (R-UI-03). The browser build of the verifier (WebAssembly) is in the public website, `site/`, not in this audit view.
 
 | File | What it is |
 |---|---|
@@ -15,7 +15,7 @@ own device with `abb approve`. **Not built:** the SSE live view (R-UI-03), the W
 | `graph.js` | Draws the run graph (from FalkorDB when connected, else straight from the receipt, and says which). A picture, never a verdict. |
 | `run.html`, `run.js` | The task page (chat board): pick a task, see the worst-case cost, confirm, watch the run, sign and approve. Only with `--enable-runs`. |
 | `console.html`, `console.js`, `console.css` | **HashCam Console** at `/console`: attach an agent, live sessions from the local recorder (read-only; the pairing token stays on the server), a receipt viewer (drop a `.abbreceipt`, see `abb verify`'s verdict as falling dominoes, events, replay, graph) and the how-it-works explainers. `TESTED`: `tests/ui/test_console.py`. |
-| `fx3d.js` | The nine animation styles (isometric pipeline, paper-cut receipts, CSS-3D bar chart, synthwave hero, CSS-3D Merkle tree, maths steps, cartoon explainer, domino verdict, glow atom). Each has a reduced-motion still version. Copied byte for byte to `extension/` (a test checks). |
+| `fx3d.js` | The nine animation styles (isometric pipeline, paper-cut receipts, CSS-3D bar chart, synthwave hero, CSS-3D Merkle tree, maths steps, cartoon explainer, domino verdict, glow atom). Each has a reduced-motion still version. Most now animate with the Web Animations API on one expo-out easing (`EASE`) and hand changed digests to `window.HCMotion.settle` (the site's hex scramble) when it is there; the cartoon explainer (console) and the signing-formula line (extension) still use GSAP. `tools/build_site.py` turns it into the classic script `site/fx3d.js`. Copied byte for byte to `extension/` (a test checks). |
 | `readable.js` | **Plain words instead of JSON**, for every screen that shows what an agent did: one sentence per step ("Stopped from opening evil.test"), the verifier's verdict restated, and the rules for what is never shown (values behind password/token/key/card names, secret-looking text, URL query strings, and the raw record of a sensitive agent). Raw JSON is only behind a closed "Technical details" opener. An ES module (console, extension) that `tools/build_site.py` also turns into the classic script `site/readable.js`. Copied byte for byte to `extension/` (a test checks). `TESTED`: `tests/ui/test_readable.py` (53). |
 | `theme.css` | The **Night Observatory** design tokens shared with the extension. Verdict colours are reserved: green only for VALID/PASS, red for INVALID/FAIL, violet for UNKNOWN/PARTIAL/NOT_INDEPENDENT. |
 | `style.css`, `chat.css`, `format.js`, `fx.js`, `vendor/` | Shared styles, formatting helpers, and the vendored motion library (`vendor/README.md`). |

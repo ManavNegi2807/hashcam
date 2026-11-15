@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="console.css">
 <link rel="stylesheet" href="site.css">
+<link rel="stylesheet" href="motion.css">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -41,17 +42,23 @@
 
     <section class="sec" id="bus" aria-labelledby="bus-h">
       <h2 id="bus-h">The telemetry bus</h2>
-      <div class="panel bus">
+      <div data-reveal class="panel bus">
         <p class="muted small">Every agent action rides the same four stops, in this order. Click a stop (or press Enter on it) to read, in plain words, a real sample made in your browser a moment ago. The raw record is behind "Technical details".</p>
         <svg class="bus-svg" id="busSvg" viewBox="0 0 960 190" role="group" aria-label="Telemetry bus with four stops in order: 1 SHA-256 chain, 2 deterministic policy, 3 fake-money gate, 4 human sign-off">
           <path class="bus-rail" d="M200 95 H270"/>
           <path class="bus-rail" d="M450 95 H520"/>
           <path class="bus-rail" d="M700 95 H770"/>
+          <path class="packet halo" pathLength="100" d="M200 95 H270"/>
           <path class="packet" pathLength="100" d="M200 95 H270"/>
+          <path class="packet halo later" pathLength="100" d="M200 95 H270"/>
           <path class="packet later" pathLength="100" d="M200 95 H270"/>
+          <path class="packet halo" pathLength="100" d="M450 95 H520"/>
           <path class="packet" pathLength="100" d="M450 95 H520"/>
+          <path class="packet halo later" pathLength="100" d="M450 95 H520"/>
           <path class="packet later" pathLength="100" d="M450 95 H520"/>
+          <path class="packet halo" pathLength="100" d="M700 95 H770"/>
           <path class="packet" pathLength="100" d="M700 95 H770"/>
+          <path class="packet halo later" pathLength="100" d="M700 95 H770"/>
           <path class="packet later" pathLength="100" d="M700 95 H770"/>
           <g class="bus-node on" role="button" tabindex="0" data-i="0" aria-pressed="true" aria-label="1. SHA-256 Chain: show a sample record">
             <rect x="20" y="40" width="180" height="110" rx="16"/>
@@ -120,7 +127,7 @@
     <section class="sec" id="attach" aria-labelledby="attach-h">
       <h2 id="attach-h">Attach HashCam to an agent</h2>
       <div class="cards3">
-        <article class="card">
+        <article data-reveal class="card">
           <header><span class="light on" aria-hidden="true"></span><h3>Browser agents</h3><span class="tag built">BUILT</span></header>
           <p class="muted">Claude in Chrome, Comet, browser-use, or you, in Chrome or Edge.</p>
           <ol>
@@ -130,12 +137,12 @@
             <li>Open the agent's tab, set the passport, press <b>Record this tab</b>.</li>
           </ol>
         </article>
-        <article class="card">
+        <article data-reveal class="card">
           <header><span class="light off" aria-hidden="true"></span><h3>MCP agents</h3><span class="tag planned">PLANNED</span></header>
           <p class="muted">Claude Code, Cursor, Claude Desktop.</p>
           <p>An MCP proxy that sends every tool call through the same gateway and ledger. Not built yet.</p>
         </article>
-        <article class="card">
+        <article data-reveal class="card">
           <header><span class="light on" aria-hidden="true"></span><h3>Custom agents</h3><span class="tag built">BUILT</span></header>
           <p class="muted">Your own agent reports each step to the local recorder API.</p>
           <ol>
@@ -150,23 +157,23 @@
 
     <section class="sec" id="quickstart" aria-labelledby="quickstart-h">
       <h2 id="quickstart-h">Quickstart</h2>
-      <div class="panel qs">
+      <div data-reveal class="panel qs">
         <div class="qs-tabs" role="tablist" aria-label="Quickstart steps">
           <button class="qs-tab" role="tab" id="qt0" aria-controls="qp0" aria-selected="true" type="button">1. Python Recorder</button>
           <button class="qs-tab" role="tab" id="qt1" aria-controls="qp1" aria-selected="false" tabindex="-1" type="button">2. Verify Offline</button>
           <button class="qs-tab" role="tab" id="qt2" aria-controls="qp2" aria-selected="false" tabindex="-1" type="button">3. Export HTML Receipt</button>
         </div>
-        <div class="qs-panel" role="tabpanel" id="qp0" aria-labelledby="qt0">
+        <div data-reveal class="qs-panel" role="tabpanel" id="qp0" aria-labelledby="qt0">
           <p class="muted small">About 30 seconds once the prerequisites are in place (Rust build of <code>abb</code>, a PostgreSQL you can create databases on). First-time setup takes longer: see the README.</p>
           <div class="codebox"><pre><code>git clone https://github.com/ManavNegi2807/hashcam.git &amp;&amp; cd hashcam
 pip install -r requirements.txt
 python tools/recorder.py --dsn postgresql://abb@127.0.0.1:5432/postgres</code></pre><button class="copy" type="button">Copy</button></div>
         </div>
-        <div class="qs-panel" role="tabpanel" id="qp1" aria-labelledby="qt1" hidden>
+        <div data-reveal class="qs-panel" role="tabpanel" id="qp1" aria-labelledby="qt1" hidden>
           <p class="muted small">No server, no network: the verifier reads the receipt and the public key manifest, nothing else. Exit code 0 means VALID, 1 means INVALID.</p>
           <div class="codebox"><pre><code>abb verify run.abbreceipt --keys run.abbreceipt.keys.json --profile LOCAL_ONLY</code></pre><button class="copy" type="button">Copy</button></div>
         </div>
-        <div class="qs-panel" role="tabpanel" id="qp2" aria-labelledby="qt2" hidden>
+        <div data-reveal class="qs-panel" role="tabpanel" id="qp2" aria-labelledby="qt2" hidden>
           <p class="muted small">The Gatekeeper Sandbox exports a self-contained <code>.html</code> receipt that re-checks itself offline in any browser. (The real recorder exports <code>.abbreceipt</code> files, checked with <code>abb verify</code> or the receipt checker below.) You can also just double-click <code>site/sandbox.html</code>.</p>
           <div class="codebox"><pre><code>python -m http.server 8000 --directory site
 # then open http://localhost:8000/sandbox.html, run the test flights,
@@ -177,7 +184,7 @@ python tools/recorder.py --dsn postgresql://abb@127.0.0.1:5432/postgres</code></
 
     <section class="sec" id="live" aria-labelledby="live-h">
       <h2 id="live-h">Live sessions</h2>
-      <form class="connect panel" id="connect">
+      <form data-reveal class="connect panel" id="connect">
         <h3>Connect to your recorder</h3>
         <p class="muted small">Run <code>python tools/recorder.py</code> on this computer, then paste the <b>viewer key</b> from <code>~/.hashcam/recorder-viewer-key</code>. The viewer key can only look at sessions; it cannot start, approve or stop anything. Your browser may ask to let this site reach devices on your local network: allow it. The key stays in this tab only.</p>
         <div class="connect-row">
@@ -190,8 +197,8 @@ python tools/recorder.py --dsn postgresql://abb@127.0.0.1:5432/postgres</code></
       </form>
       <p class="sample-note" role="note" id="sampleNote"><b>Sample data</b> until you connect.</p>
       <div class="live-grid">
-        <div class="panel"><h3>Events per session</h3><div id="bars"></div></div>
-        <div class="panel">
+        <div data-reveal class="panel"><h3>Events per session</h3><div id="bars"></div></div>
+        <div data-reveal class="panel">
           <h3 id="coreTitle">Session core</h3>
           <canvas id="atom" class="atom" role="img" aria-label="Sample session core: page loads, submits, secrets and downloads orbiting the agent; a glowing outer electron shows an approval is waiting"></canvas>
           <p class="atom-key small muted">Nucleus: the agent. Shells: pages (cyan), submits (gold), secrets (violet), downloads (teal). Glowing outer electron: an approval is waiting. Lit shells: trust.</p>
@@ -221,18 +228,19 @@ python tools/recorder.py --dsn postgresql://abb@127.0.0.1:5432/postgres</code></
         <p class="small muted honest-note" id="verdictPlain" role="status">A valid receipt means the record has not changed since it was signed. It does not mean the agent was honest, or that a page told the truth.</p>
       </div>
       <p class="small muted" id="engineNote" role="status"></p>
+      <p class="mono small muted" id="runDigest" aria-live="polite"></p>
       <div id="dominoes"></div>
       <details class="details" id="detailsBox" hidden><summary>Each check, in words (technical detail from the verifier)</summary><ul id="details"></ul></details>
     </section>
 
     <section class="sec" id="how" aria-labelledby="how-h">
       <h2 id="how-h">How it works</h2>
-      <div class="panel"><h3>The path of every action</h3><div id="iso"></div></div>
+      <div data-reveal class="panel"><h3>The path of every action</h3><div id="iso"></div></div>
       <div class="how-grid">
-        <div class="panel"><h3>Why tampering fails</h3><p class="muted small">Edit any event. Drag the tree to turn it. Hashes here are plain SHA-256 of the text, computed in your browser, to show the idea; real receipts hash canonical JSON with domain tags, so their values differ.</p><div id="merkle"></div></div>
-        <div class="panel"><h3>The maths</h3><div id="maths"></div></div>
+        <div data-reveal class="panel"><h3>Why tampering fails</h3><p class="muted small">Edit any event. Drag the tree to turn it. Hashes here are plain SHA-256 of the text, computed in your browser, to show the idea; real receipts hash canonical JSON with domain tags, so their values differ.</p><div id="merkle"></div></div>
+        <div data-reveal class="panel"><h3>The maths</h3><div id="maths"></div></div>
       </div>
-      <div class="panel"><h3>A risky step, from start to seal</h3><div id="cartoon"></div></div>
+      <div data-reveal class="panel"><h3>A risky step, from start to seal</h3><div id="cartoon"></div></div>
       <p class="cta"><a class="btn" href="sandbox.html">Now try the Gatekeeper Sandbox</a></p>
     </section>
 
@@ -241,10 +249,10 @@ python tools/recorder.py --dsn postgresql://abb@127.0.0.1:5432/postgres</code></
     </footer>
   </main>
 
-  <script src="vendor/gsap.min.js"></script>
   <script src="chain.js"></script>
   <script src="readable.js"></script>
   <script src="fallback.js"></script>
+  <script src="motion.js"></script>
   <script src="fx3d.js"></script>
   <script src="site.js"></script>
   <script src="showcase.js"></script>

@@ -2,14 +2,24 @@
 
 **Status:** `TESTED`: `tests/recorder/test_recorder_service.py` (11 tests: grant, deny, timeout,
 out-of-passport, refused passkey, tripwire, drift, secret, kill switch, tampered receipt, API
-guard), `tests/recorder/test_passkey.py` (9) and the browser test `test_extension_e2e.py` (1).
+guard), `tests/recorder/test_passkey.py` (9), `test_viewer_access.py` (11), `test_public_view.py` (5)
+and the browser test `test_extension_e2e.py` (2).
 
 | File | What it does |
 |---|---|
 | `session.py` | One recorded agent session. Every report from the extension goes through the existing policy gateway (`services/worker/gateway.py`) with policy `recorder` v1 and a signed passport (a mandate). Approvals are signed with `abb approve`; sealing uses the existing finalize, export and `abb verify`. |
 | `server.py` | The HTTP API on `127.0.0.1`: pairing token, loopback `Host`, and no web `Origin`. |
 | `passkey.py` | Checks the WebAuthn (passkey) answer before the approver key may be used. Trust on first use; the attestation is not examined. |
-| `public.py` | What the **website's** read-only viewer may see of a session (below). Pure functions; `TESTED` in `tests/recorder/test_public_view.py` (5) and `test_viewer_access.py` (9). |
+| `public.py` | What the **website's** read-only viewer may see of a session (below). Pure functions; `TESTED` in `tests/recorder/test_public_view.py` (5) and `test_viewer_access.py` (11). |
+
+## The extension's browser checks (CORS)
+
+Browsers normally let an extension call a host it has permission for without a CORS check, but some
+do check, and then a flat refusal reads as a CORS error that cuts the extension off. So a preflight
+(`OPTIONS`) from a `chrome-extension://` origin to a loopback `Host` gets the CORS headers back, and
+the extension may read a refusal's text. A preflight carries no token and reveals nothing; every real
+request still needs the pairing token, and a web page cannot send an extension origin. `TESTED` in
+`tests/recorder/test_viewer_access.py`.
 
 ## Sensitive agents, and what the website sees
 

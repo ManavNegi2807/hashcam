@@ -131,11 +131,14 @@ if ($ExtensionSetup) {
         }
         Start-Process explorer.exe -ArgumentList ('"' + $folder + '"')
     }
-    Say ("One time only, and only clicks:`n`n" +
-        "1. In the page that just opened (Extensions), turn on Developer mode (top right).`n" +
+    $isEdge = $browser -and ($browser -like "*msedge.exe")
+    $name = if ($isEdge) { "Microsoft Edge" } else { "Chrome" }
+    $devMode = if ($isEdge) { "turn on Developer mode (the switch at the bottom of the menu on the left)" } else { "turn on Developer mode (the switch at the top right)" }
+    Say ("One time only, and only clicks, in $name`n`n" +
+        "1. In the Extensions page that just opened, $devMode.`n" +
         "2. Click Load unpacked.`n" +
         "3. Pick this folder:`n   $folder`n" +
-        "4. Click the puzzle-piece icon in the toolbar, pin HashCam, and click its icon.`n" +
+        "4. Click the puzzle-piece (Extensions) icon in the toolbar, pin HashCam, and click its icon.`n" +
         "5. Paste the pairing token (HashCam.bat puts it on your clipboard) and register your passkey.`n`n" +
         "Press Ctrl+C on this box to copy the folder path.")
     exit 0

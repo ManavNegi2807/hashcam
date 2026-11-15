@@ -10,6 +10,8 @@
 const C = window.HCChain;
 const { verifyChain } = C;
 const $ = (id) => document.getElementById(id);
+// A digest that changed scrambles into place (motion.js); the page still works without it.
+const hexify = (node, text, key) => (window.HCMotion ? window.HCMotion.hexify(node, text, key) : (node.textContent = text));
 const clone = (v) => JSON.parse(JSON.stringify(v));
 
 // ------------------------------------------------------------------ helpers the exported receipt reuses
@@ -212,7 +214,7 @@ async function refresh() {
   renderWhy();
   renderLedger();
   renderControls();
-  $("keyLine").textContent = keyId ? `key id ${keyId} · P-256 · public key x ${sessionJwk.x.slice(0, 14)}…` : "Making a key…";
+  hexify($("keyLine"), keyId ? `key id ${keyId} · P-256 · public key x ${sessionJwk.x.slice(0, 14)}…` : "Making a key…", "key");
   await refreshVerify();
 }
 
@@ -229,7 +231,7 @@ function renderMeter() {
   const pct = (c) => (Math.max(0, c) / POLICY.budget_cents) * 100 + "%";
   $("liquid").style.setProperty("--level", pct(left));
   $("meterHold").style.setProperty("--bottom", pct(left - held));
-  $("meterHold").style.setProperty("--height", pct(held));
+  $("meterHold").style.setProperty("--sy", String(Math.max(0, held) / POLICY.budget_cents));
   $("meterHold").hidden = held === 0;
   $("mCap").textContent = money(POLICY.budget_cents);
   $("mSpent").textContent = money(spent);
@@ -254,8 +256,8 @@ function renderGate() {
   const what = $("gateWhat");
   if (pending) {
     what.hidden = false;
-    what.textContent = `You are asked to approve: ${pending.action.label} · ${money(pending.action.amount_cents)} · ${pending.action.domain}. ` +
-      `Your signature covers the SHA-256 of exactly this request (${pending.req.hash.slice(0, 12)}…).`;
+    hexify(what, `You are asked to approve: ${pending.action.label} · ${money(pending.action.amount_cents)} · ${pending.action.domain}. ` +
+      `Your signature covers the SHA-256 of exactly this request (${pending.req.hash.slice(0, 12)}…).`, "gate");
   } else {
     what.hidden = true;
   }
@@ -355,7 +357,7 @@ function renderLedger() {
     sum.textContent = summarize(ev);
     const hashes = document.createElement("code");
     hashes.className = "ev-hash";
-    hashes.textContent = `links back to ${ev.prev.slice(0, 10)}… · own fingerprint ${ev.hash.slice(0, 10)}…`;
+    hexify(hashes, `links back to ${ev.prev.slice(0, 10)}… · own fingerprint ${ev.hash.slice(0, 10)}…`, "ev" + i);
     hashes.title = `prev ${ev.prev}\nhash ${ev.hash}`;
     const note = document.createElement("p");
     note.className = "ev-note";
@@ -399,7 +401,7 @@ function renderStatus() {
     items[i].querySelector(".ev-status").textContent = ok
       ? (row.sigOk ? "✓ Intact · signature valid" : "✓ Intact")
       : "✗ Broken";
-    items[i].querySelector(".ev-note").textContent = ok ? "" : row.note;
+    hexify(items[i].querySelector(".ev-note"), ok ? "" : row.note, "note" + i);
   }
   const status = $("chainStatus");
   if (!lastVerify || !working.length) {

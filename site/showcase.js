@@ -107,7 +107,7 @@ function fill(host, i) {
     const dt = document.createElement("dt");
     dt.textContent = label;
     const dd = document.createElement("dd");
-    dd.textContent = value;
+    window.HCMotion.hexify(dd, value, "fact-" + label);
     list.append(dt, dd);
   }
   host.append(list);

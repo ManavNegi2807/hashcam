@@ -1,6 +1,6 @@
 # HashCam Recorder (Chrome extension)
 
-**Status:** `TESTED`: `tests/recorder/` (21 tests). One of them loads this extension into a real
+**Status:** `TESTED`: `tests/recorder/` (38 tests). Two of them load this extension into a real
 Chromium, drives a scripted agent on a local test site, approves with Chrome's own WebAuthn code
 through a virtual authenticator, and checks the verifier's verdict. Not tested: a real side panel
 opened from the toolbar (the test opens the panel page as a tab), a physical fingerprint reader,
@@ -23,6 +23,7 @@ happened into a signed receipt anyone can verify offline.
 | **Replay** | Scrub through the session's screenshots. |
 | **Plain words** | Every step in the flight record is one sentence ("Stopped from opening evil.test", "Typed a password on shop.test. The value was never recorded"), not a code or JSON. The raw record is behind a closed "Technical details" opener. |
 | **Sensitive agent** | Tick "This agent handles sensitive data" when arming: its task, sites and raw records stay off the website's viewer, no screen here shows its raw records, and screenshots start off. A typed password or card number is never recorded either way. |
+| **Stop & seal** | The result (verdict, **Save receipt**, **New session**) appears above the list of steps, so its buttons are never buried. If the browser cleared the extension's memory of a recording (it can, when it restarts the extension), the panel still knows the session id and Stop & seal works anyway. |
 | **Verify** | Drop a `.abbreceipt` (and its `.keys.json`) to see the offline verifier's verdict. |
 
 ## What it does not do (read this)
@@ -50,6 +51,7 @@ pairing token to your clipboard), then, once, `HashCam-Extension-Setup.bat` (a f
 extension), then paste the token in the side panel. See the root `README.md`. The steps below are
 the same thing by hand.
 
+0. Works in Chrome and in Microsoft Edge (Edge: `edge://extensions`, turn on Developer mode with the switch at the bottom of the menu on the left).
 1. Start the local service (needs the built `abb` binaries and a PostgreSQL you can create
    databases on, as for the other demos):
 
@@ -73,7 +75,7 @@ the same thing by hand.
 | `scripting` | Put the content script into the passport's sites only. |
 | `downloads` | Pause a download until you decide. |
 | `http://127.0.0.1/*` | Talk to the local recorder. |
-| optional `http(s)://*/*` | Requested per session for **the passport's sites only**. |
+| optional `http(s)://*/*` | Requested per session for **the passport's sites only**. Screenshots need all-sites access: it is kept after the session is sealed (handing it back could take the recorder's own address with it) and you can remove it any time in the browser's extension settings. |
 
 ## Files
 

@@ -11,11 +11,21 @@ export async function settings() {
 export async function api(path, body, { raw = false } = {}) {
   const { port, token } = await settings();
   if (!token) throw new Error("Pair the extension with the recorder first.");
-  const response = await fetch(`http://127.0.0.1:${port}${path}`, {
-    method: body === undefined ? "GET" : "POST",
-    headers: { "X-HashCam-Token": token, "Content-Type": "application/json" },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
+  let response;
+  try {
+    response = await fetch(`http://127.0.0.1:${port}${path}`, {
+      method: body === undefined ? "GET" : "POST",
+      headers: { "X-HashCam-Token": token, "Content-Type": "application/json" },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  } catch (error) {
+    // The browser reports a blocked or an unreachable request only as "Failed to fetch" (a blocked
+    // one is logged as a CORS error). Say which it is, and what to do.
+    const allowed = await chrome.permissions.contains({ origins: ["http://127.0.0.1/*"] }).catch(() => true);
+    throw new Error(allowed
+      ? `HashCam cannot reach the recorder on 127.0.0.1:${port}. Is it running? (Double-click HashCam.bat.)`
+      : "The browser has taken away HashCam's access to the recorder on 127.0.0.1. In the browser's extension settings, remove HashCam and load it again.");
+  }
   if (raw && response.ok) return response;
   const answer = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(answer.error || `recorder answered ${response.status}`);

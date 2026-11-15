@@ -64,7 +64,7 @@
       <label class="check"><input type="checkbox" id="sensitive"> This agent handles sensitive data
         <span class="muted small">Its task, sites and raw records are kept off the website's viewer, no screen here shows its raw records, and screenshots start off. Typed passwords and card numbers are never recorded either way.</span></label>
       <label class="check"><input type="checkbox" id="shots" checked> Screenshots for Replay
-        <span class="muted small">The browser only lets an extension capture a tab with access to all sites. HashCam asks for it now and gives it back when the session is sealed.</span></label>
+        <span class="muted small">The browser only lets an extension capture a tab with access to all sites. HashCam asks for it now and keeps it until you remove it in the browser's extension settings. Leave this off if you do not want that.</span></label>
       <button class="btn big" id="armBtn"><span class="rec-dot small"></span> Record this tab</button>
     </div>
 
@@ -73,6 +73,9 @@
       <div class="session-line mono" id="sessionLine"></div>
       <canvas class="atom" id="atom" role="img" aria-label="Session core: the agent, with its pages, submits, secrets and downloads orbiting; a glowing outer electron means an approval is waiting"></canvas>
       <div id="approvals"></div>
+      <!-- The result of a sealed session goes first: its buttons (Save receipt, New session) must not
+           be buried under a long list of steps. -->
+      <div id="verdict" hidden></div>
       <div class="roll" id="roll" aria-live="polite">
         <div class="roll-head mono">
           <span>HASHCAM FLIGHT RECORD</span><span id="rollRun"></span>
@@ -87,7 +90,6 @@
           <button class="kill-btn" id="killBtn" disabled>KILL AGENT</button>
         </div>
       </div>
-      <div id="verdict" hidden></div>
     </div>
   </section>
 

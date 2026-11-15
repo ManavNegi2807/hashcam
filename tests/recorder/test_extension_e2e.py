@@ -291,6 +291,11 @@ def test_agent_submit_is_held_until_the_passkey_approves(stack: dict[str, Any]) 
             panel.click("#stopBtn")
             panel.wait_for_selector(".big-stamp", timeout=180_000)
             assert panel.inner_text(".big-stamp") == "VALID"
+            # The result and its buttons come first, not under a long list of steps.
+            verdict_box = panel.locator("#verdict").bounding_box()
+            roll_box = panel.locator("#roll").bounding_box()
+            assert verdict_box and roll_box and verdict_box["y"] < roll_box["y"]
+            assert panel.locator("#verdict button", has_text="New session").is_visible()
             assert session.verdict is not None and session.verdict["overall"] == "VALID"
             panel.screenshot(path=str(stack["work"] / "panel.png"), full_page=True)
 
@@ -316,5 +321,49 @@ def test_agent_submit_is_held_until_the_passkey_approves(stack: dict[str, Any]) 
             assert secret.locator(".tech-withheld").count() == secret.count()  # every such line
             assert secret.locator(".tech-text").count() == 0
             assert "hunter2-correct-horse" not in panel.content()
+        finally:
+            context.close()
+
+
+def test_stop_still_seals_when_the_extension_forgot_the_recording(stack: dict[str, Any]) -> None:
+    """The browser can clear the extension's session storage while the recorder keeps recording.
+
+    The panel then still knows the session id, and handing it back lets the person stop and seal
+    anyway; before, Stop answered "not recording" and the session stayed open until it expired.
+    """
+    home = stack["work"] / "lost-memory"
+    home.mkdir()
+    extension = extension_with_screenshots_granted(home)
+    recorder: Recorder = stack["recorder"]
+    session = recorder.start_session(
+        task="Read the page", agent="Browser agent", passport={"hosts": ["127.0.0.1"]}
+    )
+    with playwright_api.sync_playwright() as p:
+        context = p.chromium.launch_persistent_context(
+            str(home / "profile"),
+            headless=True,
+            channel="chromium",
+            args=[f"--disable-extensions-except={extension}", f"--load-extension={extension}"],
+        )
+        try:
+            worker = (
+                context.service_workers[0]
+                if context.service_workers
+                else context.wait_for_event("serviceworker")
+            )
+            panel = context.new_page()
+            panel.goto(f"chrome-extension://{worker.url.split('/')[2]}/sidepanel.html")
+            panel.evaluate(
+                "([t, p]) => chrome.storage.local.set({token: t, port: p})", [TOKEN, stack["port"]]
+            )
+            stop = "(m) => chrome.runtime.sendMessage({type: 'stop', killed: false, ...m})"
+            # Nothing remembered and no id given, or an id that is not a session id: still refused.
+            assert panel.evaluate(stop, {}) == {"error": "not recording"}
+            assert panel.evaluate(stop, {"sessionId": "../../x"}) == {"error": "not recording"}
+            assert session.state == "recording"
+            # The panel's session id is enough to stop and seal it.
+            sealed = panel.evaluate(stop, {"sessionId": session.session_id})
+            assert sealed["verdict"]["overall"] == "VALID", sealed
+            assert session.state == "sealed"
         finally:
             context.close()

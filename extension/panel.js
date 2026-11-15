@@ -312,6 +312,7 @@ function renderVerdict() {
   const box = $("verdict");
   box.hidden = false;
   box.textContent = "";
+  box.scrollIntoView({ block: "start" }); // the result and its buttons come into view
   const overall = String(v.overall || "UNREADABLE");
   const dims = el("div", { class: "dims-host" });
   dominoes(dims, v.dimensions || {});
@@ -356,7 +357,7 @@ async function newSession() {
 // ------------------------------------------------------------------ stop and kill
 
 $("stopBtn").addEventListener("click", () => guarded(async () => {
-  const answer = await chrome.runtime.sendMessage({ type: "stop", killed: false });
+  const answer = await chrome.runtime.sendMessage({ type: "stop", killed: false, sessionId });
   if (answer && answer.error) throw new Error(answer.error);
   await refresh();
 }));
@@ -367,7 +368,7 @@ $("killCover").addEventListener("click", () => {
   setTimeout(() => { $("killCover").parentElement.classList.remove("open"); $("killBtn").disabled = true; }, 6000);
 });
 $("killBtn").addEventListener("click", () => guarded(async () => {
-  const answer = await chrome.runtime.sendMessage({ type: "stop", killed: true });
+  const answer = await chrome.runtime.sendMessage({ type: "stop", killed: true, sessionId });
   if (answer && answer.error) throw new Error(answer.error);
   await refresh();
 }));
