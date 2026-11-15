@@ -8,6 +8,16 @@ Plain HTML, vanilla CSS and zero-dependency JavaScript (no animation library, no
 for the pages themselves, and no network use except the optional read of your own recorder on
 `127.0.0.1`. It works from `file://` (double-click `index.html`) and from the web.
 
+## Logo and watermark
+
+The favicon, the mark beside the wordmark and the faint page watermark all come from one master image,
+`docs/brand/hashcam-logo.png`, through `tools/make_brand_assets.py` (needs Pillow; run it again if the
+master changes). `brand.css` and the favicon in each page's `<head>` are generated: small images
+embedded as `data:` URIs, so the pages make no image request and work offline. The watermark is one
+tone, feathered at its edges, fixed behind the page and deaf to the pointer; it is hidden when printed.
+`TESTED`: `tests/ui/test_branding.py`. At 16px on a 1x screen the mark is recognisable but soft;
+from 20px up, and at 2x, it is crisp.
+
 ## Motion
 
 `motion.css` and `motion.js` (unchanged copies of `ui/motion.css` and `ui/motion.js`, which the console
