@@ -1,7 +1,7 @@
 # site: the public HashCam website
 
 **Status:** `TESTED`: `tests/ui/test_site.py` (needs the full stack), `tests/ui/test_site_pages.py` (33),
-`tests/ui/test_motion.py` (25), `tests/ui/test_fallback.py` (39) and `tests/ui/test_readable.py` (53). The deployed copy is only as fresh as the
+`tests/ui/test_motion.py` (29), `tests/ui/test_fallback.py` (39) and `tests/ui/test_readable.py` (53). The deployed copy is only as fresh as the
 last merge to `main`.
 
 Plain HTML, vanilla CSS and zero-dependency JavaScript (no animation library, no CDN), no build step
@@ -26,8 +26,13 @@ Animations API and CSS. One easing everywhere, an expo-out `cubic-bezier(0.16, 1
 `transform`, `opacity` and `stroke-dashoffset` animate, so no frame repaints or reflows the layout.
 Entrances stagger 60ms apart; digests scramble through hex for ~320ms and lock left to right into the
 real value; cards light their border where the pointer is (`--mouse-x`, `--mouse-y`); the hero is a
-telemetry core, not a circle. Everything has a still version under `prefers-reduced-motion`. Endless
-loops (the rings, the grid, the stripes) are constant-speed on purpose, so they stay linear. They
+telemetry core, not a circle, over a fine hairline grid, and, inside it, a small browser window in a viewfinder (REC, a running timecode, an
+agent that opens a shop, fills a form, is held for a passkey and stopped at a site it may not use: a scripted
+illustration). Under it is a **flight record**: each step writes
+a card onto a tape at the moment it happens, a small card (its kind, what happened in plain words, and its hash,
+chained to the card before; the hashes are real SHA-256), and the tape drifts away like a chart recorder's
+paper (the retro rolling grid is gone). Everything has a still version under `prefers-reduced-motion`. Endless
+loops (the rings, the tape, the stripes) are constant-speed on purpose, so they stay linear. They
 pause while scrolled out of view.
 
 `tests/ui/test_motion.py` checks the above in a real Chromium: no console error, a `layout-shift` of

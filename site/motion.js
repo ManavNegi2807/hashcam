@@ -213,6 +213,287 @@ function core(host) {
   host.append(stage);
 }
 
+// ------------------------------------------------------------------ the hero field
+
+// A fine hairline grid that dissolves toward its edges: a still backdrop (it replaced the retro rolling
+// perspective floor). The motion in the hero is the flight record below.
+function field() {
+  const root = document.createElement("div");
+  root.className = "hero-field";
+  root.setAttribute("aria-hidden", "true");
+  const grid = document.createElement("div");
+  grid.className = "hf-grid";
+  root.append(grid);
+  return root;
+}
+
+// ------------------------------------------------------------------ the flight record (hero)
+
+// The site's story in one strip: the recorder (the REC core) writes each thing an agent does onto a
+// tape as a small card (what happened in plain words, its kind, and its hash chained to the one before),
+// and the tape drifts away like a chart recorder's paper. The hashes are real SHA-256: each is the hash
+// of the one before it plus the words on its card. Only transform and opacity animate.
+const RECORD = [
+  ["ALLOWED", "cyan", "Opened shop.example/checkout"],
+  ["SECRET", "violet", "Typed a password \u00b7 value withheld"],
+  ["HELD", "gold", "Wants to send a form \u00b7 waiting for you"],
+  ["SIGNED", "gold", "Approved with a passkey"],
+  ["BLOCKED", "rose", "Stopped from opening bank.example"],
+  ["SEALED", "paper", "Receipt sealed, signed, checkable offline"],
+];
+const TAPE_MS = 17000; // how long a card takes to drift away
+const EVERY_MS = 2800; // a new card this often
+
+const make = (tag, cls, text) => {
+  const node = document.createElement(tag);
+  node.className = cls;
+  if (text != null) node.textContent = text;
+  return node;
+};
+
+// Cards #1 and #2 are written silently when the page opens, so the first card on screen is #3 (the tail of
+// the story) and the agent's own first step lands as #7: card number n always tells RECORD[(n - 1) % 6].
+function recorder(host) {
+  const root = make("div", "hero-record");
+  root.setAttribute("aria-hidden", "true");
+  const bolt = make("i", "");
+  const strip = make("div", "rc-strip");
+  const head = make("div", "rc-head");
+  strip.append(make("div", "rc-line"), head);
+  root.append(make("div", "rc-link"), strip);
+  root.firstChild.append(bolt);
+  host.append(root);
+
+  let previous = "0".repeat(64);
+  let count = 0;
+  const live = new Set();
+  let shown = true;
+  const history = (async () => {
+    for (const [, , words] of RECORD.slice(0, 2)) {
+      previous = await digestOf(previous + words);
+      count += 1;
+    }
+  })();
+  const card = async (index, { age = 0, at = null } = {}) => {
+    const [kind, tone, words] = RECORD[index];
+    count += 1;
+    const number = count;
+    previous = await digestOf(previous + words);
+    const x = head.offsetLeft + head.offsetWidth / 2;
+    const chip = make("div", `rc-chip ${number % 2 ? "up" : "down"} tone-${tone}`);
+    chip.style.left = (at == null ? x : at) + "px";
+    const hash = make("span", "hex");
+    const box = make("div", "rc-card");
+    const top = make("span", "");
+    top.append(make("b", "rc-kind", kind), make("span", "rc-words", words));
+    const low = make("span", "rc-hash", `#${number} · `);
+    low.append(hash);
+    box.append(top, low);
+    chip.append(make("i", "rc-stem"), make("i", "rc-dot"), box);
+    strip.append(chip);
+    if (at != null) { // the still version: laid out, not moving
+      chip.style.opacity = "1";
+      hash.textContent = previous.slice(0, 8);
+      return;
+    }
+    const travel = x + 340;
+    const run = chip.animate([
+      { transform: "translateX(0)", opacity: 0, offset: 0 },
+      { opacity: 1, offset: 0.04 },
+      { opacity: 1, offset: 0.7 },
+      { transform: `translateX(${-travel}px)`, opacity: 0, offset: 1 },
+    ], { duration: TAPE_MS, easing: "linear", fill: "both" });
+    if (age) { run.currentTime = age; hash.textContent = previous.slice(0, 8); } else settle(hash, previous.slice(0, 8));
+    live.add(run);
+    if (!shown) run.pause(); // written while the hero is out of view: it waits
+    run.finished.then(() => { live.delete(run); chip.remove(); }, () => { /* cancelled */ });
+  };
+  let queue = Promise.resolve();
+  const place = (index, options) => {
+    queue = queue.then(() => history).then(() => card(index, options));
+    return queue;
+  };
+
+  if (calm()) {
+    const x = head.offsetLeft + head.offsetWidth / 2;
+    [2, 3, 4, 5].forEach((index, i) => place(index, { at: x - (3 - i) * 210 }));
+  } else {
+    [2, 3, 4, 5].forEach((index, i) => place(index, { age: (3 - i) * 2800 + 600 }));
+  }
+  return {
+    // the agent did something: a pulse runs from the recorder down to the tape, and a card is written
+    emit(index) {
+      go(bolt, [{ transform: "translateY(-100%)", opacity: 0 }, { opacity: 1, offset: 0.25 }, { transform: "translateY(260%)", opacity: 0 }], { duration: 650, fill: "none" });
+      setTimeout(() => place(index), 480);
+    },
+    setVisible(on) {
+      shown = on;
+      live.forEach((a) => (on ? a.play() : a.pause()));
+    },
+  };
+}
+
+// ------------------------------------------------------------------ the agent being recorded (hero)
+
+// A small browser window in a viewfinder, with REC and a timecode: an AI agent opens a shop's checkout, fills
+// a form, is held for a passkey, is stopped at a site it may not use, and gets its receipt sealed. Each step
+// writes its card onto the tape (see recorder) at the moment it happens. It is a scripted illustration.
+const SCENE_URL = { shop: "shop.example/checkout", bank: "bank.example/transfer" };
+
+function agent(panel, tape, host) {
+  const root = make("div", "agent");
+  root.setAttribute("aria-hidden", "true");
+  const time = make("span", "ag-time", "00:00");
+  const rec = make("span", "ag-rec");
+  rec.append(make("i", ""), document.createTextNode("REC"));
+  const top = make("div", "ag-top");
+  top.append(rec, time, make("span", "ag-tag", "AGENT · BROWSER"));
+  const bar = make("div", "ag-bar");
+  const url = make("span", "ag-url", "");
+  bar.append(make("i", ""), make("i", ""), make("i", ""), url);
+  const field = (label) => {
+    const box = make("div", "ag-field");
+    const value = make("span", "ag-val", "");
+    box.append(make("b", "", label), value);
+    return [box, value];
+  };
+  const [emailBox, email] = field("Email");
+  const [passwordBox, password] = field("Password");
+  const lock = make("em", "ag-lock", "WITHHELD");
+  passwordBox.append(lock);
+  const button = make("div", "ag-btn", "Place order");
+  const ripple = make("i", "ag-ripple");
+  const ring = svg("svg", { viewBox: "0 0 24 24", class: "ag-ring", focusable: "false" },
+    svg("circle", { class: "track", cx: 12, cy: 12, r: 9 }), svg("circle", { class: "arc", cx: 12, cy: 12, r: 9, pathLength: 1 }));
+  const said = make("span", "", "");
+  const over = make("div", "ag-over");
+  over.append(ring, said);
+  const cursor = svg("svg", { viewBox: "0 0 14 18", class: "ag-cursor", focusable: "false" },
+    svg("path", { d: "M1.5 1.5v13l3.4-3.1 2.3 5 2.2-1-2.3-4.9H12z", fill: "#F1F5F9", stroke: "#080B12", "stroke-width": 1, "stroke-linejoin": "round" }));
+  const page = make("div", "ag-page");
+  page.append(emailBox, passwordBox, button, ripple, over, cursor);
+  const win = make("div", "ag-win");
+  win.append(bar, page);
+  root.append(top, win, ...["tl", "tr", "bl", "br"].map((k) => make("i", `ag-br ${k}`)));
+  panel.append(root);
+  panel.classList.add("with-agent"); // the window stands where the core's own REC text was
+
+  const fmt = (n) => `${String(Math.floor(n / 60)).padStart(2, "0")}:${String(n % 60).padStart(2, "0")}`;
+  const say = (kind, text) => { over.className = `ag-over on ${kind}`; said.textContent = text; };
+  const clear = () => { over.className = "ag-over"; };
+
+  if (calm()) { // one still frame: the agent, recorded, with its last step approved
+    url.textContent = SCENE_URL.shop;
+    email.textContent = "agent@demo.test";
+    password.textContent = "•".repeat(9);
+    lock.classList.add("on");
+    page.classList.add("on");
+    time.textContent = fmt(7);
+    say("ok", "Approved with your passkey");
+    ring.querySelector(".arc").style.strokeDashoffset = "0";
+    return;
+  }
+
+  let visible = true;
+  let seconds = 0;
+  const gate = async (ms) => {
+    await sleep(ms);
+    while (!visible) await sleep(300);
+  };
+  const type = async (node, text, ms) => {
+    node.textContent = "";
+    for (const ch of text) {
+      node.textContent += ch;
+      await gate(ms);
+    }
+  };
+  let at = { x: 16, y: 150 };
+  const move = async (target) => {
+    const to = { x: target.offsetLeft + target.offsetWidth * 0.32, y: target.offsetTop + target.offsetHeight * 0.55 };
+    const run = cursor.animate([{ transform: `translate(${at.x}px, ${at.y}px)` }, { transform: `translate(${to.x}px, ${to.y}px)` }], { duration: 760, easing: EASE, fill: "forwards" });
+    await run.finished;
+    cursor.style.transform = `translate(${to.x}px, ${to.y}px)`;
+    run.cancel();
+    at = to;
+  };
+  const click = () => {
+    ripple.style.left = at.x + "px";
+    ripple.style.top = at.y + "px";
+    go(ripple, [{ transform: "scale(.3)", opacity: 0.9 }, { transform: "scale(2.6)", opacity: 0 }], { duration: 650, fill: "none" });
+    button.classList.add("press");
+    setTimeout(() => button.classList.remove("press"), 180);
+  };
+  let spin = null;
+  const reset = () => {
+    url.textContent = "";
+    email.textContent = "";
+    password.textContent = "";
+    lock.classList.remove("on");
+    page.classList.remove("on");
+    clear();
+    if (spin) spin.cancel();
+    seconds = 0;
+    time.textContent = fmt(0);
+    at = { x: 16, y: 150 };
+    cursor.style.transform = `translate(${at.x}px, ${at.y}px)`;
+  };
+  async function loop() {
+    for (;;) {
+      reset();
+      cursor.style.opacity = "1";
+      await gate(600);
+      await type(url, SCENE_URL.shop, 42);
+      page.classList.add("on");
+      tape.emit(0);
+      await gate(900);
+      await move(emailBox);
+      await type(email, "agent@demo.test", 48);
+      await gate(350);
+      await move(passwordBox);
+      await type(password, "•".repeat(9), 70);
+      lock.classList.add("on");
+      tape.emit(1);
+      await gate(800);
+      await move(button);
+      click();
+      say("held", "Held · waiting for your passkey");
+      spin = go(ring.querySelector(".arc"), [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: 1500, easing: "linear" });
+      tape.emit(2);
+      await gate(1900);
+      say("ok", "Approved with your passkey");
+      tape.emit(3);
+      await gate(1500);
+      clear();
+      await type(url, SCENE_URL.bank, 38);
+      page.classList.remove("on");
+      say("blocked", "Not on this agent’s passport");
+      tape.emit(4);
+      await gate(1900);
+      say("sealed", "Receipt sealed");
+      tape.emit(5);
+      await gate(2400);
+      clear();
+    }
+  }
+
+  new IntersectionObserver((entries) => {
+    visible = entries.some((e) => e.isIntersecting);
+    tape.setVisible(visible);
+  }, { threshold: 0.05 }).observe(host);
+  setInterval(() => {
+    if (!visible) return;
+    seconds += 1;
+    time.textContent = fmt(seconds);
+  }, 1000);
+  const wide = matchMedia("(min-width: 761px)");
+  let started = false;
+  const start = () => {
+    if (!started && wide.matches) { started = true; loop(); }
+  };
+  start();
+  wide.addEventListener("change", start);
+}
+
 function hero(host) {
   if (!host) return;
   const sky = host.querySelector(".synth-sky");
@@ -221,13 +502,14 @@ function hero(host) {
     if (sun) sun.remove(); // the retro REC circle gives way to the core
     const spot = document.createElement("div");
     spot.className = "synth-spot";
-    sky.append(spot);
+    sky.append(field(), spot);
   }
   const holder = document.createElement("div");
   holder.className = "hero-core spot";
   holder.id = "core";
   host.append(holder);
   core(holder);
+  agent(holder, recorder(host), host);
 }
 
 // ------------------------------------------------------------------ "A risky step, from start to seal"
