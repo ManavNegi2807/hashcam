@@ -36,8 +36,19 @@ pre code { background: none; padding: 0; }
 .brand b { color: var(--hc-gold); }
 .brand-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--hc-gold); box-shadow: var(--hc-glow); }
 .topbar nav { display: flex; gap: 4px; flex-wrap: wrap; }
-.topbar nav a { color: var(--hc-muted); text-decoration: none; padding: 8px 12px; border-radius: 8px; font-size: 14px; }
+.topbar nav a { position: relative; color: var(--hc-muted); text-decoration: none; padding: 8px 12px; border-radius: 8px; font-size: 14px; }
 .topbar nav a:hover { color: var(--hc-text); background: var(--hc-surface); }
+/* A thin gold line that draws out from the middle under the link you point at, and stays under the page
+   you are on. Only transform and opacity move, so it costs the page nothing. */
+.topbar nav a::after {
+  content: ""; position: absolute; left: 12px; right: 12px; bottom: 3px; height: 1px; border-radius: 1px;
+  background: var(--hc-gold); opacity: 0; transform: scaleX(.2); transform-origin: 50% 50%;
+  transition: transform .32s cubic-bezier(0.16, 1, 0.3, 1), opacity .32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.topbar nav a:hover::after, .topbar nav a:focus-visible::after { opacity: .9; transform: scaleX(1); }
+.topbar nav a[aria-current="page"] { color: var(--hc-text); }
+.topbar nav a[aria-current="page"]::after { opacity: 1; transform: scaleX(1); }
+@media (prefers-reduced-motion: reduce) { .topbar nav a::after { transition: none; } }
 
 /* ------------------------------------------------------------ hero + synthwave (style 4) */
 .hero { position: relative; min-height: 78vh; display: grid; align-items: center; padding: 64px clamp(16px, 6vw, 80px) 120px; overflow: hidden; isolation: isolate; }

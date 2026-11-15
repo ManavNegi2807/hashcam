@@ -1,0 +1,76 @@
+/* The HashCam Range. Tokens come from theme.css. Verdict colours keep their meaning: emerald = pass,
+   crimson = fail, violet = unknown or incomplete, never green. */
+
+.rg { --ok: #10b981; --bad: #ef4444; --unknown: #b9a7ff; --hold: #f59e0b;
+  max-width: 1240px; margin: 0 auto; padding: 28px clamp(16px, 4vw, 48px) 72px; display: grid; gap: 18px; }
+.rg h2 { font-size: 17px; margin: 0 0 10px; }
+.rg h3 { font-size: 15px; margin: 0 0 6px; }
+.rg-head h1 { font-size: clamp(28px, 4.4vw, 46px); line-height: 1.1; margin: 6px 0 12px; letter-spacing: -.02em; }
+.rg-head .lead { max-width: 760px; }
+.sim-chip { display: inline-block; font: 600 12px var(--hc-mono); letter-spacing: .1em; color: var(--hc-gold-2);
+  border: 1px solid rgba(245, 158, 11, .5); background: rgba(245, 158, 11, .08); padding: 6px 14px; border-radius: 999px; margin: 6px 0; max-width: 100%; }
+.rg-steps { display: grid; gap: 6px; margin: 14px 0 0; padding-left: 22px; color: var(--hc-muted); max-width: 760px; }
+.rg-steps b { color: var(--hc-text); }
+.rg .panel { min-width: 0; }
+.rg-shared { border-color: rgba(185, 167, 255, .4); }
+
+/* limits and key/value lists */
+.rg-dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px 18px; margin: 0; }
+.rg-dl div { display: grid; gap: 2px; min-width: 0; }
+.rg-dl dt { color: var(--hc-muted); font-size: 12px; letter-spacing: .04em; }
+.rg-dl dd { margin: 0; font: 600 15px var(--hc-mono); overflow-wrap: anywhere; }
+
+/* the levels */
+.rg-levels { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 14px; }
+.level { display: grid; align-content: start; gap: 9px; }
+.level header { display: flex; align-items: baseline; gap: 10px; }
+.lv-n { font: 700 12px var(--hc-mono); letter-spacing: .12em; color: var(--hc-muted); }
+.level h3 { margin: 0; font-size: 16px; }
+.lv-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.lv-chip { font: 600 10px var(--hc-mono); letter-spacing: .1em; text-transform: uppercase; padding: 4px 8px; border-radius: 6px;
+  color: var(--hc-muted); border: 1px solid rgba(255, 255, 255, .12); }
+.lv-chip.lock { color: var(--unknown); border-color: rgba(185, 167, 255, .45); }
+.lv-looks { margin: 0; padding-left: 18px; color: var(--hc-muted); font-size: 13px; display: grid; gap: 2px; }
+.level .btn { justify-self: start; margin-top: 4px; }
+.level.on { outline: 1px solid rgba(245, 158, 11, .6); }
+
+/* start a run, score a run */
+.rg-label { display: block; font-size: 13px; margin: 8px 0 4px; }
+.rg-task { width: 100%; box-sizing: border-box; min-height: 110px; resize: vertical; background: #060910; color: #cbd5e1;
+  border: 1px solid var(--hc-line); border-radius: 10px; padding: 10px 12px; font: 13px/1.55 var(--hc-mono); }
+.rg-do { display: grid; gap: 6px; padding-left: 22px; color: var(--hc-muted); }
+.rg-passport { margin-top: 12px; padding: 12px 14px; border: 1px dashed rgba(245, 158, 11, .5); border-radius: 12px; }
+.rg-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.rg-select { background: var(--hc-raised); color: var(--hc-text); border: 1px solid var(--hc-line); border-radius: 8px; padding: 8px 10px; font: 600 14px var(--hc-sans); max-width: 100%; }
+.rg-drop { margin: 12px 0; padding: 16px; border: 1.5px dashed rgba(255, 255, 255, .18); border-radius: 12px; display: grid; gap: 8px; }
+.rg-drop.over { border-color: var(--hold); background: rgba(245, 158, 11, .06); }
+.rg-files { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font: 12px var(--hc-mono); color: var(--hc-muted); overflow-wrap: anywhere; }
+
+/* the result */
+.rg-overall { margin: 4px 0; font: 800 26px var(--hc-mono); letter-spacing: .08em; }
+.rg-overall.PASSED { color: var(--ok); }
+.rg-overall.FAILED { color: var(--bad); }
+.rg-overall.INCOMPLETE, .rg-overall.NOTSCORED { color: var(--unknown); }
+.rg-criteria { list-style: none; margin: 12px 0; padding: 0; display: grid; gap: 8px; }
+.rg-criteria li { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 4px 12px; padding: 10px 12px; border-radius: 10px;
+  border: 1px solid var(--hc-line); border-left: 4px solid var(--c, var(--hc-line)); background: rgba(255, 255, 255, .02); }
+.rg-criteria li.PASS { --c: var(--ok); }
+.rg-criteria li.FAIL { --c: var(--bad); }
+.rg-criteria li.UNKNOWN { --c: var(--unknown); }
+.rg-st { font: 700 11px var(--hc-mono); letter-spacing: .1em; color: var(--c); align-self: center; }
+.rg-what b { display: block; font-size: 14px; }
+.rg-what span { color: var(--hc-muted); font-size: 13px; overflow-wrap: anywhere; }
+.rg-badge { margin: 10px 0; min-height: 22px; }
+.rg-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+/* Drawn by range.js after the first paint: hidden until then, so nothing jumps down the page. */
+.rg:not(.ready) > :not(.rg-head) { visibility: hidden; }
+
+/* the test pages (levels 7 and 8) */
+.rg-fix { margin-top: 12px; padding: 12px 14px; border: 1px solid var(--hc-line); border-radius: 12px; }
+/* Out of sight for people, in the page's text for an agent. aria-hidden keeps it from screen readers. */
+.rg-hidden { position: absolute; left: -9999px; top: auto; width: 1px; height: 1px; overflow: hidden; }
+
+@media (max-width: 560px) {
+  .rg-criteria li { grid-template-columns: minmax(0, 1fr); }
+}

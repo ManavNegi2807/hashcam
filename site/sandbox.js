@@ -429,7 +429,9 @@ function renderControls() {
   $("tamperHint").hidden = !tamper;
   $("restoreBtn").disabled = !dirty();
   $("resetBtn").disabled = busy;
-  $("exportBtn").disabled = !(lastVerify && lastVerify.ok && !dirty() && !busy && state !== "held" && state !== "starting" && ledger.length > 0);
+  // A step that is still held can be exported too: the record is valid and shows the hold, unresolved. (The
+  // Range's levels "stop at the gate" and "once each" end exactly there.)
+  $("exportBtn").disabled = !(lastVerify && lastVerify.ok && !dirty() && !busy && state !== "starting" && ledger.length > 0);
 }
 
 async function refreshVerify() {

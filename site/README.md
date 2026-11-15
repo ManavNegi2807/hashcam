@@ -45,6 +45,7 @@ the top of the home page about 30 fps while the hero's rings turn.
 |---|---|
 | `index.html` | Hero, the four-stop telemetry bus, a four-step walkthrough, attach guide, a 30-second quickstart, live sessions, the receipt checker and how-it-works. |
 | `sandbox.html` | The **Gatekeeper Sandbox**: four test flights, a fake-money escrow meter, a held gate that needs a signature, a radar that explains each decision, a hash-chained ledger you can tamper with, and an exported receipt that checks itself. |
+| `range.html` | The **HashCam Range**: 8 levels to test your own AI agent on this site. It checks the record your run left (sandbox export or extension receipt) in the browser, then scores it pass / fail / unknown, with a share link and a badge. Limits are shown, **not enforced yet**. Design for what comes next: [`docs/AGENT_RANGE.md`](../docs/AGENT_RANGE.md). |
 
 ## The sandbox is a simulation
 
