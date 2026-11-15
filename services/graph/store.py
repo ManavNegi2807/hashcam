@@ -36,7 +36,7 @@ class FalkorStore:
 
     def _graph(self, run_id: str) -> Any:
         try:
-            from falkordb import FalkorDB  # type: ignore[import-untyped]
+            from falkordb import FalkorDB
         except ImportError as exc:
             raise GraphUnavailable("the falkordb Python package is not installed") from exc
         try:
