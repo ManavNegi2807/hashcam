@@ -6,7 +6,7 @@
 (function () {
 "use strict";
 
-const { bars3d, dominoes, glowAtom, isometric, merkle, printStrip, synthwave } = window.HCFX;
+const { dominoes, eventBars, glowAtom, merkle, pipeline, printStrip, synthwave } = window.HCFX;
 const M = window.HCMotion;
 const R = window.HCReadable;
 
@@ -22,7 +22,7 @@ const fromDisk = location.protocol === "file:";
 
 synthwave(document.querySelector(".hero"));
 M.hero(document.querySelector(".hero")); // the telemetry core replaces the old REC circle
-isometric($("iso"));
+pipeline($("iso"));
 merkle($("merkle"), $("maths"));
 const story = M.riskyStep($("cartoon"));
 const storyWatch = new IntersectionObserver((entries) => {
@@ -79,7 +79,7 @@ function showSample() {
   $("sampleNote").hidden = false;
   $("coreTitle").textContent = "Session core (sample)";
   $("sessionList").textContent = "";
-  bars3d($("bars"), SAMPLE.sessions);
+  eventBars($("bars"), SAMPLE.sessions);
   drawTimeline(SAMPLE.view, true);
 }
 
@@ -104,7 +104,7 @@ async function refreshLive() {
       ? `Connected to your recorder · ${sessions.length} session${sessions.length > 1 ? "s" : ""}`
       : "Connected to your recorder · no sessions yet. Start one from the extension.";
     $("sampleNote").hidden = true;
-    bars3d($("bars"), sessions);
+    eventBars($("bars"), sessions);
     const list = $("sessionList");
     list.textContent = "";
     for (const s of sessions) {

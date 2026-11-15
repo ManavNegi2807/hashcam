@@ -2,7 +2,7 @@
 // so it also loads from a file:// page. Reached as window.HCFX.
 (function () {
 "use strict";
-// HashCam's nine animation styles. Each has one job, and each has a still version for people who
+// HashCam's animation styles. Each has one job, and each has a still version for people who
 // ask for reduced motion: the still version shows the same facts, never less.
 //
 // Nothing here decides anything. The verdict, statuses and counts drawn come from the verifier
@@ -68,72 +68,83 @@ function synthwave(host) {
   whileVisible(host, () => host.classList.remove("paused"), () => host.classList.add("paused"));
 }
 
-// ===================================================================== 1. ISOMETRIC (how it works)
-// agent -> policy gateway -> ledger -> separate signer -> receipt. Packets travel the path; every
-// third packet is refused and bounces off the gateway.
-function isometric(host) {
-  const S = 22;
-  const iso = (x, y, z = 0) => [(x - y) * S * 0.866 + 300, (x + y) * S * 0.5 - z * S + 60];
-  const stations = [
-    { x: 0, y: 0, h: 1.4, label: "AI agent", tone: "cyan" },
-    { x: 4, y: 0, h: 2.2, label: "Policy gateway", tone: "gold" },
-    { x: 8, y: 0, h: 1.2, label: "Ledger", tone: "cyan" },
-    { x: 8, y: 4, h: 1.8, label: "Separate signer", tone: "gold" },
-    { x: 12, y: 4, h: 0.6, label: "Receipt", tone: "paper" },
-  ];
-  const root = svg("svg", { viewBox: "0 0 620 380", class: "iso", role: "img",
-    "aria-label": "How it works: the AI agent's actions pass the policy gateway, are written to the ledger, checkpointed by a separate signer, and sealed into a receipt. Refused actions stop at the gateway." });
-  const face = (pts, cls) => svg("polygon", { points: pts.map((p) => p.join(",")).join(" "), class: cls });
-  // floor tiles
-  for (let x = -1; x <= 13; x++) for (let y = -1; y <= 5; y++) {
-    root.append(face([iso(x, y), iso(x + 1, y), iso(x + 1, y + 1), iso(x, y + 1)], "iso-tile"));
-  }
-  // the path the packets take
-  const path = [[0.5, 0.5], [4.5, 0.5], [8.5, 0.5], [8.5, 4.5], [12.5, 4.5]].map(([x, y]) => iso(x, y, 0.05));
-  root.append(svg("polyline", { points: path.map((p) => p.join(",")).join(" "), class: "iso-path" }));
-  for (const s of stations) {
-    const [x, y, h] = [s.x, s.y, s.h];
-    const g = svg("g", { class: `iso-box tone-${s.tone}` });
-    g.append(face([iso(x, y + 1, 0), iso(x + 1, y + 1, 0), iso(x + 1, y + 1, h), iso(x, y + 1, h)], "f-left"));
-    g.append(face([iso(x + 1, y, 0), iso(x + 1, y + 1, 0), iso(x + 1, y + 1, h), iso(x + 1, y, h)], "f-right"));
-    g.append(face([iso(x, y, h), iso(x + 1, y, h), iso(x + 1, y + 1, h), iso(x, y + 1, h)], "f-top"));
-    const [lx, ly] = iso(x + 0.5, y + 1.6, 0);
-    g.append(svg("text", { x: lx, y: ly + 14, class: "iso-label", "text-anchor": "middle" }, s.label));
-    root.append(g);
-  }
-  host.append(root);
-  if (calm()) return;
+// ===================================================================== 1. THE PATH OF AN ACTION (how it works)
+// agent -> policy gateway -> ledger -> separate signer -> receipt: five cards joined by hairline rails.
+// A light pulse travels the rails; every third request is refused at the gateway and goes no further.
+// Only transform and opacity animate. (Cards turn into a column on a narrow screen.)
+const STAGES = [
+  { name: "AI agent", says: "Asks to do something.", tone: "cyan", chips: [["REQUEST"]],
+    icon: [["rect", { x: 3, y: 4, width: 18, height: 16, rx: 3 }], ["path", { d: "M7 9.5l3 2.5-3 2.5M13 15h4" }]] },
+  { name: "Policy gateway", says: "Checks it against your rules.", tone: "gold", chips: [["ALLOW"], ["DENY", "bad"]],
+    icon: [["path", { d: "M12 3l7 3v5.2c0 4.6-3 7.8-7 9.8-4-2-7-5.2-7-9.8V6z" }], ["path", { d: "M9 12l2 2 4-4.2" }]] },
+  { name: "Ledger", says: "Writes it into a chain no one can quietly edit.", tone: "cyan", chips: [["SHA-256 CHAIN"]],
+    icon: [["rect", { x: 4, y: 4, width: 16, height: 4, rx: 1.5 }], ["rect", { x: 4, y: 10, width: 16, height: 4, rx: 1.5 }], ["rect", { x: 4, y: 16, width: 16, height: 4, rx: 1.5 }]] },
+  { name: "Separate signer", says: "Signs the chain. Its key never leaves it.", tone: "gold", chips: [["ED25519"]],
+    icon: [["circle", { cx: 8, cy: 12, r: 3.5 }], ["path", { d: "M11.5 12H21M17.5 12v3M20.5 12v2" }]] },
+  { name: "Receipt", says: "Anyone can check it, offline.", tone: "paper", chips: [["VERIFIABLE"]],
+    icon: [["path", { d: "M6 3h8.5L18 6.5V21H6z" }], ["path", { d: "M9 10h6M9 13.5h6M9 17h3.5" }]] },
+];
 
-  const legs = [[path[0], path[1]], [path[1], path[2]], [path[2], path[3]], [path[3], path[4]]];
-  let n = 0;
+function pipeline(host) {
+  host.textContent = "";
+  const root = el("div", { class: "pipe", role: "group",
+    "aria-label": "The path of every action: the AI agent asks, the policy gateway checks the request against your rules, the ledger writes it into a hash chain, a separate signer signs the chain, and a receipt anyone can check offline is sealed. A refused request stops at the gateway and the refusal is still recorded." });
+  const nodes = [];
+  const rails = [];
+  STAGES.forEach((stage, i) => {
+    const icon = svg("svg", { viewBox: "0 0 24 24", class: "pn-ico", "aria-hidden": "true", focusable: "false" },
+      ...stage.icon.map(([tag, attrs]) => svg(tag, attrs)));
+    const chips = el("div", { class: "pn-chips" },
+      ...stage.chips.map(([text, tone]) => el("span", { class: `pn-chip${tone ? " " + tone : ""}` }, text)));
+    const node = el("div", { class: `pipe-node spot tone-${stage.tone}` },
+      el("span", { class: "pn-idx", "aria-hidden": "true" }, `0${i + 1}`), icon,
+      el("b", { class: "pn-title" }, stage.name), el("span", { class: "pn-cap" }, stage.says), chips);
+    nodes.push(node);
+    root.append(node);
+    if (i < STAGES.length - 1) {
+      const pulse = el("span", { class: "pipe-pk" });
+      root.append(el("div", { class: "pipe-rail", "aria-hidden": "true" }, pulse));
+      rails.push(pulse);
+    }
+  });
+  host.append(root);
+  if (calm()) { nodes.forEach((n) => n.classList.add("on")); return; }
+
+  const chipOf = (node, index = 0) => node.querySelectorAll(".pn-chip")[index];
+  const vertical = () => matchMedia("(max-width: 820px)").matches;
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const travel = (pulse) => go(pulse, vertical()
+    ? [{ transform: "translateY(-100%)" }, { transform: "translateY(100%)" }]
+    : [{ transform: "translateX(-100%)" }, { transform: "translateX(100%)" }], { duration: 600, fill: "none" }).finished;
+  const light = (node, how = "on") => {
+    node.classList.add(how);
+    setTimeout(() => node.classList.remove(how), 1300);
+  };
+  const stamp = (chip) => {
+    chip.classList.add("hit");
+    go(chip, [{ transform: "scale(1)" }, { transform: "scale(1.12)" }, { transform: "scale(1)" }], { duration: 480, fill: "none" });
+    setTimeout(() => chip.classList.remove("hit"), 1300);
+  };
+  let count = 0;
   let timer = null;
   const send = async () => {
-    n += 1;
-    const refused = n % 3 === 0;
-    const packet = svg("circle", { r: 5, class: refused ? "iso-packet bad" : "iso-packet", cx: path[0][0], cy: path[0][1] });
-    packet.style.transformBox = "fill-box";
-    packet.style.transformOrigin = "center";
-    root.append(packet);
-    const at = (p) => `translate(${p[0] - path[0][0]}px, ${p[1] - path[0][1]}px)`;
+    count += 1;
+    const refused = count % 3 === 0;
     try {
-      if (refused) {
-        const [a, b] = legs[0];
-        const stop = [a[0] + (b[0] - a[0]) * 0.86, a[1] + (b[1] - a[1]) * 0.86];
-        await go(packet, [{ transform: at(a) }, { transform: at(stop) }], { duration: 700 }).finished;
-        await go(packet, [{ transform: at(stop), opacity: 1 }, { transform: at(a), opacity: 0 }], { duration: 520 }).finished;
-      } else {
-        let from = path[0];
-        for (const [, b] of legs) {
-          await go(packet, [{ transform: at(from) }, { transform: at(b) }], { duration: 640 }).finished;
-          from = b;
-        }
-        await go(packet, [{ transform: `${at(from)} scale(1)`, opacity: 1 }, { transform: `${at(from)} scale(1.9)`, opacity: 0 }], { duration: 320 }).finished;
+      light(nodes[0]); stamp(chipOf(nodes[0]));
+      await travel(rails[0]);
+      light(nodes[1], refused ? "stop" : "on");
+      stamp(chipOf(nodes[1], refused ? 1 : 0));
+      if (refused) return; // refused: it goes no further
+      for (let i = 1; i < rails.length; i++) {
+        await sleep(160);
+        await travel(rails[i]);
+        light(nodes[i + 1]);
+        stamp(chipOf(nodes[i + 1]));
       }
-    } catch { /* cancelled with the page */ } finally {
-      packet.remove();
-    }
+    } catch { /* cancelled with the page */ }
   };
-  whileVisible(host, () => { send(); timer = setInterval(send, 1100); }, () => clearInterval(timer));
+  whileVisible(host, () => { send(); timer = setInterval(send, 3200); }, () => clearInterval(timer));
 }
 
 // ===================================================================== 2. PAPER-CUT (receipts)
@@ -146,50 +157,42 @@ function printStrip(list, strip, { prepend = false } = {}) {
   return strip;
 }
 
-// ===================================================================== 3. 3D DATA CHART (live)
-// One stacked 3D bar per session: allowed / approved / blocked / tripwire.
+// ===================================================================== 3. EVENTS PER SESSION (live)
+// One stacked bar per session: allowed / approved / blocked / tripwire. Flat, precise, readable.
 const SEGMENTS = [
   ["allowed", "Allowed"], ["approved", "Approved"], ["blocked", "Blocked or unsent"], ["tripwire", "Tripwire"],
 ];
-function bars3d(host, sessions) {
+function eventBars(host, sessions) {
+  const shown = sessions.slice(0, 8);
+  const count = (s, k) => Number(s.counts[k]) || 0;
+  const total = (s) => SEGMENTS.reduce((t, [k]) => t + count(s, k), 0);
+  // The live view calls this on every refresh: draw (and animate) again only when the numbers changed.
+  const signature = JSON.stringify(shown.map((s) => [s.agent, SEGMENTS.map(([k]) => count(s, k))]));
+  if (host.dataset.signature === signature && host.firstChild) return;
+  host.dataset.signature = signature;
   host.textContent = "";
-  host.classList.add("bars3d");
-  const scene = el("div", { class: "b3-scene", role: "img",
-    "aria-label": sessions.length
-      ? "Events per session: " + sessions.map((s) => `${s.agent}: ` + SEGMENTS.map(([k, n]) => `${s.counts[k]} ${n.toLowerCase()}`).join(", ")).join("; ")
-      : "No sessions yet." });
-  const plane = el("div", { class: "b3-plane" });
-  scene.append(plane);
-  const max = Math.max(4, ...sessions.map((s) => SEGMENTS.reduce((t, [k]) => t + s.counts[k], 0)));
-  const unit = 150 / max;
-  sessions.slice(0, 8).forEach((s, i) => {
-    let z = 0;
-    const x = 30 + i * 62;
-    for (const [key] of SEGMENTS) {
-      const h = s.counts[key] * unit;
-      if (h <= 0) continue;
-      plane.append(cuboid(x, 70, 34, 34, z, h, key));
-      z += h;
-    }
-    plane.append(el("div", { class: "b3-label", style: `left:${x}px;top:112px` }, s.agent.slice(0, 10)));
-  });
-  for (let i = 0; i < 6; i++) plane.append(el("div", { class: "b3-gridline", style: `top:${20 + i * 22}px` }));
-  host.append(scene, el("ul", { class: "b3-legend" },
-    ...SEGMENTS.map(([k, n]) => el("li", {}, el("i", { class: `seg-${k}` }), n))));
-  if (!calm()) {
-    plane.querySelectorAll(".cube").forEach((cube, i) =>
-      go(cube, [{ scale: "1 1 0.01" }, { scale: "1 1 1" }], { duration: 720, delay: i * 50, fill: "backwards" }));
+  host.classList.add("ebars");
+  if (!shown.length) {
+    host.append(el("p", { class: "eb-empty muted" }, "No sessions yet."));
+    return;
   }
-}
-function cuboid(x, y, w, d, z, h, key) {
-  // The ground is the plane (x, y); height rises along +z.
-  const cube = el("div", { class: `cube seg-${key}`, style: `left:${x}px;top:${y}px;transform:translateZ(${z}px)` });
-  cube.append(
-    el("div", { class: "face top", style: `width:${w}px;height:${d}px;transform:translateZ(${h}px)` }),
-    el("div", { class: "face front", style: `width:${w}px;height:${h}px;transform:translateY(${d}px) rotateX(90deg)` }),
-    el("div", { class: "face side", style: `width:${h}px;height:${d}px;transform:translateX(${w}px) rotateY(-90deg)` }),
-  );
-  return cube;
+  const max = Math.max(1, ...shown.map(total));
+  const chart = el("div", { class: "eb", role: "img",
+    "aria-label": "Events per session: " + shown.map((s) => `${s.agent}: ` + SEGMENTS.map(([k, n]) => `${count(s, k)} ${n.toLowerCase()}`).join(", ")).join("; ") });
+  shown.forEach((s, i) => {
+    const fill = el("div", { class: "eb-fill", style: `width:${(total(s) / max) * 100}%` });
+    for (const [k, name] of SEGMENTS) {
+      if (count(s, k) > 0) fill.append(el("span", { class: `eb-seg seg-${k}`, style: `flex:${count(s, k)} 1 0`, title: `${name}: ${count(s, k)}` }));
+    }
+    chart.append(el("div", { class: "eb-row" },
+      el("span", { class: "eb-name", title: s.agent }, s.agent),
+      el("div", { class: "eb-track" }, fill),
+      el("span", { class: "eb-n" }, String(total(s)))));
+    if (!calm()) go(fill, [{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }], { duration: 800, delay: i * 70, fill: "backwards" });
+  });
+  const sums = SEGMENTS.map(([k]) => shown.reduce((t, s) => t + count(s, k), 0));
+  host.append(chart, el("ul", { class: "eb-legend" },
+    ...SEGMENTS.map(([k, n], i) => el("li", {}, el("i", { class: `seg-${k}` }), n, el("b", {}, String(sums[i]))))));
 }
 
 // ===================================================================== 5 + 6. 3D MERKLE TREE + MATHS
@@ -519,5 +522,5 @@ function signFormula(host, digest) {
   if (!calm() && gsap()) gsap().from(line.children, { opacity: 0, y: 6, duration: 0.3, stagger: 0.12 });
 }
 
-window.HCFX = { calm, EASE, whileVisible, synthwave, isometric, printStrip, bars3d, merkle, cartoon, dominoes, glowAtom, signFormula };
+window.HCFX = { calm, EASE, whileVisible, synthwave, pipeline, printStrip, eventBars, merkle, cartoon, dominoes, glowAtom, signFormula };
 })();

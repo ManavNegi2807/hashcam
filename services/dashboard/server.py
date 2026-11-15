@@ -64,6 +64,9 @@ STATIC = {
     "/fx3d.js": ("fx3d.js", "text/javascript; charset=utf-8"),
     "/readable.js": ("readable.js", "text/javascript; charset=utf-8"),
     "/theme.css": ("theme.css", "text/css; charset=utf-8"),
+    # The motion layer (the public site uses the same two files).
+    "/motion.css": ("motion.css", "text/css; charset=utf-8"),
+    "/motion.js": ("motion.js", "text/javascript; charset=utf-8"),
 }
 SECURITY_HEADERS = {
     # Everything the page needs comes from this origin; nothing is inlined.
@@ -75,6 +78,8 @@ SECURITY_HEADERS = {
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "no-referrer",
     "Cache-Control": "no-store",
+    # Fetch the font early so swapping it in does not shift the page.
+    "Link": "</vendor/plus-jakarta-sans.woff2>; rel=preload; as=font; type=font/woff2; crossorigin",
 }
 MAX_EVENTS_SHOWN = 500
 
