@@ -23,10 +23,11 @@ REPO = Path(__file__).resolve().parents[2]
 if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 
-os.environ.setdefault(
-    "PLAYWRIGHT_BROWSERS_PATH",
-    os.environ.get("ABB_PLAYWRIGHT_BROWSERS", str(Path.home() / "AppData/Local/ms-playwright")),
-)
+# Playwright's own per-platform browser cache, unless a shared folder is named explicitly. (A fixed
+# Windows path here made Linux CI look for Chromium under ~/AppData/Local/ms-playwright; on Windows
+# Playwright's default is that same folder, so nothing changes there.)
+if os.environ.get("ABB_PLAYWRIGHT_BROWSERS"):
+    os.environ.setdefault("PLAYWRIGHT_BROWSERS_PATH", os.environ["ABB_PLAYWRIGHT_BROWSERS"])
 
 from adapters.base import Provenance  # noqa: E402
 from adapters.playwright.adapter import (  # noqa: E402

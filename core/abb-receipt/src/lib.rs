@@ -472,7 +472,8 @@ pub fn verify_with(
     check_semantic(receipt, &mut report);
     check_prompt_security(receipt, &mut report);
     check_anomaly(receipt, &mut report);
-    for dim in [Dimension::MlAssessment] {
+    {
+        let dim = Dimension::MlAssessment;
         if report.status(dim) == Status::Unknown {
             report.note(dim, None, "no records of this kind in the receipt");
         }
@@ -1529,18 +1530,16 @@ fn check_coverage(receipt: &Receipt, report: &mut Report) {
                 "ACTION_AUTHORIZED" => {
                     authorized.insert(action_id);
                 }
-                "ACTION_DISPATCHED" => {
-                    if !authorized.contains(&action_id) {
-                        report.fail(
-                            Dimension::ObservationCoverage,
-                            Some(format!("event at position {position}")),
-                            format!(
-                                "action {action_id} was dispatched with no earlier \
-                                 authorization, so this run is not STEP_GATED"
-                            ),
-                        );
-                        ok = false;
-                    }
+                "ACTION_DISPATCHED" if !authorized.contains(&action_id) => {
+                    report.fail(
+                        Dimension::ObservationCoverage,
+                        Some(format!("event at position {position}")),
+                        format!(
+                            "action {action_id} was dispatched with no earlier \
+                             authorization, so this run is not STEP_GATED"
+                        ),
+                    );
+                    ok = false;
                 }
                 _ => {}
             }

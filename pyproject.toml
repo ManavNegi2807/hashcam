@@ -58,7 +58,7 @@ disallow_untyped_calls = false
 disallow_incomplete_defs = false
 
 [[tool.mypy.overrides]]
-module = ["psycopg.*", "testcontainers.*"]
+module = ["psycopg.*", "testcontainers.*", "falkordb", "falkordb.*"]
 ignore_missing_imports = true
 
 # psycopg optionally imports numpy; when numpy is installed (the optional learned model needs it) mypy
