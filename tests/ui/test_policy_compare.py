@@ -378,7 +378,7 @@ def test_the_sandbox_runs_a_custom_policy_says_so_and_decides_by_it(
     page.get_by_role("button", name=BUTTON["gpu"], exact=True).click()
     page.wait_for_timeout(800)
     expect(page.locator("#mSpent")).to_have_text("$35.00")
-    expect(page.locator("#signBtn")).to_be_hidden()
+    expect(page.locator("#signBtn")).to_be_disabled()
     page.get_by_role("button", name=BUTTON["webhook"], exact=True).click()
     page.wait_for_timeout(700)
     expect(page.locator("#mSpent")).to_have_text(
@@ -447,7 +447,7 @@ def test_a_bad_policy_link_is_ignored_and_the_standard_policy_runs(
     page.wait_for_timeout(700)
     expect(
         page.locator("#signBtn")
-    ).to_be_visible()  # the standard policy holds the $35 GPU for a person
+    ).to_be_enabled()  # the standard policy holds the $35 GPU for a person
     assert page.locator("script:not([src])").count() == 0
     page.close()
 
@@ -546,7 +546,7 @@ def test_a_pro_policy_file_is_labelled_sandbox_only_and_round_trips(
         page.locator("#polBudget").input_value(),
         page.locator("#polAuto").input_value(),
         page.locator("#polRefuse").input_value(),
-    ) == ("250.5", "25", "120.25")
+    ) == ("250.50", "25", "120.25")
     assert page.locator("#polHosts").input_value().split("\n") == [
         "docs.github.com",
         "api.gpu-cloud.example",
@@ -801,7 +801,9 @@ def test_compare_two_real_runs_better_worse_mixed_and_the_same(
     )
 
     compare_on_page(page, "denial-final", [once], [twice])
-    expect(page.locator("#cmpSummary")).to_have_text("1 check got worse.")
+    expect(page.locator("#cmpSummary")).to_have_text(
+        "1 check got worse. Look at the ones marked worse first."
+    )
     assert ("WORSE", "Accepted the answer") in rows()
 
     compare_on_page(page, "denial-final", [twice], [plus_docs])  # one better, one worse

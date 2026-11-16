@@ -132,7 +132,7 @@ function fromForm({ budget, autoLimit, refuseOver, hosts }) {
   const parsed = {
     budget: centsOf(budget),
     auto: centsOf(autoLimit),
-    refuse: refuseText === "" ? null : centsOf(refuseText),
+    refuse: refuseText === "" ? null : (centsOf(refuseText) ?? Number.NaN), // text that is not an amount is an error, never "empty"
     hosts: hostsOf(hosts),
   };
   const errors = problems(parsed);
