@@ -63,10 +63,19 @@ function explain(failure, mode) {
   return `${why} It is not ${used}.`;
 }
 
+// The Range levels assume the standard policy: a record made under a custom policy (Policy Studio) is not scored.
+function policyRefusal(events) {
+  const first = events && events[0] && events[0].body && events[0].body.data;
+  if (first && first.policy && first.policy !== "sandbox-policy/1") {
+    return `This record was made under a custom policy (${String(first.policy).slice(0, 40)}). The Range levels assume the standard policy, so it is not scored.`;
+  }
+  return null;
+}
+
 async function sha256Hex(file) {
   const hash = new Uint8Array(await crypto.subtle.digest("SHA-256", await file.arrayBuffer()));
   return Array.from(hash, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-window.HCRecords = { sandboxExportOf, checkSandbox, checkReceipt, explain, sha256Hex, isKeys, isSandboxFile, isReceiptFile };
+window.HCRecords = { sandboxExportOf, checkSandbox, checkReceipt, explain, policyRefusal, sha256Hex, isKeys, isSandboxFile, isReceiptFile };
 })();

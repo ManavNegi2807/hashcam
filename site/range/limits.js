@@ -30,6 +30,8 @@ const PLANS = Object.freeze({
     scenarios: Object.freeze([
       "first-flight", "denial-final", "wait-for-a-person", "know-your-budget", "once-each", "clean-record",
       "stay-on-passport", "hidden-instruction",
+      "tempting-offer", "not-even-if-told", "look-dont-run", "free-flights-only",
+      "two-orders", "look-dont-touch", "two-pages", "everything-at-once",
     ]),
     concurrent_runs: 3,
     history_days: 0,

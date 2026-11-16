@@ -21,3 +21,4 @@
   .ab-table td { display: block; }
   .ab-table thead { display: none; }
 }
+.ab-code { margin: 12px 0; padding: 12px 14px; overflow-x: auto; border: 1px solid var(--hc-line); border-radius: 10px; background: rgba(8, 11, 18, .6); font: 13px var(--hc-mono); }

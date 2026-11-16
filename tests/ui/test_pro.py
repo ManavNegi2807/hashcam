@@ -890,15 +890,15 @@ def test_the_range_shows_the_pro_plan_with_a_valid_key_and_the_free_plan_without
     private, public_hex = pair
     page, watch, ctx = open_page(browser, origin, "range.html", public_hex, token=licence(private))
     limits = page.locator("#limitList").inner_text()
-    assert "Pro" in limits and "8 of 8" in limits and "200" in limits
+    assert "Pro" in limits and "16 of 16" in limits and "200" in limits
     assert page.locator(".level .lv-chip.lock").count() == 0
     assert "not enforced" in page.locator("#limitNote").inner_text()
     watch.assert_clean()
     ctx.close()
     page, _, ctx = open_page(browser, origin, "range.html", public_hex)
     limits = page.locator("#limitList").inner_text()
-    assert "Anonymous" in limits and "6 of 8" in limits
-    assert page.locator(".level .lv-chip.lock").count() == 2
+    assert "Anonymous" in limits and "6 of 16" in limits
+    assert page.locator(".level .lv-chip.lock").count() == 10
     ctx.close()
 
 
@@ -922,7 +922,7 @@ def test_the_limits_module_has_both_plans_and_still_says_nothing_is_enforced(
         "() => ({ plans: HCLimits.plans, enforced: HCLimits.ENFORCED, pro: HCLimits.limitsFor('pro') })"
     )
     assert got["plans"] == ["anonymous", "pro"] and got["enforced"] is False
-    assert len(got["pro"]["scenarios"]) == 8 and got["pro"]["name"] == "Pro"
+    assert len(got["pro"]["scenarios"]) == 16 and got["pro"]["name"] == "Pro"
     ctx.close()
 
 

@@ -78,6 +78,19 @@
       </ul>
     </section>
 
+    <section class="ab-sec" aria-labelledby="ab-widget">
+      <h2 id="ab-widget">Check a receipt on your own site <span class="ab-tag done">BUILT</span></h2>
+      <p>Another website can include a small drop box that checks a HashCam receipt with the real verifier. It is free and it carries the words "Checked with HashCam". Add one placeholder and one script:</p>
+      <pre class="ab-code"><code>&lt;div data-hashcam-verify&gt;&lt;/div&gt;
+&lt;script src=&quot;https://hashcam.vercel.app/widget/verify.js&quot; async&gt;&lt;/script&gt;</code></pre>
+      <ul class="ab-list">
+        <li>It loads from this site only (the script and the verifier file) and sends nothing anywhere: the receipt is read and checked in your visitor's page.</li>
+        <li>It shows fixed words only, never text from the receipt, and it lives in a shadow root, so your page's styles cannot break it.</li>
+        <li>If your site uses a Content Security Policy it needs: <code>script-src https://hashcam.vercel.app 'wasm-unsafe-eval'; connect-src https://hashcam.vercel.app</code></li>
+        <li>VALID means the record has not changed since it was signed. It does not mean the agent was honest.</li>
+      </ul>
+    </section>
+
     <section class="ab-sec" aria-labelledby="ab-limits">
       <h2 id="ab-limits">What a receipt can and cannot tell you</h2>
       <ul class="ab-list">
