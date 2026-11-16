@@ -22,10 +22,6 @@ It is an evidence and auditing system. A valid receipt shows that the recorded h
 
 **On your own computer**, the audit view and the task page (chat board) are served from `127.0.0.1`. Pick what the agent should do from the task page's sidebar: Search, Research and Browse use TinyFish; Demo task, Endpoint review, Pay bills (local mock simulation) and Real website pause for your signed approval before anything sensitive happens.
 
-**Alerts in the audit view** (a real signed run; TinyFish shows "not asked" because no key was set):
-
-![Alerts in the audit view: a HIGH alert with the rules that fired, the learned model's reasons, web evidence and the analyst's signed decision](docs/screenshots/alert-view.png)
-
 ## What it does
 
 - **Signed receipts and an offline verifier** (Rust). Canonical JSON (RFC 8785), SHA-256, an RFC 6962-style Merkle tree and Ed25519 checkpoints. `abb verify` reports sixteen separate dimensions and never turns missing evidence into a pass.
