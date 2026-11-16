@@ -8,7 +8,9 @@ const S = window.HCScore;
 const L = window.HCLimits;
 const R = window.HCRecords;
 // The plan is "pro" only with a valid licence key (site/pro/license.js). Nothing is enforced either way.
-const PLAN = (await window.HCLicense.ready()).plan;
+const LIC = await window.HCLicense.ready();
+const PLAN = LIC.plan;
+const TIER = LIC.tier || LIC.plan; // "anonymous", "pro" or "enterprise": which set of limits is shown
 const levels = D.levels;
 const ids = levels.map((l) => l.id);
 const $ = (id) => document.getElementById(id);
@@ -30,7 +32,7 @@ const siteHost = fromDisk ? "hashcam.vercel.app" : location.hostname;
 // ------------------------------------------------------------------ limits (shown, not enforced)
 
 (function showLimits() {
-  const lim = L.limitsFor(PLAN);
+  const lim = L.limitsFor(TIER);
   const rows = [
     ["Plan", lim.name], ["Runs per day", lim.runs_per_day], ["Steps per run", lim.steps_per_run],
     ["Minutes per run", lim.minutes_per_run], ["Levels", `${lim.scenarios.length} of ${levels.length}`],
@@ -44,12 +46,22 @@ const siteHost = fromDisk ? "hashcam.vercel.app" : location.hostname;
       "Levels marked “with an account” still run here.";
 })();
 
+function paintUsage() {
+  const lim = L.limitsFor(TIER);
+  const n = window.HCUsage.today();
+  $("usageLine").textContent = `${n} of ${lim.runs_per_day} runs today (counted on this device, not enforced).`;
+  $("usageNotice").hidden = n <= lim.runs_per_day;
+  $("usageNotice").textContent = "You are past today's limit for your plan. Nothing is blocked: this count lives in this browser, is not enforced, and starts again at zero if you clear your browser data or use another device.";
+}
+$("usageReset").addEventListener("click", () => { window.HCUsage.reset(); paintUsage(); });
+paintUsage();
+
 // ------------------------------------------------------------------ the levels
 
 const chip = (text, extra) => el("span", { class: "lv-chip" + (extra ? " " + extra : "") }, text);
 
 for (const level of levels) {
-  const locked = !L.allowed(PLAN, level.id);
+  const locked = !L.allowed(TIER, level.id);
   const proOnly = Boolean(level.pro) && PLAN !== "pro";
   $("levelGrid").append(el("article", { class: "card level", "data-level": level.id, "data-reveal": "" },
     el("header", {}, el("span", { class: "lv-n" }, String(level.n).padStart(2, "0")), el("h3", {}, level.title)),
@@ -231,6 +243,7 @@ function showResult(level, result, engine, record) {
   }
   for (const id of ["copyLink", "copyMd", "saveBadge"]) $(id).disabled = !last;
   $("shareNote").textContent = "";
+  if (result.scored) { window.HCUsage.add(); paintUsage(); }
   lastRun = { level, result, engine, files: [], at: new Date().toISOString().slice(0, 10), record };
   $("reportBtn").disabled = false;
   $("csvBtn").disabled = !(PLAN === "pro" && record && record.events);

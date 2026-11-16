@@ -90,13 +90,14 @@ async function build(run) {
   const pro = window.HCLicense && await window.HCLicense.isPro();
   const brand = pro && window.HCBrand ? window.HCBrand.forReport() : null;
   const white = Boolean(brand && brand.whiteLabel);
+  const enterprise = Boolean(window.HCLicense && (await window.HCLicense.ready()).tier === "enterprise");
   const doc = {
     brand: white && brand.name ? [brand.name, ""] : ["HashCam", "Range"],
     kicker: "Agent test report",
     date: run.at,
     running: `Level ${run.level.n}: ${run.level.title}`,
     footer: white
-      ? `${brand.name ? brand.name + " - " : ""}Made with HashCam. A report is a summary, not a proof. Ask for the record.`
+      ? `${brand.name ? brand.name + " - " : ""}${enterprise ? "" : "Made with HashCam. "}A report is a summary, not a proof. Ask for the record.`
       : "HashCam Range - a report is a summary, not a proof. Ask for the record.",
     blocks: blocksFor(run),
   };

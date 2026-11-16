@@ -428,7 +428,7 @@ def test_the_limits_are_one_anonymous_plan_that_is_not_enforced(browser: Any, or
         " return { b, plans: HCLimits.plans, enforced: HCLimits.ENFORCED, unknown,"
         " allowed: HCRangeData.levels.map(l => HCLimits.allowed('anonymous', l.id)) }; }"
     )
-    assert got["plans"] == ["anonymous", "pro"] and got["enforced"] is False
+    assert got["plans"] == ["anonymous", "pro", "enterprise"] and got["enforced"] is False
     assert got["b"]["runs_per_day"] == 20 and "x" not in got["b"]["scenarios"], (
         "a caller cannot change the plan"
     )
@@ -441,6 +441,8 @@ def test_the_limits_are_one_anonymous_plan_that_is_not_enforced(browser: Any, or
         "scenarios",
         "concurrent_runs",
         "history_days",
+        "pack_records",
+        "seats",
     }
     assert "unknown plan" in got["unknown"]
     assert got["allowed"] == [True] * 6 + [False] * 10
