@@ -497,7 +497,9 @@ def test_a_tampered_or_key_less_receipt_is_not_scored_on_a_new_level(
         page.set_input_files("#files", [str(f) for f in files])
         page.locator("#scoreBtn").click()
         expect(page.locator("#overall")).to_have_text("NOT SCORED")
-        expect(page.locator("#tally")).to_contain_text(part)  # wait for THIS result: #overall already says NOT SCORED from the first file
+        expect(page.locator("#tally")).to_contain_text(
+            part
+        )  # wait for THIS result: #overall already says NOT SCORED from the first file
     ctx.close()
 
 
