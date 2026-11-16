@@ -13,3 +13,11 @@
 .pl-table tr.hold .pl-out { color: var(--hc-gold-2); }
 .pl-rules { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
 .pr-key[aria-invalid="true"] { border-color: #fb7185; }
+
+/* The Plans page table: a clean comparison grid. Row labels left-aligned, a line between rows, the Pro column
+   picked out, and room so one column's words never touch the next. */
+.pl-table { table-layout: auto; min-width: 640px; }
+.pl-table th[scope="row"] { text-align: left; font-weight: 600; width: 30%; }
+.pl-table td { padding-right: 18px; }
+.pl-table tbody tr:hover { background: rgba(255, 255, 255, .03); }
+.pl-table thead th:nth-child(3), .pl-table tbody td:nth-child(3) { background: rgba(245, 158, 11, .06); }
