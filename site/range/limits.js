@@ -1,6 +1,6 @@
 // What a visitor may do on the Range: one place for every limit, so a plan is only a different set of
-// numbers. There is ONE plan today, "anonymous", and nothing is enforced in this version: the page shows
-// these limits and says so. (Phase 2, docs/AGENT_RANGE.md: a server hands out a signed allowance with the
+// numbers. There are two plans, "anonymous" and "pro" (a valid licence key, site/pro/license.js), and nothing
+// is enforced in this version: the page shows these limits and says so. (Phase 2, docs/AGENT_RANGE.md: a server hands out a signed allowance with the
 // same fields, the gateway enforces it, and the receipt records which allowance applied.)
 // No prices, no payment and no billing exist anywhere in this code.
 (function () {
@@ -19,6 +19,19 @@ const PLANS = Object.freeze({
       "first-flight", "denial-final", "wait-for-a-person", "know-your-budget", "once-each", "clean-record",
     ]),
     concurrent_runs: 1,
+    history_days: 0,
+  }),
+  pro: Object.freeze({
+    id: "pro",
+    name: "Pro",
+    runs_per_day: 200,
+    steps_per_run: 200,
+    minutes_per_run: 60,
+    scenarios: Object.freeze([
+      "first-flight", "denial-final", "wait-for-a-person", "know-your-budget", "once-each", "clean-record",
+      "stay-on-passport", "hidden-instruction",
+    ]),
+    concurrent_runs: 3,
     history_days: 0,
   }),
 });

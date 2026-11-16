@@ -51,12 +51,10 @@ function summarize(ev) {
 
 // ------------------------------------------------------------------ the deterministic policy
 
-const POLICY = {
-  id: "sandbox-policy/1",
-  budget_cents: 10000,
-  auto_limit_cents: 1000,
-  allow_domains: ["docs.github.com", "api.gpu-cloud.example", "tokens.example-bank.test"],
-};
+// The standard policy, or a custom one a link asked for (#policy=..., made in the Policy Studio). Both come from
+// policy.js, which checks a custom policy field by field; a link that does not check out is ignored and said so.
+const asked = window.HCPolicy.fromHash(location.hash);
+const POLICY = asked.state === "ok" ? asked.policy : window.HCPolicy.STANDARD;
 
 const ACTIONS = {
   docs: { action: "read_repo_docs", label: "Read Repo Docs", amount_cents: 0, domain: "docs.github.com", target: "https://docs.github.com/en/repositories" },
@@ -65,27 +63,7 @@ const ACTIONS = {
   bulk: { action: "bulk_token_purchase", label: "Bulk Token Purchase", amount_cents: 25000, domain: "tokens.example-bank.test", target: "https://tokens.example-bank.test/v1/purchase" },
 };
 
-// Pure: no clock, no randomness, no network. The first matching rule wins; a deny is final.
-function decide(a, spentCents) {
-  const remaining = POLICY.budget_cents - spentCents;
-  if (!POLICY.allow_domains.includes(a.domain)) {
-    return { rule_id: "R1", rule: "DOMAIN_NOT_ALLOWED", outcome: "DENY", domain_check: "FAIL",
-      trigger_reason: a.domain + " is not on the allow-list" };
-  }
-  if (a.amount_cents > remaining) {
-    return { rule_id: "R2", rule: "OVER_BUDGET", outcome: "DENY", domain_check: "PASS",
-      trigger_reason: money(a.amount_cents) + " is more than the " + money(remaining) + " left in escrow" };
-  }
-  if (a.amount_cents === 0) {
-    return { rule_id: "R3", rule: "FREE_ACTION", outcome: "ALLOW", domain_check: "PASS", trigger_reason: "no money moves" };
-  }
-  if (a.amount_cents <= POLICY.auto_limit_cents) {
-    return { rule_id: "R4", rule: "AUTO_SMALL_SPEND", outcome: "ALLOW", domain_check: "PASS",
-      trigger_reason: money(a.amount_cents) + " is within the " + money(POLICY.auto_limit_cents) + " the agent may spend alone" };
-  }
-  return { rule_id: "R5", rule: "HUMAN_SIGNOFF_REQUIRED", outcome: "HOLD", domain_check: "PASS",
-    trigger_reason: money(a.amount_cents) + " is more than the " + money(POLICY.auto_limit_cents) + " the agent may spend alone" };
-}
+const decide = (a, spentCents) => window.HCPolicy.decide(a, spentCents, POLICY);
 
 // ------------------------------------------------------------------ state
 
@@ -134,7 +112,10 @@ async function startSession() {
   const jwk = await crypto.subtle.exportKey("jwk", keys.publicKey);
   sessionJwk = { crv: jwk.crv, kty: jwk.kty, x: jwk.x, y: jwk.y };
   keyId = (await C.sha256hex(C.canon(sessionJwk))).slice(0, 16);
-  await append("SESSION_STARTED", { policy: POLICY.id, budget_cents: POLICY.budget_cents, key_id: keyId, public_key_jwk: sessionJwk });
+  const started = { policy: POLICY.id, budget_cents: POLICY.budget_cents, key_id: keyId, public_key_jwk: sessionJwk };
+  // A custom policy is written into the first event, so the hash chain commits to the rules that were used.
+  if (POLICY.id === window.HCPolicy.CUSTOM_ID) started.policy_spec = JSON.parse(JSON.stringify(POLICY));
+  await append("SESSION_STARTED", started);
   state = "idle";
   busy = false;
   await refresh();
@@ -582,6 +563,35 @@ $("resetBtn").addEventListener("click", () => { if (!busy) startSession(); });
 // Bring the panels in as they scroll into view. Without this every panel (data-reveal) stays at opacity 0
 // and the page looks empty: the buttons still work, so the tests that only clicked them did not notice.
 if (window.HCMotion) window.HCMotion.init();
+
+// Say which policy is running. A custom one is never mistaken for the standard one.
+(function showPolicy() {
+  const banner = $("policyBanner");
+  const P = window.HCPolicy;
+  if (asked.state === "ok") {
+    banner.textContent = `Custom policy in use (${POLICY.id}): budget ${P.money(POLICY.budget_cents)}, a person must approve above ${P.money(POLICY.auto_limit_cents)}, ` +
+      (POLICY.refuse_over_cents != null ? `refused above ${P.money(POLICY.refuse_over_cents)}, ` : "") +
+      `${POLICY.allow_domains.length} allowed host${POLICY.allow_domains.length === 1 ? "" : "s"}. This is a sandbox policy, not the real gateway's. `;
+    banner.append(Object.assign(document.createElement("a"), { href: "sandbox.html", textContent: "Back to the standard policy" }));
+    banner.hidden = false;
+    $("rulesId").textContent = POLICY.id;
+    const body = $("rulesBody");
+    body.textContent = "";
+    for (const row of P.rules(POLICY)) {
+      const tr = document.createElement("tr");
+      const first = document.createElement("td");
+      first.append(Object.assign(document.createElement("code"), { textContent: row[0] }));
+      for (const text of [row[1], row[2]]) tr.append(Object.assign(document.createElement("td"), { textContent: text }));
+      tr.prepend(first);
+      body.append(tr);
+    }
+  } else if (asked.state === "bad") {
+    banner.textContent = `The policy in this link could not be used (${asked.reason}), so the standard policy is running. `;
+    banner.append(Object.assign(document.createElement("a"), { href: "policy.html", textContent: "Make a policy" }));
+    banner.hidden = false;
+  }
+  window.addEventListener("hashchange", () => location.reload());
+})();
 
 if (!window.crypto || !crypto.subtle) {
   $("cryptoBanner").hidden = false;

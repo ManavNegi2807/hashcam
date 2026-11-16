@@ -1,0 +1,43 @@
+/* The Pro page. Loads after about.css (tags, lists). Plain: no inline styles, compositor-only motion. */
+.pr { max-width: 1040px; margin: 0 auto; padding: 48px clamp(16px, 4vw, 40px) 80px; }
+.pr-head h1 { font-size: clamp(32px, 5vw, 52px); line-height: 1.08; margin: 8px 0 14px; }
+.pr-sec { margin-top: 44px; }
+.pr-sec h2, .pr-licence h2, .pr-tools h2 { margin: 0 0 14px; }
+.pr-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.pr-grid .card h3 { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.pr-licence, .pr-tools { margin-top: 28px; }
+.pr-dl { display: grid; gap: 8px; margin: 0 0 16px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.pr-dl > div { padding: 10px 12px; border: 1px solid var(--hc-line); border-radius: 10px; }
+.pr-dl dt { color: var(--hc-muted); font: 600 11px var(--hc-mono); letter-spacing: .12em; text-transform: uppercase; }
+.pr-dl dd { margin: 4px 0 0; overflow-wrap: anywhere; }
+.pr-label { display: block; margin: 12px 0 6px; font-weight: 600; }
+.pr-key, .pr-input { width: 100%; box-sizing: border-box; padding: 10px 12px; color: var(--hc-text); background: rgba(8, 11, 18, .6);
+  border: 1px solid var(--hc-line); border-radius: 10px; font: 13px var(--hc-mono); }
+.pr-key { resize: vertical; overflow-wrap: anywhere; }
+.pr-file { max-width: 100%; }
+.pr-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 12px 0; }
+.pr-fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+.pr-fieldset:disabled { opacity: .5; }
+.pr-fieldset:disabled .btn { cursor: not-allowed; }
+.pr-tool { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--hc-line); }
+.pr-tool:first-of-type { margin-top: 0; padding-top: 0; border-top: 0; }
+.pr-tool h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; }
+.pr-logo { border-radius: 10px; border: 1px solid var(--hc-line); background: #080B12; object-fit: contain; }
+.pr-list { list-style: none; margin: 12px 0; padding: 0; display: grid; gap: 8px; }
+.pr-list li { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 12px; align-items: start; padding: 10px 12px;
+  border: 1px solid var(--hc-line); border-left-width: 3px; border-radius: 10px; overflow-wrap: anywhere; }
+.pr-list li.ok { border-left-color: #34d399; }
+.pr-list li.no { border-left-color: #fb7185; }
+.pr-st { font: 700 10.5px var(--hc-mono); letter-spacing: .08em; }
+.pr-list li.ok .pr-st { color: #34d399; }
+.pr-list li.no .pr-st { color: #fb7185; }
+.pr-pass { margin-top: 10px; padding: 12px 14px; border: 1px solid var(--hc-gold); border-radius: 12px; }
+.pr-pass[hidden] { display: none; }
+.pr-code { font: 600 16px var(--hc-mono); letter-spacing: .06em; user-select: all; overflow-wrap: anywhere; }
+.pro-tag { display: inline-block; padding: 1px 6px; border-radius: 999px; font: 700 9.5px var(--hc-mono); letter-spacing: .08em; border: 1px solid rgba(251, 191, 36, .5); color: var(--hc-gold-2); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.pr .panel { background: linear-gradient(135deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .015) 45%, rgba(16, 22, 36, .2));
+  -webkit-backdrop-filter: blur(2px) saturate(1.3); backdrop-filter: blur(2px) saturate(1.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), inset 0 0 0 1px rgba(255, 255, 255, .03); }
+.pr .card { background: rgba(16, 22, 36, .35); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+@media (max-width: 640px) { .pr-list li { grid-template-columns: minmax(0, 1fr); gap: 4px; } }

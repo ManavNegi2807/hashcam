@@ -47,3 +47,7 @@ start_hascham.*
 .env
 .env.*
 !.env.example
+
+# HashCam Pro licence signing key (the real one lives outside the repo; these are belt and braces)
+license-private*
+*.pem

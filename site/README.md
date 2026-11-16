@@ -52,6 +52,7 @@ the top of the home page about 30 fps while the hero's rings turn.
 | `sandbox.html` | The **Gatekeeper Sandbox**: four test flights, a fake-money escrow meter, a held gate that needs a signature, a radar that explains each decision, a hash-chained ledger you can tamper with, and an exported receipt that checks itself. |
 | `range.html` | The **HashCam Range**: 8 levels to test your own AI agent on this site. It checks the record your run left (sandbox export or extension receipt) in the browser, then scores it pass / fail / unknown, with a share link and a badge. Limits are shown, **not enforced yet**. Design for what comes next: [`docs/AGENT_RANGE.md`](../docs/AGENT_RANGE.md). |
 | `about.html` | **About**: what each page does, what is `BUILT`, `PLANNED` or not possible, what the site does with your data, and what a receipt can and cannot tell you. No script. The console (`ui/console.html`) has a matching About section. `TESTED`: `tests/ui/test_about.py`. |
+| `pro.html` | **HashCam Pro**: paste a licence key (checked in your browser against the public key in `pro/pubkey.js`) to turn on your own name and logo on locked reports, an audit pack for many records, and CSV. Free users see the tools greyed. The licence check is **not enforced** by a server. `audit.html` is a free "Book an audit" page (no script). See [`docs/PRO.md`](../docs/PRO.md). `TESTED`: `tests/ui/test_pro.py`. |
 
 ## The sandbox is a simulation
 

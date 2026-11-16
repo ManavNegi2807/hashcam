@@ -1,0 +1,15 @@
+/* The Policy Studio. Loads after about.css and pro.css (shared fields, tags and lists). */
+.pl-fields { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.pl-field { min-width: 0; }
+.pl-err { min-height: 1.3em; margin: 6px 0 0; color: #fb7185; font-size: 13px; overflow-wrap: anywhere; }
+.pr-input[aria-invalid="true"], .pr-key[aria-invalid="true"] { border-color: #fb7185; }
+.pl-scroll { overflow-x: auto; }
+.pl-table { width: 100%; border-collapse: collapse; min-width: 560px; }
+.pl-table th, .pl-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--hc-line); vertical-align: top; }
+.pl-table thead th { color: var(--hc-muted); font: 600 12px var(--hc-mono); letter-spacing: .14em; text-transform: uppercase; }
+.pl-out { font: 700 12px var(--hc-mono); letter-spacing: .06em; white-space: nowrap; }
+.pl-table tr.ok .pl-out { color: #34d399; }
+.pl-table tr.no .pl-out { color: #fb7185; }
+.pl-table tr.hold .pl-out { color: var(--hc-gold-2); }
+.pl-rules { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.pr-key[aria-invalid="true"] { border-color: #fb7185; }

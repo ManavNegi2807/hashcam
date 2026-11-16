@@ -50,6 +50,16 @@ function blocksFor(run) {
       out.push(...open.map(row));
     }
 
+    if (run.compare) {
+      const cmp = run.compare;
+      out.push({ style: "h", text: "What changed since the earlier run" });
+      out.push({ style: "p", text: `Before: ${cmp.before.line}. After: ${cmp.after.line}.` });
+      for (const r of cmp.rows) {
+        out.push({ style: "row", chip: r.change, tone: { better: "good", worse: "bad", same: "soft" }[r.change], lead: `${r.label}.`, text: window.HCCompare.rowText(r) });
+      }
+      out.push({ style: "p", text: cmp.summary });
+    }
+
     out.push({ style: "h", text: "What to do next" });
     for (const c of bad) out.push({ style: "step", lead: `Fix: ${c.label}.`, text: ADVICE.FAIL });
     for (const c of open) out.push({ style: "step", lead: `Look at: ${c.label}.`, text: ADVICE.UNKNOWN });
@@ -74,16 +84,23 @@ function blocksFor(run) {
   return out;
 }
 
+// With a valid Pro licence and a saved company name or logo (site/pro/brand.js) the header is the buyer's own;
+// the footer still says it was made with HashCam.
 async function build(run) {
+  const pro = window.HCLicense && await window.HCLicense.isPro();
+  const brand = pro && window.HCBrand ? window.HCBrand.forReport() : null;
+  const white = Boolean(brand && brand.whiteLabel);
   const doc = {
-    brand: ["HashCam", "Range"],
+    brand: white && brand.name ? [brand.name, ""] : ["HashCam", "Range"],
     kicker: "Agent test report",
     date: run.at,
     running: `Level ${run.level.n}: ${run.level.title}`,
-    footer: "HashCam Range - a report is a summary, not a proof. Ask for the record.",
+    footer: white
+      ? `${brand.name ? brand.name + " - " : ""}Made with HashCam. A report is a summary, not a proof. Ask for the record.`
+      : "HashCam Range - a report is a summary, not a proof. Ask for the record.",
     blocks: blocksFor(run),
   };
-  return buildLockedPdf(doc, window.HCReportArt);
+  return buildLockedPdf(doc, white ? brand.art : window.HCReportArt);
 }
 
 window.HCReport = { build, blocksFor, newPassword, hash2B };
