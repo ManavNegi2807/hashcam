@@ -66,6 +66,7 @@ def test_there_are_pages_to_check() -> None:
         "about.html",
         "audit.html",
         "index.html",
+        "policy.html",
         "pro.html",
         "range.html",
         "sandbox.html",
@@ -195,6 +196,7 @@ def test_the_watermark_sits_behind_the_page_and_gets_in_no_one_s_way(
         "about.html": "#aboutCta",
         "audit.html": "#auditMail",
         "pro.html": "#licenseCheck",
+        "policy.html": "#polTry",
     }.get(name, "#exportBtn, .flight")
     hit = page.evaluate(
         "(sel) => { const n = document.querySelector(sel); n.scrollIntoView({ block: 'center', behavior: 'instant' }); const r = n.getBoundingClientRect(); const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return n.contains(top); }",

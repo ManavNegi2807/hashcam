@@ -39,6 +39,9 @@
 
     <p class="banner" id="cryptoBanner" role="alert" hidden>This browser cannot run Web Crypto here (it needs a secure context), so the sandbox cannot start. Open it over https or from a local file.</p>
 
+    <p class="banner" id="policyBanner" role="status" hidden></p>
+    <p class="muted small">Want your own rules? <a href="policy.html">Open the Policy Studio</a>.</p>
+
     <div class="sb-grid">
       <div class="sb-col">
         <section data-reveal class="panel" aria-labelledby="flights-h">
@@ -136,10 +139,10 @@
 
     <section data-reveal class="panel sb-rules" aria-labelledby="rules-h">
       <h2 id="rules-h">The policy, in full</h2>
-      <p class="muted small"><code>sandbox-policy/1</code>: the first matching rule wins, and the same input always gets the same answer. A deny cannot be unblocked by an approval.</p>
+      <p class="muted small"><code id="rulesId">sandbox-policy/1</code>: the first matching rule wins, and the same input always gets the same answer. A deny cannot be unblocked by an approval.</p>
       <table class="rules">
         <thead><tr><th>Rule</th><th>When</th><th>Outcome</th></tr></thead>
-        <tbody>
+        <tbody id="rulesBody">
           <tr><td><code>R1 DOMAIN_NOT_ALLOWED</code></td><td>the host is not on the allow-list (<code>docs.github.com</code>, <code>api.gpu-cloud.example</code>, <code>tokens.example-bank.test</code>)</td><td>DENY</td></tr>
           <tr><td><code>R2 OVER_BUDGET</code></td><td>the amount is more than what is left of the $100.00 cap</td><td>DENY</td></tr>
           <tr><td><code>R3 FREE_ACTION</code></td><td>no money moves</td><td>ALLOW</td></tr>
@@ -151,6 +154,7 @@
   </main>
 
   <script src="chain.js"></script>
+  <script src="policy.js"></script>
   <script src="motion.js"></script>
   <script src="sandbox.js"></script>
 </body>

@@ -12,7 +12,9 @@ price in the repository.
 | Audit pack: many verified records in one locked PDF | `BUILT` |
 | Every step as a CSV file | `BUILT` |
 | Book-an-audit page (free; a person's time) | `BUILT` |
-| Compare runs, Policy Studio, more levels, command-line scorer, verify widget | `PLANNED` |
+| Compare two runs of a Range level, also in the locked report | `BUILT` |
+| Policy Studio (free to use); exporting and importing a policy file | `BUILT` (export and import are Pro) |
+| More levels, command-line scorer, verify widget | `PLANNED` |
 
 Free users still see the Pro tools, greyed out, with one line on what each does.
 
@@ -70,6 +72,27 @@ python tools/make_license.py check HCPRO1.…
 
 How you take payment is up to you. Use a payment link from a provider and email the key after it clears. Prices
 and tax are your decision and may need local advice. Nothing about them is in the code.
+
+## Compare two runs (Pro)
+
+On the Range page, choose a level, then drop the record of the earlier run ("before") and of the later run
+("after"). Both are verified first; a record that does not check out, or a receipt that is not VALID, is never
+compared and the page says which side was refused. Each check is marked **better**, **worse** or **same**.
+If any check got worse the summary says so first and never says "better overall". The locked report for the
+"after" run then has a "What changed since the earlier run" section.
+
+## Policy Studio
+
+`/policy` lets anyone (free) set the Gatekeeper Sandbox's rules: the budget, the amount a person must approve
+above, an optional amount above which a step is refused outright, and the host names the agent may use. It shows
+what the policy does to the four test flights, and "Try it" opens the sandbox with that policy.
+
+- Every field is checked and a bad value is refused with a plain message, never quietly changed.
+- The sandbox says on its page that a custom policy is running, and its record carries the policy in the first
+  event, so the hash chain commits to the rules that were used.
+- The Range does not score a record made under a custom policy (its levels assume the standard policy).
+- **Pro:** export the policy as a JSON file and import it again. The file says "sandbox policy only". It is **not**
+  the real HashCam gateway's policy or mandate format and the real gateway cannot read it.
 
 ## Honest limits
 

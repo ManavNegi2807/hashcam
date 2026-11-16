@@ -86,6 +86,28 @@
       <p><button class="btn" type="button" id="scoreBtn">Score my run</button> <span class="muted small" id="scoreNote" role="status"></span></p>
     </section>
 
+    <section class="panel" id="compare" aria-labelledby="cmp-h">
+      <h2 id="cmp-h">Compare two runs <span class="pro-tag">Pro</span></h2>
+      <p class="muted small" id="cmpIntro">Before and after a change to your agent: drop the record of each run for the level chosen under “Score my run”. Both are checked first, then each check is marked better, worse or the same.</p>
+      <fieldset id="cmpTools" class="rg-fieldset" disabled>
+        <legend class="sr-only">Compare two runs</legend>
+        <label class="rg-label" for="cmpBefore">Before (the earlier run's record; for extension levels also its .keys.json)</label>
+        <input type="file" id="cmpBefore" multiple accept=".html,.htm,.json,.abbreceipt">
+        <label class="rg-label" for="cmpAfter">After (the later run's record)</label>
+        <input type="file" id="cmpAfter" multiple accept=".html,.htm,.json,.abbreceipt">
+        <p><button class="btn small" type="button" id="cmpBtn">Compare</button>
+          <button class="btn small ghost" type="button" id="cmpReport" disabled>Download the locked report with the comparison (.pdf)</button>
+          <span class="muted small" id="cmpMsg" role="status"></span></p>
+        <p class="rg-cmp-sum" id="cmpSummary" role="status"></p>
+        <ul class="rg-criteria" id="cmpRows"></ul>
+        <div class="rg-key" id="cmpKey" hidden>
+          <p class="rg-label">Password for this report <span class="muted small">(shown once, saved nowhere)</span></p>
+          <p><code id="cmpPass" class="rg-pass"></code> <button class="btn small ghost" type="button" id="cmpCopy">Copy</button></p>
+          <p class="muted small">Write it down now. Never send it in the same message as the file.</p>
+        </div>
+      </fieldset>
+    </section>
+
     <section class="panel" id="result" aria-labelledby="result-h" hidden>
       <h2 id="result-h">Result</h2>
       <p class="rg-overall" id="overall"></p>
@@ -142,6 +164,7 @@
   <script src="pro/records.js"></script>
   <script src="pro/brand.js"></script>
   <script src="pro/pack.js"></script>
+  <script src="pro/compare.js"></script>
   <script src="range/scenarios.js"></script>
   <script src="range/limits.js"></script>
   <script src="range/score.js"></script>

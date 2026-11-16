@@ -166,6 +166,11 @@ async function scoreSandboxFile(level, files) {
   if (!file) throw new Error("Drop the receipt you exported from the sandbox (a .html file).");
   const checked = await R.checkSandbox(file);
   if (!checked.ok) return { result: S.refusal(R.explain(checked.failure, "scored")), engine: "" };
+  // The levels assume the standard policy: a record made under a custom policy (Policy Studio) is not scored here.
+  const first = checked.events[0] && checked.events[0].body && checked.events[0].body.data;
+  if (first && first.policy && first.policy !== "sandbox-policy/1") {
+    return { result: S.refusal(`This record was made under a custom policy (${String(first.policy).slice(0, 40)}). The Range levels assume the standard policy, so it is not scored.`), engine: "" };
+  }
   return {
     result: S.scoreSandbox(level, checked.events),
     events: checked.events,
@@ -303,6 +308,80 @@ $("csvBtn").addEventListener("click", () => {
 $("proNote").textContent = PLAN === "pro"
   ? "Pro is on: the report uses your company name and logo if you saved them, and the CSV has every step."
   : "Pro adds your own company name and logo to this report, and every step as a CSV file.";
+// ------------------------------------------------------------------ Pro: compare two runs
+
+let lastCompare = null;
+const scoreFiles = (level, files) => (level.source === "sandbox" ? scoreSandboxFile(level, files) : scoreReceiptFile(level, files));
+
+function paintCompare(cmp) {
+  $("cmpSummary").textContent = cmp.summary;
+  const list = $("cmpRows");
+  list.textContent = "";
+  for (const r of cmp.rows) {
+    list.append(el("li", { class: r.change.toUpperCase() },
+      el("span", { class: "rg-st" }, r.change.toUpperCase()),
+      el("span", { class: "rg-what" }, el("b", {}, r.label), el("span", {}, window.HCCompare.rowText(r)))));
+  }
+}
+
+$("cmpBtn").addEventListener("click", async () => {
+  if (PLAN !== "pro") return;
+  const level = levels.find((l) => l.id === $("scoreLevel").value);
+  const before = [...$("cmpBefore").files], after = [...$("cmpAfter").files];
+  const note = $("cmpMsg");
+  lastCompare = null;
+  $("cmpReport").disabled = true;
+  $("cmpKey").hidden = true;
+  $("cmpRows").textContent = "";
+  $("cmpSummary").textContent = "";
+  if (!before.length || !after.length) { note.textContent = "Choose the record of the earlier run and of the later run first."; return; }
+  if ([before, after].some((f) => f.length > MAX_FILES || f.some((x) => x.size > MAX_BYTES))) {
+    note.textContent = `Too much to check: at most ${MAX_FILES} files per run, each under ${MAX_BYTES / 1048576} MB.`;
+    return;
+  }
+  note.textContent = "Checking both records…";
+  $("cmpBtn").disabled = true;
+  try {
+    const first = await scoreFiles(level, before);
+    const second = await scoreFiles(level, after);
+    const cmp = window.HCCompare.compare(first.result, second.result);
+    if (!cmp.ok) { note.textContent = cmp.reason; return; }
+    note.textContent = `Level ${level.n} · ${level.title}. Before: ${cmp.before.line}. After: ${cmp.after.line}.`;
+    paintCompare(cmp);
+    const files = [];
+    for (const f of after) files.push({ name: f.name.slice(0, 80), sha256: await R.sha256Hex(f) });
+    lastCompare = { cmp, run: { level, result: second.result, engine: second.engine, files, at: new Date().toISOString().slice(0, 10), compare: cmp } };
+    $("cmpReport").disabled = false;
+  } catch (error) {
+    note.textContent = String((error && error.message) || error);
+  } finally {
+    $("cmpBtn").disabled = false;
+  }
+});
+
+$("cmpReport").addEventListener("click", async () => {
+  if (PLAN !== "pro" || !lastCompare) return;
+  $("cmpReport").disabled = true;
+  try {
+    const { bytes, password } = await window.HCReport.build(lastCompare.run);
+    saveFile(bytes, `hashcam-range-level-${lastCompare.run.level.n}-comparison.pdf`, "application/pdf");
+    $("cmpPass").textContent = password;
+    $("cmpKey").hidden = false;
+    $("cmpMsg").textContent = "Saved. Each report gets its own new password.";
+  } catch (error) {
+    $("cmpMsg").textContent = `The report could not be made: ${String((error && error.message) || error)}`;
+  } finally {
+    $("cmpReport").disabled = false;
+  }
+});
+$("cmpCopy").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText($("cmpPass").textContent); $("cmpMsg").textContent = "Password copied. Keep it apart from the file."; }
+  catch { $("cmpMsg").textContent = "Select the password and copy it yourself."; }
+});
+$("cmpTools").disabled = PLAN !== "pro";
+$("cmpIntro").textContent = PLAN === "pro"
+  ? "Before and after a change to your agent: drop the record of each run for the level chosen under “Score my run”. Both are checked first, then each check is marked better, worse or the same."
+  : "Pro compares two runs of the same level: what got better, what got worse. It turns on with a valid licence key.";
 $("copyPass").addEventListener("click", async () => {
   const note = $("reportNote");
   try {
