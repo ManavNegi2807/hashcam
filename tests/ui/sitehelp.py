@@ -7,20 +7,27 @@ another host fails here as it would on the web.
 from __future__ import annotations
 
 import json
+import re
 import threading
 from collections.abc import Iterator
 from contextlib import contextmanager
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, ClassVar
+from urllib.parse import urlsplit
 
 REPO = Path(__file__).resolve().parents[2]
 SITE = REPO / "site"
 
 
-def vercel_headers() -> dict[str, str]:
+def vercel_headers(path: str = "/") -> dict[str, str]:
+    """The headers vercel.json sends for one path: every matching rule, later rules last."""
     config = json.loads((SITE / "vercel.json").read_text(encoding="utf-8"))
-    return {h["key"]: h["value"] for h in config["headers"][0]["headers"]}
+    out: dict[str, str] = {}
+    for rule in config["headers"]:
+        if re.fullmatch(rule["source"], path):
+            out.update({h["key"]: h["value"] for h in rule["headers"]})
+    return out
 
 
 class SiteHandler(SimpleHTTPRequestHandler):
@@ -34,7 +41,7 @@ class SiteHandler(SimpleHTTPRequestHandler):
         super().__init__(*args, directory=str(SITE), **kwargs)
 
     def end_headers(self) -> None:
-        for key, value in vercel_headers().items():
+        for key, value in vercel_headers(urlsplit(self.path).path).items():
             self.send_header(key, value)
         super().end_headers()
 

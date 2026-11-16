@@ -67,8 +67,17 @@ def sign_license(
     expires: str | None = None,
     issued: str | None = None,
     license_id: str | None = None,
+    plan: str = "pro",
+    org: str | None = None,
+    seats: int | None = None,
 ) -> str:
     """One licence key: HCPRO1.<payload>.<signature>, both base64url. Checks its own inputs."""
+    if plan not in ("pro", "enterprise"):
+        raise ValueError("the plan must be pro or enterprise")
+    if org is not None and not NAME_RE.match(org):
+        raise ValueError("the organisation must be 1 to 80 characters with no control characters")
+    if seats is not None and not 1 <= seats <= 10000:
+        raise ValueError("seats must be between 1 and 10000")
     if not NAME_RE.match(name):
         raise ValueError("the name must be 1 to 80 characters with no control characters")
     if expires is not None and not DATE_RE.match(expires):
@@ -80,11 +89,15 @@ def sign_license(
     payload = {
         "v": 1,
         "name": name,
-        "plan": "pro",
+        "plan": plan,
         "issued": issued,
         "expires": expires,
         "id": license_id or secrets.token_hex(4),
     }
+    if org is not None:
+        payload["org"] = org
+    if seats is not None:
+        payload["seats"] = seats
     raw = json.dumps(payload, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
     return f"{PREFIX}.{b64u(raw)}.{b64u(private.sign(raw))}"
 
@@ -100,7 +113,7 @@ def check_license(token: str, public_hex: str) -> dict[str, Any]:
     except Exception as error:
         raise ValueError("the signature does not match this site's public key") from error
     payload: dict[str, Any] = json.loads(raw)
-    if payload.get("plan") != "pro":
+    if payload.get("plan") not in ("pro", "enterprise"):
         raise ValueError("not a Pro licence")
     return payload
 
@@ -170,7 +183,14 @@ def cmd_sign(args: argparse.Namespace) -> int:
         print(f"No private key at {key_file}. Run `init` first.", file=sys.stderr)
         return 2
     try:
-        token = sign_license(load_private(key_file), args.name, expires=args.expires)
+        token = sign_license(
+            load_private(key_file),
+            args.name,
+            expires=args.expires,
+            plan=args.plan,
+            org=args.org,
+            seats=args.seats,
+        )
     except ValueError as error:
         print(f"Cannot make the licence: {error}", file=sys.stderr)
         return 2
@@ -214,6 +234,11 @@ def main(argv: list[str] | None = None) -> int:
     sign = sub.add_parser("sign", help="print a licence key for a buyer")
     sign.add_argument("--name", required=True, help="the buyer's name as it should appear")
     sign.add_argument("--expires", help="last valid day, e.g. 2027-12-31 (default: never)")
+    sign.add_argument("--plan", choices=["pro", "enterprise"], default="pro")
+    sign.add_argument("--org", help="the organisation's name (shown on the Pro page)")
+    sign.add_argument(
+        "--seats", type=int, help="how many people the licence is for (shown, not counted)"
+    )
     sign.set_defaults(run=cmd_sign)
     check = sub.add_parser("check", help="check a licence key against the site's public key")
     check.add_argument("key")

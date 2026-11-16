@@ -25,12 +25,30 @@
           "value": "same-origin"
         },
         {
-          "key": "Cross-Origin-Resource-Policy",
-          "value": "same-origin"
-        },
-        {
           "key": "Link",
           "value": "</vendor/plus-jakarta-sans.woff2>; rel=preload; as=font; type=font/woff2; crossorigin"
+        }
+      ]
+    },
+    {
+      "source": "/((?!widget/|verifier\\.wasm).*)",
+      "headers": [
+        {
+          "key": "Cross-Origin-Resource-Policy",
+          "value": "same-origin"
+        }
+      ]
+    },
+    {
+      "source": "/(widget/.*|verifier\\.wasm)",
+      "headers": [
+        {
+          "key": "Cross-Origin-Resource-Policy",
+          "value": "cross-origin"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
         }
       ]
     }

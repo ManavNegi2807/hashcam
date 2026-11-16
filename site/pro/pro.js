@@ -42,7 +42,9 @@ async function paintLicence() {
   $("licState").textContent = text;
   const lic = st.licence;
   $("licName").textContent = lic ? lic.name : "-";
-  $("licPlan").textContent = st.plan === "pro" ? "Pro" : "Free";
+  const org = lic && lic.org ? ` · ${lic.org}` : "";
+  const seats = lic && lic.seats ? ` · ${lic.seats} seats (shown, not counted or enforced: there is no server)` : "";
+  $("licPlan").textContent = st.plan === "pro" ? (st.tier === "enterprise" ? "Enterprise" : "Pro") + org + seats : "Free";
   $("licExpires").textContent = lic ? (lic.expires || "no end date") : "-";
   const pro = st.plan === "pro";
   $("proTools").disabled = !pro;
@@ -172,7 +174,8 @@ $("packPdf").addEventListener("click", async () => {
   note.textContent = "Writing and locking the pack…";
   try {
     const brand = B.forReport();
-    const doc = P.packDoc({ included, skipped, brandName: brand.name, whiteLabel: brand.whiteLabel, at: today() });
+    const tier = (await L.ready()).tier;
+    const doc = P.packDoc({ included, skipped, brandName: brand.name, whiteLabel: brand.whiteLabel, at: today(), enterprise: tier === "enterprise" });
     const { bytes, password } = await window.HCLockedPdf.buildLockedPdf(doc, brand.art);
     saveFile(bytes, "hashcam-audit-pack.pdf", "application/pdf");
     $("packPass").textContent = password; // shown once, on this page only: not stored, not sent

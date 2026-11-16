@@ -26,6 +26,7 @@
       <a href="range.html">Range</a>
       <a href="about.html" aria-current="page">About</a>
       <a href="pro.html">Pro</a>
+      <a href="plans.html">Plans</a>
     </nav>
   </header>
   <main id="main" class="ab">
@@ -45,6 +46,7 @@
         <article class="card"><h3>Gatekeeper Sandbox</h3><p class="muted">A simulation with fake money: a policy decides each step, a person signs the risky one, and you can edit the record to watch it break.</p><p><a href="sandbox.html">Try the sandbox</a></p></article>
         <article class="card"><h3>Range</h3><p class="muted">Test your own AI agent on this site: eight levels, a scorecard from a record that checks out, and a locked PDF report.</p><p><a href="range.html">Open the Range</a></p></article>
         <article class="card"><h3>Pro</h3><p class="muted">Your name and logo on the locked report, an audit pack for many sessions, and every step as CSV, unlocked by a licence key checked in your browser.</p><p><a href="pro.html">See what Pro adds</a></p></article>
+        <article class="card"><h3>Plans</h3><p class="muted">Free, Pro and Enterprise side by side: the limits (shown, counted on your device, not enforced) and what is built and what is planned.</p><p><a href="plans.html">Compare the plans</a></p></article>
         <article class="card"><h3>How it works</h3><p class="muted">The path of every action, why tampering fails, and a risky step from start to seal.</p><p><a href="index.html#how">See how it works</a></p></article>
       </div>
     </section>
@@ -75,6 +77,19 @@
         <li><b>The recorder key is kept for this tab only</b> (session storage) and is checked before it is used.</li>
         <li><b>No sign-in and no account.</b></li>
         <li><b>The Range report is locked on your computer.</b> The PDF is written and encrypted in your tab, with a password the page makes and shows once. It is saved nowhere.</li>
+      </ul>
+    </section>
+
+    <section class="ab-sec" aria-labelledby="ab-widget">
+      <h2 id="ab-widget">Check a receipt on your own site <span class="ab-tag done">BUILT</span></h2>
+      <p>Another website can include a small drop box that checks a HashCam receipt with the real verifier. It is free and it carries the words "Checked with HashCam". Add one placeholder and one script:</p>
+      <pre class="ab-code"><code>&lt;div data-hashcam-verify&gt;&lt;/div&gt;
+&lt;script src=&quot;https://hashcam.vercel.app/widget/verify.js&quot; async&gt;&lt;/script&gt;</code></pre>
+      <ul class="ab-list">
+        <li>It loads from this site only (the script and the verifier file) and sends nothing anywhere: the receipt is read and checked in your visitor's page.</li>
+        <li>It shows fixed words only, never text from the receipt, and it lives in a shadow root, so your page's styles cannot break it.</li>
+        <li>If your site uses a Content Security Policy it needs: <code>script-src https://hashcam.vercel.app 'wasm-unsafe-eval'; connect-src https://hashcam.vercel.app</code></li>
+        <li>VALID means the record has not changed since it was signed. It does not mean the agent was honest.</li>
       </ul>
     </section>
 

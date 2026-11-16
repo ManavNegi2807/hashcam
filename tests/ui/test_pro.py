@@ -890,15 +890,15 @@ def test_the_range_shows_the_pro_plan_with_a_valid_key_and_the_free_plan_without
     private, public_hex = pair
     page, watch, ctx = open_page(browser, origin, "range.html", public_hex, token=licence(private))
     limits = page.locator("#limitList").inner_text()
-    assert "Pro" in limits and "8 of 8" in limits and "200" in limits
+    assert "Pro" in limits and "16 of 16" in limits and "200" in limits
     assert page.locator(".level .lv-chip.lock").count() == 0
     assert "not enforced" in page.locator("#limitNote").inner_text()
     watch.assert_clean()
     ctx.close()
     page, _, ctx = open_page(browser, origin, "range.html", public_hex)
     limits = page.locator("#limitList").inner_text()
-    assert "Anonymous" in limits and "6 of 8" in limits
-    assert page.locator(".level .lv-chip.lock").count() == 2
+    assert "Anonymous" in limits and "6 of 16" in limits
+    assert page.locator(".level .lv-chip.lock").count() == 10
     ctx.close()
 
 
@@ -921,8 +921,8 @@ def test_the_limits_module_has_both_plans_and_still_says_nothing_is_enforced(
     got = page.evaluate(
         "() => ({ plans: HCLimits.plans, enforced: HCLimits.ENFORCED, pro: HCLimits.limitsFor('pro') })"
     )
-    assert got["plans"] == ["anonymous", "pro"] and got["enforced"] is False
-    assert len(got["pro"]["scenarios"]) == 8 and got["pro"]["name"] == "Pro"
+    assert got["plans"] == ["anonymous", "pro", "enterprise"] and got["enforced"] is False
+    assert len(got["pro"]["scenarios"]) == 16 and got["pro"]["name"] == "Pro"
     ctx.close()
 
 
@@ -974,9 +974,11 @@ def test_pro_files_are_plain_have_no_billing_and_make_no_requests() -> None:
     for name in names:
         lines = (SITE / name).read_text(encoding="utf-8").splitlines()
         code = "\n".join(line for line in lines if not line.lstrip().startswith("//"))
-        assert not re.search(
-            r"(?i)pricing|\bprice|\bprices\b|subscri|billing|stripe|invoice|checkout\b|\$\d", code
-        ), name
+        if name != "pro/config.js":  # the one place optional price text may be set (plans page)
+            assert not re.search(
+                r"(?i)pricing|\bprice|\bprices\b|subscri|billing|stripe|invoice|checkout\b|\$\d",
+                code,
+            ), name
         assert not re.search(r"\beval\(|new Function|innerHTML|document\.write", code), name
         assert not re.search(
             r"\bfetch\(|XMLHttpRequest|sendBeacon|WebSocket|importScripts", code

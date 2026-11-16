@@ -23,6 +23,9 @@ const bytesOfHex = (hex) => Uint8Array.from(hex.match(/../g), (h) => parseInt(h,
 const isDate = (s) => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s + "T00:00:00Z"));
 
 const no = (reason) => ({ ok: false, reason });
+// The checked licence as the pages see it: org and seats only when the key carries them.
+const licenceOf = (p) => ({ name: p.name, plan: p.plan, issued: p.issued, expires: p.expires, id: p.id,
+  ...(p.org !== undefined ? { org: p.org } : {}), ...(p.seats !== undefined ? { seats: p.seats } : {}) });
 
 // Check one key against one public key (64 hex characters). `now` is a number of milliseconds (default: now).
 async function verifyLicense(token, publicKeyHex, now = Date.now()) {
@@ -48,7 +51,9 @@ async function verifyLicense(token, publicKeyHex, now = Date.now()) {
   let p;
   try { p = JSON.parse(enc.decode(raw)); } catch { return no("That key is damaged: its contents could not be read."); }
   if (!p || typeof p !== "object" || p.v !== 1) return no("That key is from a version this site does not know.");
-  if (p.plan !== "pro") return no("That key is not a Pro key.");
+  if (p.plan !== "pro" && p.plan !== "enterprise") return no("That key is not a Pro key.");
+  if (p.org !== undefined && (typeof p.org !== "string" || !p.org.trim() || p.org.length > 80 || /[\u0000-\u001f\u007f]/.test(p.org))) return no("That key has an organisation name that is not valid.");
+  if (p.seats !== undefined && (!Number.isInteger(p.seats) || p.seats < 1 || p.seats > 10000)) return no("That key has a number of seats that is not valid.");
   if (typeof p.name !== "string" || !p.name.trim() || p.name.length > 80 || /[\u0000-\u001f\u007f]/.test(p.name)) {
     return no("That key has a name that is not valid.");
   }
@@ -56,9 +61,9 @@ async function verifyLicense(token, publicKeyHex, now = Date.now()) {
   if (typeof p.id !== "string" || !/^[A-Za-z0-9-]{1,40}$/.test(p.id)) return no("That key has an id that is not valid.");
   if (Date.parse(p.issued + "T00:00:00Z") > now + DAY) return no("That key says it was issued in the future. Check this computer's date.");
   if (p.expires !== null && Date.parse(p.expires + "T23:59:59Z") < now) {
-    return { ok: false, expired: true, reason: `That licence ended on ${p.expires}.`, licence: { name: p.name, plan: "pro", issued: p.issued, expires: p.expires, id: p.id } };
+    return { ok: false, expired: true, reason: `That licence ended on ${p.expires}.`, licence: licenceOf(p) };
   }
-  return { ok: true, licence: { name: p.name, plan: "pro", issued: p.issued, expires: p.expires, id: p.id } };
+  return { ok: true, licence: licenceOf(p) };
 }
 
 // ---------------------------------------------------------------- what this page has stored
@@ -79,7 +84,8 @@ async function evaluate(token) {
   if (!publicKeyHex) return free("not-configured", { reason: "Licence checking is not set up on this site yet, so nothing can be unlocked." });
   if (!token) return free("none");
   const result = await verifyLicense(token, publicKeyHex);
-  if (result.ok) return { plan: "pro", state: "valid", licence: result.licence };
+  // "plan" stays "pro" for both paid plans (every Pro feature works for Enterprise); "tier" tells them apart.
+  if (result.ok) return { plan: "pro", tier: result.licence.plan, state: "valid", licence: result.licence };
   if (result.unsupported) return free("unsupported", { reason: result.reason });
   if (result.expired) return free("expired", { reason: result.reason, licence: result.licence });
   return free("invalid", { reason: result.reason });

@@ -8,7 +8,9 @@ const S = window.HCScore;
 const L = window.HCLimits;
 const R = window.HCRecords;
 // The plan is "pro" only with a valid licence key (site/pro/license.js). Nothing is enforced either way.
-const PLAN = (await window.HCLicense.ready()).plan;
+const LIC = await window.HCLicense.ready();
+const PLAN = LIC.plan;
+const TIER = LIC.tier || LIC.plan; // "anonymous", "pro" or "enterprise": which set of limits is shown
 const levels = D.levels;
 const ids = levels.map((l) => l.id);
 const $ = (id) => document.getElementById(id);
@@ -30,7 +32,7 @@ const siteHost = fromDisk ? "hashcam.vercel.app" : location.hostname;
 // ------------------------------------------------------------------ limits (shown, not enforced)
 
 (function showLimits() {
-  const lim = L.limitsFor(PLAN);
+  const lim = L.limitsFor(TIER);
   const rows = [
     ["Plan", lim.name], ["Runs per day", lim.runs_per_day], ["Steps per run", lim.steps_per_run],
     ["Minutes per run", lim.minutes_per_run], ["Levels", `${lim.scenarios.length} of ${levels.length}`],
@@ -44,20 +46,33 @@ const siteHost = fromDisk ? "hashcam.vercel.app" : location.hostname;
       "Levels marked “with an account” still run here.";
 })();
 
+function paintUsage() {
+  const lim = L.limitsFor(TIER);
+  const n = window.HCUsage.today();
+  $("usageLine").textContent = `${n} of ${lim.runs_per_day} runs today (counted on this device, not enforced).`;
+  $("usageNotice").hidden = n <= lim.runs_per_day;
+  $("usageNotice").textContent = "You are past today's limit for your plan. Nothing is blocked: this count lives in this browser, is not enforced, and starts again at zero if you clear your browser data or use another device.";
+}
+$("usageReset").addEventListener("click", () => { window.HCUsage.reset(); paintUsage(); });
+paintUsage();
+
 // ------------------------------------------------------------------ the levels
 
 const chip = (text, extra) => el("span", { class: "lv-chip" + (extra ? " " + extra : "") }, text);
 
 for (const level of levels) {
-  const locked = !L.allowed(PLAN, level.id);
+  const locked = !L.allowed(TIER, level.id);
+  const proOnly = Boolean(level.pro) && PLAN !== "pro";
   $("levelGrid").append(el("article", { class: "card level", "data-level": level.id, "data-reveal": "" },
     el("header", {}, el("span", { class: "lv-n" }, String(level.n).padStart(2, "0")), el("h3", {}, level.title)),
     el("div", { class: "lv-chips" }, chip(level.difficulty),
       chip(level.source === "sandbox" ? "Sandbox record" : "Extension receipt"),
-      locked ? chip("With an account · coming soon", "lock") : null),
+      proOnly ? chip("Pro", "lock") : locked ? chip("With an account · coming soon", "lock") : null),
     el("p", { class: "muted" }, level.goal),
     el("ul", { class: "lv-looks" }, ...level.looks_at.map((t) => el("li", {}, t))),
-    el("button", { class: "btn small", type: "button", "data-start": level.id }, "Start this level")));
+    proOnly
+      ? el("button", { class: "btn small ghost", type: "button", disabled: "", "data-pro-level": level.id }, "Part of Pro")
+      : el("button", { class: "btn small", type: "button", "data-start": level.id }, "Start this level")));
   $("scoreLevel").append(el("option", { value: level.id }, `${level.n}. ${level.title}`));
 }
 
@@ -74,9 +89,11 @@ function fill(text) {
   return text.replaceAll("{site}", siteBase).replaceAll("{host}", siteHost).replaceAll("{label}", label);
 }
 
+const proLocked = (level) => Boolean(level && level.pro) && PLAN !== "pro";
+
 function selectLevel(id, { scroll = true } = {}) {
   const level = levels.find((l) => l.id === id);
-  if (!level) return;
+  if (!level || proLocked(level)) return;
   current = level;
   label = newLabel();
   for (const card of document.querySelectorAll(".level")) card.classList.toggle("on", card.dataset.level === id);
@@ -166,11 +183,8 @@ async function scoreSandboxFile(level, files) {
   if (!file) throw new Error("Drop the receipt you exported from the sandbox (a .html file).");
   const checked = await R.checkSandbox(file);
   if (!checked.ok) return { result: S.refusal(R.explain(checked.failure, "scored")), engine: "" };
-  // The levels assume the standard policy: a record made under a custom policy (Policy Studio) is not scored here.
-  const first = checked.events[0] && checked.events[0].body && checked.events[0].body.data;
-  if (first && first.policy && first.policy !== "sandbox-policy/1") {
-    return { result: S.refusal(`This record was made under a custom policy (${String(first.policy).slice(0, 40)}). The Range levels assume the standard policy, so it is not scored.`), engine: "" };
-  }
+  const custom = R.policyRefusal(checked.events);
+  if (custom) return { result: S.refusal(custom), engine: "" };
   return {
     result: S.scoreSandbox(level, checked.events),
     events: checked.events,
@@ -229,6 +243,7 @@ function showResult(level, result, engine, record) {
   }
   for (const id of ["copyLink", "copyMd", "saveBadge"]) $(id).disabled = !last;
   $("shareNote").textContent = "";
+  if (result.scored) { window.HCUsage.add(); paintUsage(); }
   lastRun = { level, result, engine, files: [], at: new Date().toISOString().slice(0, 10), record };
   $("reportBtn").disabled = false;
   $("csvBtn").disabled = !(PLAN === "pro" && record && record.events);
@@ -242,6 +257,7 @@ $("scoreBtn").addEventListener("click", async () => {
   const level = levels.find((l) => l.id === $("scoreLevel").value);
   const files = [...input.files];
   const note = $("scoreNote");
+  if (proLocked(level)) { note.textContent = `Level ${level.n} is part of Pro. Pro turns on with a valid licence key (see the Pro page).`; return; }
   if (!files.length) { note.textContent = "Choose or drop the record of your run first."; return; }
   // A record is a few hundred KB at most. A huge or long list of files is refused before anything is read,
   // so a stranger's file cannot freeze the tab.

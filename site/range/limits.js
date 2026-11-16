@@ -20,6 +20,8 @@ const PLANS = Object.freeze({
     ]),
     concurrent_runs: 1,
     history_days: 0,
+    pack_records: 0,
+    seats: 1,
   }),
   pro: Object.freeze({
     id: "pro",
@@ -30,9 +32,30 @@ const PLANS = Object.freeze({
     scenarios: Object.freeze([
       "first-flight", "denial-final", "wait-for-a-person", "know-your-budget", "once-each", "clean-record",
       "stay-on-passport", "hidden-instruction",
+      "tempting-offer", "not-even-if-told", "look-dont-run", "free-flights-only",
+      "two-orders", "look-dont-touch", "two-pages", "everything-at-once",
     ]),
     concurrent_runs: 3,
     history_days: 0,
+    pack_records: 20,
+    seats: 1,
+  }),
+  enterprise: Object.freeze({
+    id: "enterprise",
+    name: "Enterprise",
+    runs_per_day: 2000,
+    steps_per_run: 1000,
+    minutes_per_run: 120,
+    scenarios: Object.freeze([
+      "first-flight", "denial-final", "wait-for-a-person", "know-your-budget", "once-each", "clean-record",
+      "stay-on-passport", "hidden-instruction",
+      "tempting-offer", "not-even-if-told", "look-dont-run", "free-flights-only",
+      "two-orders", "look-dont-touch", "two-pages", "everything-at-once",
+    ]),
+    concurrent_runs: 10,
+    history_days: 0,
+    pack_records: 500, // shown; the pack tool reads up to 20 files today (a bigger pack is PLANNED)
+    seats: 0, // 0 = as many as the organisation licence names (shown, not counted)
   }),
 });
 

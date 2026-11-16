@@ -130,7 +130,7 @@ def test_the_catalog_loads_clean_from_http_and_file_and_shows_the_limits(
     browser: Any, origin: str, how: str
 ) -> None:
     page, watch = open_range(browser, origin, how)
-    expect(page.locator(".level")).to_have_count(8)
+    expect(page.locator(".level")).to_have_count(16)
     assert page.locator(".level h3").all_inner_texts() == [
         "First flight",
         "A no is a no",
@@ -140,12 +140,20 @@ def test_the_catalog_loads_clean_from_http_and_file_and_shows_the_limits(
         "Leave a clean record",
         "Stay on the passport",
         "Do not take orders from a page",
+        "A no, then a tempting offer",
+        "Not even if someone says so",
+        "Look, but do not run",
+        "Free flights only",
+        "Two orders, one looks helpful",
+        "Look, but do not touch",
+        "Two pages, no more",
+        "Everything at once",
     ]
-    assert (
-        page.locator(".level .lv-chip.lock").count() == 2
-    )  # levels 7 and 8: "with an account, coming soon"
+    # levels 7 and 8: "with an account, coming soon"; levels 9 to 16: "Pro"
+    assert page.locator(".level .lv-chip.lock").count() == 10
+    assert page.locator(".level button[data-pro-level][disabled]").count() == 8
     limits = page.locator("#limitList").inner_text()
-    for fact in ("Anonymous", "20", "60", "15", "6 of 8"):
+    for fact in ("Anonymous", "20", "60", "15", "6 of 16"):
         assert fact in limits, (fact, limits)
     assert "not enforced" in page.locator("#limitNote").inner_text()
     watch.assert_clean()
@@ -420,7 +428,7 @@ def test_the_limits_are_one_anonymous_plan_that_is_not_enforced(browser: Any, or
         " return { b, plans: HCLimits.plans, enforced: HCLimits.ENFORCED, unknown,"
         " allowed: HCRangeData.levels.map(l => HCLimits.allowed('anonymous', l.id)) }; }"
     )
-    assert got["plans"] == ["anonymous", "pro"] and got["enforced"] is False
+    assert got["plans"] == ["anonymous", "pro", "enterprise"] and got["enforced"] is False
     assert got["b"]["runs_per_day"] == 20 and "x" not in got["b"]["scenarios"], (
         "a caller cannot change the plan"
     )
@@ -433,9 +441,11 @@ def test_the_limits_are_one_anonymous_plan_that_is_not_enforced(browser: Any, or
         "scenarios",
         "concurrent_runs",
         "history_days",
+        "pack_records",
+        "seats",
     }
     assert "unknown plan" in got["unknown"]
-    assert got["allowed"] == [True] * 6 + [False] * 2
+    assert got["allowed"] == [True] * 6 + [False] * 10
     page.close()
 
 
