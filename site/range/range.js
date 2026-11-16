@@ -1,14 +1,14 @@
 // The Range page. A classic script (it works from a file:// page) with no libraries. Everything happens in
 // this tab: the files you drop are read here, checked here and never sent anywhere.
-(function () {
+(async function () {
 "use strict";
 
 const D = window.HCRangeData;
 const S = window.HCScore;
 const L = window.HCLimits;
-const C = window.HCChain;
-const V = window.HCVerify;
-const PLAN = "anonymous";
+const R = window.HCRecords;
+// The plan is "pro" only with a valid licence key (site/pro/license.js). Nothing is enforced either way.
+const PLAN = (await window.HCLicense.ready()).plan;
 const levels = D.levels;
 const ids = levels.map((l) => l.id);
 const $ = (id) => document.getElementById(id);
@@ -161,57 +161,29 @@ drop.addEventListener("drop", (e) => {
 const MAX_FILES = 4;
 const MAX_BYTES = 8 * 1048576;
 
-function sandboxExportOf(text) {
-  let json = text;
-  if (/^\s*</.test(text)) {
-    // Cut the record out as text. Parsing a stranger's whole HTML file (DOMParser) would make the browser
-    // read its styles and markup; this page only ever wants the one JSON block inside it.
-    const open = text.match(/<script type="application\/json" id="receipt">/);
-    const end = open ? text.indexOf("</script>", open.index + open[0].length) : -1;
-    if (!open || end < 0) throw new Error("That HTML file is not a sandbox receipt: it has no record inside.");
-    json = text.slice(open.index + open[0].length, end);
-  }
-  let data;
-  try { data = JSON.parse(json); } catch { throw new Error("The record in that file could not be read."); }
-  if (!data || data.format !== "hashcam-sandbox-receipt/1" || !Array.isArray(data.events) || !data.public_key_jwk) {
-    throw new Error("That file is not a Gatekeeper Sandbox receipt.");
-  }
-  return data;
-}
-
 async function scoreSandboxFile(level, files) {
-  const file = files.find((f) => /\.(html?|json)$/i.test(f.name) && !/\.keys\.json$/i.test(f.name));
+  const file = files.find(R.isSandboxFile);
   if (!file) throw new Error("Drop the receipt you exported from the sandbox (a .html file).");
-  const data = sandboxExportOf(await file.text());
-  const check = await C.verifyChain(data.events, data.public_key_jwk);
-  if (!check.ok) {
-    return { result: S.refusal(`This record does not check out: event #${check.firstBad} no longer matches its fingerprint or its signature, so it is not scored.`), engine: "" };
-  }
+  const checked = await R.checkSandbox(file);
+  if (!checked.ok) return { result: S.refusal(R.explain(checked.failure, "scored")), engine: "" };
   return {
-    result: S.scoreSandbox(level, data.events),
+    result: S.scoreSandbox(level, checked.events),
+    events: checked.events,
+    kind: "sandbox",
     engine: "Checked here: every event's fingerprint and the signatures re-computed and they match. That shows the record was not edited after it was made. A sandbox record cannot prove where it came from (the extension's signed receipt can).",
   };
 }
 
 async function scoreReceiptFile(level, files) {
-  const receipt = files.find((f) => /\.abbreceipt$/i.test(f.name));
+  const receipt = files.find(R.isReceiptFile);
   if (!receipt) throw new Error("Drop the .abbreceipt your extension saved (and its .keys.json).");
-  const keys = files.find((f) => /\.keys\.json$/i.test(f.name));
-  const bytes = new Uint8Array(await receipt.arrayBuffer());
-  const keyBytes = keys ? new Uint8Array(await keys.arrayBuffer()) : new Uint8Array();
-  const report = await V.verify(bytes, keyBytes);
-  const verdict = String(report.overall || "UNREADABLE");
-  const via = report.engine === "wasm" ? "the HashCam verifier (WebAssembly)" : "the JavaScript fallback";
-  if (verdict !== "VALID") {
-    const why = verdict === "INVALID" ? "The receipt does not check out: something in it was changed or does not add up."
-      : verdict === "INCOMPLETE" ? `The verdict is INCOMPLETE (checked by ${via})${keys ? "" : "; no .keys.json was dropped, so signatures could not be checked"}. A run is only scored when the whole receipt is VALID.`
-        : `The receipt could not be read (verdict ${verdict}).`;
-    return { result: S.refusal(`${why} It is not scored.`), engine: "" };
-  }
-  const events = await window.HCFallback.readEvents(bytes);
+  const checked = await R.checkReceipt(receipt, files.find(R.isKeys));
+  if (!checked.ok) return { result: S.refusal(R.explain(checked.failure, "scored")), engine: "" };
   return {
-    result: S.scoreReceipt(level, events, { siteHost }),
-    engine: `Verdict VALID from ${via}. The extension watches page loads, form submits and downloads in one tab; requests a page's own scripts send are not seen.`,
+    result: S.scoreReceipt(level, checked.events, { siteHost }),
+    events: checked.events,
+    kind: "receipt",
+    engine: `Verdict VALID from ${checked.via}. The extension watches page loads, form submits and downloads in one tab; requests a page's own scripts send are not seen.`,
   };
 }
 
@@ -225,7 +197,7 @@ function badgeNode(svg) {
   return document.importNode(doc.documentElement, true);
 }
 
-function showResult(level, result, engine) {
+function showResult(level, result, engine, record) {
   const box = $("result");
   box.hidden = false;
   const overall = result.overall;
@@ -252,8 +224,9 @@ function showResult(level, result, engine) {
   }
   for (const id of ["copyLink", "copyMd", "saveBadge"]) $(id).disabled = !last;
   $("shareNote").textContent = "";
-  lastRun = { level, result, engine, files: [], at: new Date().toISOString().slice(0, 10) };
+  lastRun = { level, result, engine, files: [], at: new Date().toISOString().slice(0, 10), record };
   $("reportBtn").disabled = false;
+  $("csvBtn").disabled = !(PLAN === "pro" && record && record.events);
   $("reportKey").hidden = true;
   $("reportPass").textContent = "";
   $("reportNote").textContent = "";
@@ -274,9 +247,9 @@ $("scoreBtn").addEventListener("click", async () => {
   note.textContent = "Checking the record…";
   $("scoreBtn").disabled = true;
   try {
-    const { result, engine } = level.source === "sandbox" ? await scoreSandboxFile(level, files) : await scoreReceiptFile(level, files);
+    const { result, engine, events, kind } = level.source === "sandbox" ? await scoreSandboxFile(level, files) : await scoreReceiptFile(level, files);
     note.textContent = "";
-    showResult(level, result, engine);
+    showResult(level, result, engine, events ? { events, kind } : null);
     // The report names the record it was written from, by fingerprint.
     for (const f of files) {
       const hash = new Uint8Array(await crypto.subtle.digest("SHA-256", await f.arrayBuffer()));
@@ -313,6 +286,23 @@ $("reportBtn").addEventListener("click", async () => {
     $("reportBtn").disabled = false;
   }
 });
+// Pro: every step of the scored record as a spreadsheet file (scrubbed like the report). Free: shown, greyed.
+function saveFile(bytes, name, type) {
+  const link = el("a", { href: URL.createObjectURL(new Blob([bytes], { type })), download: name });
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(link.href), 4000);
+}
+$("csvBtn").addEventListener("click", () => {
+  if (PLAN !== "pro" || !lastRun || !lastRun.record) return;
+  const f = lastRun.files[0] || { name: "record", sha256: "" };
+  const text = window.HCPack.csv([{ name: f.name, sha256: f.sha256, kind: lastRun.record.kind, events: lastRun.record.events }]);
+  saveFile(text, `hashcam-range-level-${lastRun.level.n}-steps.csv`, "text/csv");
+});
+$("proNote").textContent = PLAN === "pro"
+  ? "Pro is on: the report uses your company name and logo if you saved them, and the CSV has every step."
+  : "Pro adds your own company name and logo to this report, and every step as a CSV file.";
 $("copyPass").addEventListener("click", async () => {
   const note = $("reportNote");
   try {

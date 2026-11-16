@@ -24,6 +24,7 @@
       <a href="sandbox.html">Sandbox</a>
       <a href="range.html" aria-current="page">Range</a>
       <a href="about.html">About</a>
+      <a href="pro.html">Pro</a>
     </nav>
   </header>
 
@@ -103,8 +104,10 @@
         <p class="muted small">What your agent did well, what went wrong and what to do next, in plain words, as a PDF. It is written and locked here in this tab with AES-256, and it only opens with a password this page makes for it. Nothing is uploaded.</p>
         <p class="rg-actions">
           <button class="btn small" type="button" id="reportBtn" disabled>Download the locked report (.pdf)</button>
+          <button class="btn small ghost" type="button" id="csvBtn" disabled>Every step as CSV <span class="pro-tag">Pro</span></button>
           <span class="muted small" id="reportNote" role="status"></span>
         </p>
+        <p class="muted small"><span id="proNote"></span> <a href="pro.html">About Pro</a></p>
         <div class="rg-key" id="reportKey" hidden>
           <p class="rg-label">Password for this report <span class="muted small">(shown once, saved nowhere)</span></p>
           <p><code id="reportPass" class="rg-pass"></code> <button class="btn small ghost" type="button" id="copyPass">Copy</button></p>
@@ -133,6 +136,12 @@
   <script src="fallback.js"></script>
   <script src="verify.js"></script>
   <script src="motion.js"></script>
+  <script src="pro/pubkey.js"></script>
+  <script src="pro/license.js"></script>
+  <script src="readable.js"></script>
+  <script src="pro/records.js"></script>
+  <script src="pro/brand.js"></script>
+  <script src="pro/pack.js"></script>
   <script src="range/scenarios.js"></script>
   <script src="range/limits.js"></script>
   <script src="range/score.js"></script>

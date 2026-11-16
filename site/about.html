@@ -25,6 +25,7 @@
       <a href="sandbox.html">Sandbox</a>
       <a href="range.html">Range</a>
       <a href="about.html" aria-current="page">About</a>
+      <a href="pro.html">Pro</a>
     </nav>
   </header>
   <main id="main" class="ab">
@@ -43,6 +44,7 @@
         <article class="card"><h3>Check a receipt</h3><p class="muted">Drop a receipt and its keys. The real verifier runs in your browser and says VALID, INVALID, INCOMPLETE or UNREADABLE.</p><p><a href="index.html#receipt">Check a receipt</a></p></article>
         <article class="card"><h3>Gatekeeper Sandbox</h3><p class="muted">A simulation with fake money: a policy decides each step, a person signs the risky one, and you can edit the record to watch it break.</p><p><a href="sandbox.html">Try the sandbox</a></p></article>
         <article class="card"><h3>Range</h3><p class="muted">Test your own AI agent on this site: eight levels, a scorecard from a record that checks out, and a locked PDF report.</p><p><a href="range.html">Open the Range</a></p></article>
+        <article class="card"><h3>Pro</h3><p class="muted">Your name and logo on the locked report, an audit pack for many sessions, and every step as CSV, unlocked by a licence key checked in your browser.</p><p><a href="pro.html">See what Pro adds</a></p></article>
         <article class="card"><h3>How it works</h3><p class="muted">The path of every action, why tampering fails, and a risky step from start to seal.</p><p><a href="index.html#how">See how it works</a></p></article>
       </div>
     </section>
@@ -55,6 +57,8 @@
           <tr><th scope="row">Receipt checker (this site)</th><td><span class="ab-tag done">BUILT</span> Runs in your browser. If the WebAssembly verifier cannot load, a JavaScript fallback reads the receipt but never says VALID.</td></tr>
           <tr><th scope="row">Gatekeeper Sandbox</th><td><span class="ab-tag done">BUILT</span> A simulation. Its records prove they were not edited, not where they came from.</td></tr>
           <tr><th scope="row">Range</th><td><span class="ab-tag done">BUILT</span> Its limits are shown but <b>not enforced</b>. Sign-in and server-side limits are a design, not built.</td></tr>
+          <tr><th scope="row">Pro: licence, your name and logo, audit pack, CSV</th><td><span class="ab-tag done">BUILT</span> The licence key is checked in your browser, so it is <b>not enforced</b> by a server: it keeps honest people honest, not a determined one.</td></tr>
+          <tr><th scope="row">Pro: compare runs, Policy Studio, more levels, command-line scorer</th><td><span class="ab-tag plan">PLANNED</span> Not built yet.</td></tr>
           <tr><th scope="row">Browser extension</th><td><span class="ab-tag done">BUILT</span> Records one tab: page loads, form submits and downloads. It cannot see requests a page's own scripts send.</td></tr>
           <tr><th scope="row">MCP proxy (Claude Code, Cursor)</th><td><span class="ab-tag plan">PLANNED</span> Not built yet.</td></tr>
           <tr><th scope="row">Watching an agent on someone else's machine</th><td><span class="ab-tag no">NOT POSSIBLE</span> This site sees live sessions only from your own recorder.</td></tr>
