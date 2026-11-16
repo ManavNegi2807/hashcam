@@ -25,6 +25,7 @@
       <a href="range.html" aria-current="page">Range</a>
       <a href="about.html">About</a>
       <a href="pro.html">Pro</a>
+      <a href="plans.html">Plans</a>
     </nav>
   </header>
 
@@ -47,6 +48,9 @@
       <h2 id="limits-h">Your limits</h2>
       <dl class="rg-dl" id="limitList"></dl>
       <p class="muted small" id="limitNote"></p>
+      <p id="usageLine" class="small"></p>
+      <p class="rg-cmp-sum" id="usageNotice" role="status" hidden></p>
+      <p><button class="btn small ghost" type="button" id="usageReset">Reset my count</button></p>
     </section>
 
     <section id="levels" aria-labelledby="levels-h">
@@ -167,6 +171,7 @@
   <script src="fallback.js"></script>
   <script src="verify.js"></script>
   <script src="motion.js"></script>
+  <script src="pro/usage.js"></script>
   <script src="pro/pubkey.js"></script>
   <script src="pro/license.js"></script>
   <script src="readable.js"></script>

@@ -56,7 +56,7 @@ const sessionLine = (t) =>
   `${t.allowed} allowed, ${t.blocked} blocked, ${t.held} held for a person, ${t.approved} approved, ${t.refused} refused by a person, ${t.headsUp} heads-up.`;
 
 // included: [{ name, sha256, kind, events }]   skipped: [{ name, reason }]
-function packDoc({ included, skipped, brandName, whiteLabel, at }) {
+function packDoc({ included, skipped, brandName, whiteLabel, at, enterprise }) {
   const name = whiteLabel && brandName ? brandName : "HashCam";
   const all = sum(included);
   const blocks = [{
@@ -119,7 +119,7 @@ function packDoc({ included, skipped, brandName, whiteLabel, at }) {
     kicker: "Agent audit pack",
     date: at,
     running: `Audit pack: ${included.length} session${included.length === 1 ? "" : "s"}`,
-    footer: `${whiteLabel ? name + " - " : ""}Made with HashCam. A report is a summary, not a proof.`,
+    footer: `${whiteLabel ? name + " - " : ""}${enterprise && whiteLabel ? "" : "Made with HashCam. "}A report is a summary, not a proof.`,
     chip: 78,
     blocks,
   };

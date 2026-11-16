@@ -76,7 +76,7 @@ def test_the_about_page_loads_clean_and_shifts_nothing(browser: Any, origin: str
     seen = page.evaluate("window.__m")
     assert seen["shifts"] <= (0.001 if how == "http" else 0.01), seen["shiftList"]
     assert page.locator("h1").inner_text() == "A flight recorder for AI agents."
-    assert page.locator(".ab-grid .card").count() == 7
+    assert page.locator(".ab-grid .card").count() == 8
     watch.assert_clean()
     page.close()
 
