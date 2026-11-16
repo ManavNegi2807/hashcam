@@ -54,6 +54,7 @@ the top of the home page about 30 fps while the hero's rings turn.
 | `about.html` | **About**: what each page does, what is `BUILT`, `PLANNED` or not possible, what the site does with your data, and what a receipt can and cannot tell you. No script. The console (`ui/console.html`) has a matching About section. `TESTED`: `tests/ui/test_about.py`. |
 | `pro.html` | **HashCam Pro**: paste a licence key (checked in your browser against the public key in `pro/pubkey.js`) to turn on your own name and logo on locked reports, an audit pack for many records, and CSV. Free users see the tools greyed. The licence check is **not enforced** by a server. `audit.html` is a free "Book an audit" page (no script). See [`docs/PRO.md`](../docs/PRO.md). `TESTED`: `tests/ui/test_pro.py`. |
 | `policy.html` | **Policy Studio**: set the Gatekeeper Sandbox's rules (budget, approval limit, optional refusal limit, allowed hosts), see what they do to the four test flights, and try them. Free; exporting and importing the policy file is Pro and is labelled sandbox policy only. `TESTED`: `tests/ui/test_policy_compare.py`. |
+| `widget/verify.js` | The free **Verify this receipt** widget other sites include with one script tag: a drop box in a shadow root that checks a receipt with the real WebAssembly verifier and shows VALID / INVALID / INCOMPLETE / UNREADABLE. It fetches only itself and `verifier.wasm`; `vercel.json` lets other sites load just those two. `TESTED`: `tests/ui/test_widget.py` (host page on another origin). |
 
 ## The sandbox is a simulation
 
