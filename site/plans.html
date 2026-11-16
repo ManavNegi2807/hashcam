@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="console.css">
 <link rel="stylesheet" href="about.css">
 <link rel="stylesheet" href="pro.css">
-<link rel="stylesheet" href="policy.css">
+<link rel="stylesheet" href="plans.css">
 <link rel="stylesheet" href="motion.css">
 <link rel="stylesheet" href="brand.css">
 </head>
@@ -37,36 +37,113 @@
       <h1>Free, Pro and Enterprise.</h1>
       <p class="lead">What each plan includes. The usage limits are <b>shown and counted on your own device</b>. Nothing is enforced by a server: clearing your browser data starts the count again, and the page says so wherever a limit appears.</p>
     </section>
-    <section data-reveal class="panel" aria-labelledby="pl-t">
-      <h2 id="pl-t">What each plan includes</h2>
-      <div class="pl-scroll"><table class="pl-table">
-        <thead><tr><th scope="col">Feature</th><th scope="col">Free</th><th scope="col">Pro</th><th scope="col">Enterprise</th></tr></thead>
-        <tbody>
-          <tr><th scope="row">Price</th><td id="priceFree">Ask</td><td id="pricePro">Ask</td><td id="priceEnt">Ask</td></tr>
-          <tr><th scope="row">Range levels</th><td>1 to 6</td><td>1 to 16</td><td>1 to 16</td></tr>
-          <tr><th scope="row">Runs per day (shown, counted on this device)</th><td>20</td><td>200</td><td>2000</td></tr>
-          <tr><th scope="row">Steps per run / minutes per run</th><td>60 / 15</td><td>200 / 60</td><td>1000 / 120</td></tr>
-          <tr><th scope="row">Records in one audit pack</th><td>none</td><td>20</td><td>500 (the pack reads up to 20 files today)</td></tr>
-          <tr><th scope="row">Locked PDF report</th><td>HashCam branding</td><td>Your name and logo</td><td>Your name and logo, no HashCam footer</td></tr>
-          <tr><th scope="row">CSV export, compare runs, policy export</th><td>no</td><td>yes</td><td>yes</td></tr>
-          <tr><th scope="row">Command-line scorer</th><td>levels 1 to 6</td><td>all levels</td><td>all levels</td></tr>
-          <tr><th scope="row">Seats</th><td>1</td><td>1</td><td>named in the licence (shown, not counted)</td></tr>
-        </tbody>
-      </table></div>
-      <p class="pr-actions"><a class="btn" id="getPro" href="pro.html">Get Pro</a> <a class="btn ghost" id="entContact" href="#">Ask about Enterprise</a> <span class="muted small" id="planNote"></span></p>
+    <section class="plans" aria-label="The three plans">
+      <article class="plan free" aria-labelledby="pc-free">
+        
+        <h3 id="pc-free">Free</h3>
+        <p class="plan-tag">Try the Range on your own agent</p>
+        <p class="plan-price"><span id="priceFree">Ask</span></p>
+        <div class="plan-meter" role="img" aria-label="20 runs per day, shown not enforced"><i class="bar bar-free"></i></div>
+        <p class="plan-runs"><b>20</b> runs per day <span class="muted small">(shown, counted on this device)</span></p>
+        <ul class="plan-list">
+            <li>Range levels 1 to 6</li>
+            <li>60 steps / 15 minutes per run</li>
+            <li>Locked PDF report, HashCam branding</li>
+            <li>Command-line scorer for levels 1 to 6</li>
+            <li>1 seat</li>
+        </ul>
+        <p class="plan-cta"><a class="btn ghost" href="range.html">Open the Range</a></p>
+      </article>
+      <article class="plan pro" aria-labelledby="pc-pro">
+        <span class="plan-ribbon">Most chosen</span>
+        <h3 id="pc-pro">Pro</h3>
+        <p class="plan-tag">Reports with your name on them</p>
+        <p class="plan-price"><span id="pricePro">Ask</span></p>
+        <div class="plan-meter" role="img" aria-label="200 runs per day, shown not enforced"><i class="bar bar-pro"></i></div>
+        <p class="plan-runs"><b>200</b> runs per day <span class="muted small">(shown, counted on this device)</span></p>
+        <ul class="plan-list">
+            <li>Range levels 1 to 16</li>
+            <li>200 steps / 60 minutes per run</li>
+            <li>Your name and logo on reports</li>
+            <li>Audit pack of up to 20 records</li>
+            <li>CSV export, compare runs, policy export</li>
+            <li>Command-line scorer, all levels</li>
+            <li>1 seat</li>
+        </ul>
+        <p class="plan-cta"><a class="btn" id="getPro" href="pro.html">Get Pro</a></p>
+      </article>
+      <article class="plan ent" aria-labelledby="pc-ent">
+        
+        <h3 id="pc-ent">Enterprise</h3>
+        <p class="plan-tag">For a team or an organisation</p>
+        <p class="plan-price"><span id="priceEnt">Ask</span></p>
+        <div class="plan-meter" role="img" aria-label="2000 runs per day, shown not enforced"><i class="bar bar-ent"></i></div>
+        <p class="plan-runs"><b>2000</b> runs per day <span class="muted small">(shown, counted on this device)</span></p>
+        <ul class="plan-list">
+            <li>Everything in Pro</li>
+            <li>1000 steps / 120 minutes per run</li>
+            <li>Your name and logo, no HashCam footer</li>
+            <li>Audit pack: 500 records shown (the pack reads up to 20 files today)</li>
+            <li>Seats: named in the licence (shown, not counted)</li>
+            <li>Organisation licence</li>
+        </ul>
+        <p class="plan-cta"><a class="btn ghost" id="entContact" href="#">Ask about Enterprise</a></p><p class="muted small" id="planNote"></p>
+      </article>
     </section>
-    <section data-reveal class="panel" aria-labelledby="pl-p">
-      <h2 id="pl-p">Not built yet <span class="ab-tag plan">PLANNED</span></h2>
-      <div class="pl-scroll"><table class="pl-table"><tbody>
-          <tr><th scope="row">Signed reports (your own signing key)</th><td colspan="3"><span class="ab-tag plan">PLANNED</span> Not built yet.</td></tr>
-          <tr><th scope="row">Private level packs</th><td colspan="3"><span class="ab-tag plan">PLANNED</span> Not built yet.</td></tr>
-          <tr><th scope="row">Bigger audit pack and JSON Lines export</th><td colspan="3"><span class="ab-tag plan">PLANNED</span> Not built yet.</td></tr>
-          <tr><th scope="row">Self-host bundle</th><td colspan="3"><span class="ab-tag plan">PLANNED</span> Not built yet.</td></tr>
-          <tr><th scope="row">Single sign-on</th><td colspan="3"><span class="ab-tag plan">PLANNED</span> Not built yet.</td></tr>
-          <tr><th scope="row">A central usage dashboard</th><td colspan="3"><span class="ab-tag plan">PLANNED</span> Not built yet.</td></tr>
-          <tr><th scope="row">Server-enforced limits and seat counting</th><td colspan="3"><span class="ab-tag plan">PLANNED</span> Not built yet.</td></tr>
-          <tr><th scope="row">Invoices</th><td colspan="3"><span class="ab-tag plan">PLANNED</span> Not built yet.</td></tr>
-        </tbody></table></div>
+    <p class="plans-note muted small">Limits are shown and counted on your own device. Nothing is enforced by a server.</p>
+    <section class="roadmap" aria-labelledby="pl-p">
+      <h2 id="pl-p">Coming next</h2>
+      <p class="muted">What we are building next. None of this is built yet, and every card says so.</p>
+      <div class="road-grid">
+        <article class="road r1">
+          <span class="road-n">01</span>
+          <span class="ab-tag plan">PLANNED</span>
+          <h3>Signed reports (your own signing key)</h3>
+          <p>Sign every report with your company's key, so your client can check it really came from you.</p>
+        </article>
+        <article class="road r2">
+          <span class="road-n">02</span>
+          <span class="ab-tag plan">PLANNED</span>
+          <h3>Private level packs</h3>
+          <p>Write your own Range levels for your own rules, and test your agents against them.</p>
+        </article>
+        <article class="road r3">
+          <span class="road-n">03</span>
+          <span class="ab-tag plan">PLANNED</span>
+          <h3>Bigger audit pack and JSON Lines export</h3>
+          <p>Drop hundreds of records into one pack, and send every step to your log tools.</p>
+        </article>
+        <article class="road r4">
+          <span class="road-n">04</span>
+          <span class="ab-tag plan">PLANNED</span>
+          <h3>Self-host bundle</h3>
+          <p>Run HashCam inside your own network, with the same security headers.</p>
+        </article>
+        <article class="road r5">
+          <span class="road-n">05</span>
+          <span class="ab-tag plan">PLANNED</span>
+          <h3>Single sign-on</h3>
+          <p>Let your team sign in with the accounts they already use.</p>
+        </article>
+        <article class="road r6">
+          <span class="road-n">06</span>
+          <span class="ab-tag plan">PLANNED</span>
+          <h3>A central usage dashboard</h3>
+          <p>One place to see how your team uses the Range.</p>
+        </article>
+        <article class="road r7">
+          <span class="road-n">07</span>
+          <span class="ab-tag plan">PLANNED</span>
+          <h3>Server-enforced limits and seat counting</h3>
+          <p>Limits and seats that are enforced for real, not only shown.</p>
+        </article>
+        <article class="road r8">
+          <span class="road-n">08</span>
+          <span class="ab-tag plan">PLANNED</span>
+          <h3>Invoices</h3>
+          <p>Proper invoices for your organisation.</p>
+        </article>
+      </div>
     </section>
     <section class="pr-sec" aria-labelledby="pl-h">
       <h2 id="pl-h">What to know</h2>

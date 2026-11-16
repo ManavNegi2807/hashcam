@@ -298,7 +298,7 @@ def test_the_plans_page_says_what_is_built_and_what_is_planned_and_shows_no_pric
     ):
         assert part in text, part
     planned = page.locator(".ab-tag.plan").count()
-    assert planned == 8 + 1, "eight planned features and the heading tag"
+    assert planned == 8, "eight planned features, each with its tag"
     for name in (
         "Signed reports",
         "Private level packs",

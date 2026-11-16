@@ -1,0 +1,62 @@
+/* The Plans page: three cards that rise in one after another, lift on hover, and a glow around the featured one.
+   Only transform and opacity move, so nothing shifts and it costs the page nothing. Off under reduced motion. */
+.plans { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-top: 28px; align-items: stretch; }
+article.plan { position: relative; display: flex; flex-direction: column; padding: 24px 22px 22px; border-radius: 18px; overflow: hidden; isolation: isolate;
+  border: 1px solid var(--hc-line); background: linear-gradient(160deg, rgba(255,255,255,.07), rgba(255,255,255,.015) 45%, rgba(16,22,36,.25));
+  -webkit-backdrop-filter: blur(2px) saturate(1.3); backdrop-filter: blur(2px) saturate(1.3);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.14);
+  animation: planIn .7s cubic-bezier(0.16, 1, 0.3, 1) both; transition: transform .35s cubic-bezier(0.16, 1, 0.3, 1), border-color .35s; }
+article.plan:nth-child(2) { animation-delay: .12s; }
+article.plan:nth-child(3) { animation-delay: .24s; }
+article.plan:hover { transform: translateY(-8px); border-color: rgba(251, 191, 36, .45); }
+article.plan h3 { margin: 0; font-size: 22px; }
+.plan-tag { margin: 4px 0 14px; color: var(--hc-muted); }
+.plan-price { margin: 0 0 14px; font: 700 26px var(--hc-sans); color: var(--hc-gold-2); }
+.plan-meter { height: 8px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
+.plan-meter .bar { display: block; height: 100%; width: 100%; border-radius: 999px; transform-origin: 0 50%;
+  background: linear-gradient(90deg, #f59e0b, #fbbf24); animation: planBar 1.3s .5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.plan-meter .bar-free { --w: .03; }
+.plan-meter .bar-pro { --w: .22; }
+.plan-meter .bar-ent { --w: 1; }
+.plan-runs { margin: 10px 0 14px; }
+.plan-runs b { font: 700 22px var(--hc-mono); }
+.plan-list { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 9px; flex: 1; }
+.plan-list li { position: relative; padding-left: 24px; opacity: 0; animation: planItem .5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.plan-list li::before { content: ""; position: absolute; left: 2px; top: .5em; width: 12px; height: 6px; border-left: 2px solid #34d399; border-bottom: 2px solid #34d399; transform: rotate(-45deg); }
+.plan-list li:nth-child(1) { animation-delay: .5s; } .plan-list li:nth-child(2) { animation-delay: .58s; } .plan-list li:nth-child(3) { animation-delay: .66s; }
+.plan-list li:nth-child(4) { animation-delay: .74s; } .plan-list li:nth-child(5) { animation-delay: .82s; } .plan-list li:nth-child(6) { animation-delay: .9s; }
+.plan-list li:nth-child(7) { animation-delay: .98s; }
+.plan-cta { margin: 0; }
+.plan-cta .btn { display: block; text-align: center; }
+/* the featured plan */
+article.plan.pro { border-color: rgba(251, 191, 36, .55); }
+article.plan.pro::after { content: ""; position: absolute; inset: -1px; z-index: -1; border-radius: inherit; pointer-events: none;
+  box-shadow: 0 0 46px rgba(245, 158, 11, .35); animation: planGlow 3.2s ease-in-out infinite; }
+.plan-ribbon { position: absolute; top: 16px; right: -34px; transform: rotate(35deg); padding: 3px 40px; background: var(--hc-gold); color: var(--hc-gold-ink);
+  font: 700 10.5px var(--hc-mono); letter-spacing: .1em; text-transform: uppercase; }
+.plans-note { margin: 14px 2px 22px; }
+.roadmap { margin-top: 40px; }
+.roadmap h2 { margin: 0 0 6px; }
+.road-grid { display: grid; gap: 16px; margin-top: 18px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.road { position: relative; padding: 20px 18px 18px; border-radius: 16px; overflow: hidden; isolation: isolate;
+  border: 1px solid var(--hc-line); background: linear-gradient(160deg, rgba(255,255,255,.06), rgba(255,255,255,.012) 50%, rgba(16,22,36,.25));
+  animation: planIn .7s cubic-bezier(0.16, 1, 0.3, 1) both; transition: transform .35s cubic-bezier(0.16, 1, 0.3, 1), border-color .35s; }
+.road:nth-child(2) { animation-delay: .06s; } .road:nth-child(3) { animation-delay: .12s; } .road:nth-child(4) { animation-delay: .18s; }
+.road:nth-child(5) { animation-delay: .24s; } .road:nth-child(6) { animation-delay: .3s; } .road:nth-child(7) { animation-delay: .36s; } .road:nth-child(8) { animation-delay: .42s; }
+.road:hover { transform: translateY(-6px); border-color: rgba(185, 167, 255, .55); }
+.road::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; z-index: -1;
+  background: linear-gradient(90deg, transparent, #b9a7ff, transparent); transform: translateX(-100%); animation: roadSweep 4.5s ease-in-out infinite; }
+.road:nth-child(2n)::before { animation-delay: 1s; } .road:nth-child(3n)::before { animation-delay: 2s; }
+.road-n { position: absolute; right: 14px; top: 10px; font: 700 34px var(--hc-mono); color: rgba(255,255,255,.07); }
+.road h3 { margin: 12px 0 6px; font-size: 16px; padding-right: 36px; }
+.road p { margin: 0; color: var(--hc-muted); font-size: 14px; }
+@keyframes roadSweep { 0% { transform: translateX(-100%); } 55%, 100% { transform: translateX(100%); } }
+@keyframes planIn { from { opacity: 0; transform: translateY(26px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes planBar { from { transform: scaleX(0); } to { transform: scaleX(var(--w)); } }
+@keyframes planItem { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: none; } }
+@keyframes planGlow { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  article.plan, .road, .road::before, .plan-meter .bar, .plan-list li, article.plan.pro::after { animation: none; }
+  .plan-meter .bar { transform: scaleX(var(--w)); } .plan-list li { opacity: 1; } article.plan, .road { transition: none; }
+}
+.road .ab-tag { display: inline-block; width: auto; }

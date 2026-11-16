@@ -6,6 +6,8 @@ It is an evidence and auditing system. A valid receipt shows that the recorded h
 
 **Live site: [hashcam.vercel.app](https://hashcam.vercel.app/)** (a public showcase; HashCam itself runs on your own computer).
 
+**Plans:** Free, Pro and Enterprise are compared on the [Plans page](https://hashcam.vercel.app/plans). Limits and licence checks run in your browser and are **not enforced by a server**; features not built yet are marked PLANNED. See [`docs/PLANS.md`](docs/PLANS.md), [`docs/PRO.md`](docs/PRO.md) and [`docs/SECURITY.md`](docs/SECURITY.md) (section 17).
+
 | Home: an agent being recorded | Gatekeeper Sandbox |
 |---|---|
 | ![The home page: a viewfinder records an agent at a shop checkout while each step drops a card with a chained SHA-256 hash onto a tape](docs/screenshots/site-home.png) | ![The Gatekeeper Sandbox: four test flights, an escrow budget, an alert radar and a hash-chained ledger, on glass panels](docs/screenshots/site-sandbox.png) |

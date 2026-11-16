@@ -226,3 +226,12 @@ Mapped to `TESTING.md` section 9. A capability stays `UNVERIFIED` until its test
 - **The Rust build is not run with `--locked`** in `deploy/signer.Dockerfile`, and two base images (`postgres`, `alpine`) are pinned by tag, not by digest.
 - **Endpoint review** is not a security product: its events are simulated except those of the opt-in collector, its isolation is simulated, a score is a rule sum, and an alert is not proof of anything (`endpoint/README.md`).
 - **Payments** use Stripe test mode only. A key without a test prefix is refused and any reply that does not say `livemode: false` is not trusted. Real money is out of scope and forbidden by the project rules.
+
+## 17. Pro and Enterprise plans on the website (as built)
+
+- **Licence keys** are signed offline with Ed25519 (`tools/make_license.py`). The private key stays outside the repository and is never printed or committed; the site ships only the public key. A key is checked in the visitor's browser (WebCrypto).
+- **That check is not enforced.** There is no server. It keeps honest people honest; it is not copy protection, and a determined user can bypass it.
+- **Usage limits and seats are shown, not enforced.** The Range counts runs in `localStorage` on the visitor's device and shows a notice; clearing browser data resets it. Nothing is blocked.
+- **No payment code and no stored personal data.** Records the Pro tools read are verified first and stay in the browser. Locked PDF reports use AES-256 with a random password shown once.
+- **Not built, so not claimed:** server-enforced limits, seat counting, single sign-on, signed reports with your own key, a self-host bundle. They appear as PLANNED on the Plans page.
+- Reports are summaries, not proofs, and are not legal or compliance advice.
