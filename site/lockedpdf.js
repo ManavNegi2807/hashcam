@@ -176,6 +176,8 @@ const box = (color, x, y, w, h) => `${color} rg ${n1(x)} ${n1(y)} ${n1(w)} ${n1(
 function draw(doc) {
   const pages = [];
   const [brandA, brandB] = doc.brand;
+  // A long company name (white-label reports) shrinks to fit the header instead of running into the right side.
+  const brandSize = Math.min(19, 300 / widthOf(`${brandA} ${brandB}`.trim() || "x", 1, true));
   const chipWidth = doc.chip || 50;
   let ops = [], y = 0;
 
@@ -185,8 +187,8 @@ function draw(doc) {
       ops.push(box(INK.band, 0, PAGE.h - 100, PAGE.w, 100), box(INK.gold, 0, PAGE.h - 102.5, PAGE.w, 2.5));
       ops.push(`q 50 0 0 50 ${PAGE.left} ${PAGE.h - 75} cm /Im1 Do Q`);
       const x = PAGE.left + 62;
-      ops.push(say("F2", 19, INK.white, x, PAGE.h - 48, brandA));
-      ops.push(say("F2", 19, INK.gold, x + widthOf(`${brandA} `, 19, true), PAGE.h - 48, brandB));
+      ops.push(say("F2", brandSize, INK.white, x, PAGE.h - 48, brandA));
+      ops.push(say("F2", brandSize, INK.gold, x + widthOf(`${brandA} `, brandSize, true), PAGE.h - 48, brandB));
       ops.push(say("F1", 9.5, INK.onBand, x, PAGE.h - 65, doc.kicker));
       ops.push(sayRight("F2", 7.5, INK.gold, PAGE.w - PAGE.right, PAGE.h - 44, "LOCKED WITH AES-256"));
       ops.push(sayRight("F1", 9, INK.onBand, PAGE.w - PAGE.right, PAGE.h - 59, doc.date));
