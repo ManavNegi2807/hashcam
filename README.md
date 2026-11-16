@@ -4,13 +4,21 @@ A flight recorder for AI agents. Every step an agent takes goes through a policy
 
 It is an evidence and auditing system. A valid receipt shows that the recorded history has not changed since it was signed. It does **not** show that an agent was honest, or that a real-world action really happened.
 
-| The audit view | The task page (chat board) |
+**Live site: [hashcam.vercel.app](https://hashcam.vercel.app/)** (a public showcase; HashCam itself runs on your own computer).
+
+| Home: an agent being recorded | Gatekeeper Sandbox |
 |---|---|
-| ![The audit view, empty state](docs/screenshots/audit-view.png) | ![The task page, empty state](docs/screenshots/chat-board.png) |
+| ![The home page: a viewfinder records an agent at a shop checkout while each step drops a card with a chained SHA-256 hash onto a tape](docs/screenshots/site-home.png) | ![The Gatekeeper Sandbox: four test flights, an escrow budget, an alert radar and a hash-chained ledger, on glass panels](docs/screenshots/site-sandbox.png) |
+| **Range: test your own agent** | **About** |
+| ![The Range scoring a real sandbox run of level 3: four checks passed, with a badge, share links and a locked PDF report](docs/screenshots/site-range-result.png) | ![The About page: what each page does, what is built and what is not](docs/screenshots/about-page.png) |
 
-*Both screenshots show a fresh copy with no runs. The amber note on the task page is the real state of a copy with no TinyFish key set.*
+| Locked report from the Range | Locked report from the extension |
+|---|---|
+| ![A Range report PDF: the result, what the agent did well, what went wrong and what to do next](docs/screenshots/range-report-pdf.png) | ![An extension session report PDF: allowed, protected, blocked and held steps, and what to do next](docs/screenshots/extension-report-pdf.png) |
 
-**Pick what the agent should do** from the sidebar list (the task page on the right): Search, Research and Browse use TinyFish; Demo task, Endpoint review, Pay bills (local mock simulation) and Real website pause for your signed approval before anything sensitive happens.
+*The reports are written and locked with AES-256 in the browser, with a new random password shown once. They are shown here opened with that password. The Range and Sandbox are simulations with fake money; a sandbox record proves it was not edited, not where it came from.*
+
+**On your own computer**, the audit view and the task page (chat board) are served from `127.0.0.1`. Pick what the agent should do from the task page's sidebar: Search, Research and Browse use TinyFish; Demo task, Endpoint review, Pay bills (local mock simulation) and Real website pause for your signed approval before anything sensitive happens.
 
 **Alerts in the audit view** (a real signed run; TinyFish shows "not asked" because no key was set):
 
