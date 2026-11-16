@@ -50,6 +50,16 @@ function blocksFor(run) {
       out.push(...open.map(row));
     }
 
+    if (run.compare) {
+      const cmp = run.compare;
+      out.push({ style: "h", text: "What changed since the earlier run" });
+      out.push({ style: "p", text: `Before: ${cmp.before.line}. After: ${cmp.after.line}.` });
+      for (const r of cmp.rows) {
+        out.push({ style: "row", chip: r.change, tone: { better: "good", worse: "bad", same: "soft" }[r.change], lead: `${r.label}.`, text: window.HCCompare.rowText(r) });
+      }
+      out.push({ style: "p", text: cmp.summary });
+    }
+
     out.push({ style: "h", text: "What to do next" });
     for (const c of bad) out.push({ style: "step", lead: `Fix: ${c.label}.`, text: ADVICE.FAIL });
     for (const c of open) out.push({ style: "step", lead: `Look at: ${c.label}.`, text: ADVICE.UNKNOWN });
