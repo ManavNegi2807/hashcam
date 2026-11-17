@@ -6,6 +6,12 @@
     python tools/make_license.py sign --name "Acme" --expires 2027-12-31
     python tools/make_license.py check KEY                 # does this key verify?
 
+Enterprise companies (each isolated by its own key; the owner key only signs the company's certificate):
+    python tools/make_license.py org-init --org-id acme --org-name "Acme Ltd"   # prints the company certificate
+    python tools/make_license.py member --org-id acme --role boss --name Dana     # one unique access key per person
+    python tools/make_license.py member --org-id acme --role member --name Sam --scopes triage,verify
+    python tools/make_license.py revoke --org-id acme --member-id m-1a2b3c4d      # prints a signed revocation list
+
 How it works: you keep a PRIVATE key (an Ed25519 key) outside the repository. The matching PUBLIC key is
 written to `site/pro/pubkey.js`, which is deployed with the site. A licence key is a small signed note
 (the buyer's name, plan, dates, an id); the site checks the signature in the browser with the public key.
@@ -39,6 +45,15 @@ REPO = Path(__file__).resolve().parents[1]
 PUBKEY_JS = REPO / "site" / "pro" / "pubkey.js"
 DEFAULT_KEY_FILE = Path.home() / ".hashcam" / "license-private.pem"
 PREFIX = "HCPRO1"
+ORG_PREFIX = "HCORG1"
+MEMBER_PREFIX = "HCMEM1"
+REVOKE_PREFIX = "HCREV1"
+ORG_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,39}$")
+MEMBER_ID_RE = re.compile(r"^[A-Za-z0-9-]{1,40}$")
+ROLES = ("boss", "member")
+BOSS_SCOPES = ("triage", "verify", "reproduce", "notes", "members", "policy", "approve", "insights")
+MEMBER_SCOPES = ("triage", "verify", "reproduce", "notes")
+DEFAULT_ORG_DIR = Path.home() / ".hashcam" / "orgs"
 NAME_RE = re.compile(r"^[^\x00-\x1f\x7f]{1,80}$")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -220,6 +235,210 @@ def cmd_check(args: argparse.Namespace) -> int:
     return 0
 
 
+# ---------------------------------------------------------------- companies, members, revocation
+# Chain: the OWNER key signs a company certificate (HCORG1: org_id, org_name, the company's public key). The
+# COMPANY key (made by org-init, kept outside the repo) signs each person's access key (HCMEM1) and the company's
+# revocation list (HCREV1). So handing out member keys never needs the owner private key.
+
+
+def _signed(prefix: str, private: Ed25519PrivateKey, payload: dict[str, Any]) -> str:
+    raw = json.dumps(payload, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return f"{prefix}.{b64u(raw)}.{b64u(private.sign(raw))}"
+
+
+def check_signed(prefix: str, token: str, public_hex: str) -> dict[str, Any]:
+    """Verify one HCORG1/HCMEM1/HCREV1 token with a public key. Raises ValueError with a plain reason."""
+    parts = token.strip().split(".")
+    if len(parts) != 3 or parts[0] != prefix:
+        raise ValueError(f"not a {prefix} token")
+    raw, sig = unb64u(parts[1]), unb64u(parts[2])
+    try:
+        Ed25519PublicKey.from_public_bytes(bytes.fromhex(public_hex)).verify(sig, raw)
+    except Exception as error:
+        raise ValueError("the signature does not match") from error
+    payload: dict[str, Any] = json.loads(raw)
+    return payload
+
+
+def _day(value: str | None, label: str) -> None:
+    if value is not None:
+        if not DATE_RE.match(value):
+            raise ValueError(f"{label} must look like 2027-12-31")
+        date.fromisoformat(value)
+
+
+def sign_org_cert(
+    owner: Ed25519PrivateKey,
+    org_id: str,
+    org_name: str,
+    org_pubkey: str,
+    *,
+    expires: str | None = None,
+    issued: str | None = None,
+) -> str:
+    """The company certificate: HCORG1.<payload>.<signature>, signed by the owner key."""
+    if not ORG_ID_RE.match(org_id):
+        raise ValueError("org id: 1 to 40 characters, lower-case letters, digits and dashes")
+    if not NAME_RE.match(org_name):
+        raise ValueError("org name must be 1 to 80 characters with no control characters")
+    if not re.fullmatch(r"[0-9a-f]{64}", org_pubkey):
+        raise ValueError("the company public key must be 64 hex characters")
+    _day(expires, "expires")
+    issued = issued or datetime.now(UTC).date().isoformat()
+    _day(issued, "issued")
+    payload = {
+        "v": 1,
+        "org_id": org_id,
+        "org_name": org_name,
+        "org_pubkey": org_pubkey,
+        "issued": issued,
+        "expires": expires,
+    }
+    return _signed(ORG_PREFIX, owner, payload)
+
+
+def sign_member(
+    org_key: Ed25519PrivateKey,
+    org_id: str,
+    name: str,
+    role: str,
+    *,
+    scopes: list[str] | None = None,
+    expires_at: str | None = None,
+    issued: str | None = None,
+    member_id: str | None = None,
+) -> str:
+    """One person's access key: HCMEM1.<payload>.<signature>, signed by the COMPANY key."""
+    if not ORG_ID_RE.match(org_id):
+        raise ValueError("bad org id")
+    if role not in ROLES:
+        raise ValueError("the role must be boss or member")
+    if not NAME_RE.match(name):
+        raise ValueError("the name must be 1 to 80 characters with no control characters")
+    allowed = BOSS_SCOPES if role == "boss" else MEMBER_SCOPES
+    chosen = list(scopes) if scopes else list(allowed)
+    if any(s not in allowed for s in chosen) or len(set(chosen)) != len(chosen):
+        raise ValueError(f"scopes for a {role} can only be: {', '.join(allowed)}")
+    member_id = member_id or f"m-{secrets.token_hex(4)}"
+    if not MEMBER_ID_RE.match(member_id):
+        raise ValueError("bad member id")
+    _day(expires_at, "expires")
+    issued = issued or datetime.now(UTC).date().isoformat()
+    _day(issued, "issued")
+    payload = {
+        "v": 1,
+        "org_id": org_id,
+        "member_id": member_id,
+        "name": name,
+        "role": role,
+        "scopes": chosen,
+        "issued": issued,
+        "expires_at": expires_at,
+    }
+    return _signed(MEMBER_PREFIX, org_key, payload)
+
+
+def sign_revocations(
+    org_key: Ed25519PrivateKey, org_id: str, revoked: list[str], *, issued: str | None = None
+) -> str:
+    """The company's revocation list: HCREV1.<payload>.<signature>. Revoking is NOT ENFORCED by a server."""
+    if not ORG_ID_RE.match(org_id) or not all(MEMBER_ID_RE.match(m) for m in revoked):
+        raise ValueError("bad org id or member id")
+    issued = issued or datetime.now(UTC).date().isoformat()
+    _day(issued, "issued")
+    payload = {"v": 1, "org_id": org_id, "revoked": sorted(set(revoked)), "issued": issued}
+    return _signed(REVOKE_PREFIX, org_key, payload)
+
+
+def _org_key_path(args: argparse.Namespace) -> Path:
+    return Path(args.org_dir).expanduser() / f"{args.org_id}-private.pem"
+
+
+def _save_private(path: Path, private: Ed25519PrivateKey) -> None:
+    pem = private.private_bytes(
+        serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "wb") as handle:
+        handle.write(pem)
+
+
+def cmd_org_init(args: argparse.Namespace) -> int:
+    owner_file = Path(args.key_file).expanduser()
+    org_file = _org_key_path(args)
+    if inside_repo(org_file):
+        print(
+            "Refusing: the company private key must be saved OUTSIDE the repository.",
+            file=sys.stderr,
+        )
+        return 2
+    if not owner_file.exists():
+        print(f"No owner private key at {owner_file}. Run `init` first.", file=sys.stderr)
+        return 2
+    if org_file.exists() and not args.force:
+        print(
+            f"A company key already exists at {org_file}. Use --force to replace it.",
+            file=sys.stderr,
+        )
+        return 2
+    org_private, org_public = make_keypair()
+    try:
+        cert = sign_org_cert(
+            load_private(owner_file), args.org_id, args.org_name, org_public, expires=args.expires
+        )
+    except ValueError as error:
+        print(f"Cannot make the certificate: {error}", file=sys.stderr)
+        return 2
+    _save_private(org_file, org_private)
+    print(
+        f"Company private key saved to {org_file} (for this company's admin only; never commit it).",
+        file=sys.stderr,
+    )
+    print(cert)
+    return 0
+
+
+def cmd_member(args: argparse.Namespace) -> int:
+    org_file = _org_key_path(args)
+    if not org_file.exists():
+        print(f"No company key at {org_file}. Run `org-init` first.", file=sys.stderr)
+        return 2
+    scopes = [s.strip() for s in args.scopes.split(",") if s.strip()] if args.scopes else None
+    try:
+        token = sign_member(
+            load_private(org_file),
+            args.org_id,
+            args.name,
+            args.role,
+            scopes=scopes,
+            expires_at=args.expires,
+        )
+    except ValueError as error:
+        print(f"Cannot make the access key: {error}", file=sys.stderr)
+        return 2
+    print(token)
+    return 0
+
+
+def cmd_revoke(args: argparse.Namespace) -> int:
+    org_file = _org_key_path(args)
+    if not org_file.exists():
+        print(f"No company key at {org_file}. Run `org-init` first.", file=sys.stderr)
+        return 2
+    store = Path(args.org_dir).expanduser() / f"{args.org_id}-revoked.json"
+    known: list[str] = json.loads(store.read_text(encoding="utf-8")) if store.exists() else []
+    known = sorted(set(known) | {args.member_id})
+    try:
+        token = sign_revocations(load_private(org_file), args.org_id, known)
+    except ValueError as error:
+        print(f"Cannot revoke: {error}", file=sys.stderr)
+        return 2
+    store.write_text(json.dumps(known), encoding="utf-8")
+    print(token)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawTextHelpFormatter
@@ -243,6 +462,28 @@ def main(argv: list[str] | None = None) -> int:
     check = sub.add_parser("check", help="check a licence key against the site's public key")
     check.add_argument("key")
     check.set_defaults(run=cmd_check)
+    for name, helptext in (
+        ("org-init", "make a company key and print its certificate (signed by the owner key)"),
+        ("member", "print one unique Boss or Member access key (signed by the company key)"),
+        ("revoke", "print the company's signed revocation list with one more member added"),
+    ):
+        sp = sub.add_parser(name, help=helptext)
+        sp.add_argument("--org-id", required=True, help="lower-case id, e.g. acme")
+        sp.add_argument("--org-dir", default=str(DEFAULT_ORG_DIR), help="where company keys live")
+        if name == "org-init":
+            sp.add_argument("--org-name", required=True)
+            sp.add_argument("--expires", help="last valid day of the certificate (default: never)")
+            sp.add_argument("--force", action="store_true")
+            sp.set_defaults(run=cmd_org_init)
+        elif name == "member":
+            sp.add_argument("--role", choices=list(ROLES), required=True)
+            sp.add_argument("--name", required=True)
+            sp.add_argument("--scopes", help="comma list, a subset of the role's scopes")
+            sp.add_argument("--expires", help="last valid day (default: never)")
+            sp.set_defaults(run=cmd_member)
+        else:
+            sp.add_argument("--member-id", required=True)
+            sp.set_defaults(run=cmd_revoke)
     args = parser.parse_args(argv)
     return int(args.run(args))
 
